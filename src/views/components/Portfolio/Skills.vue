@@ -34,13 +34,15 @@
                                           rounded></icon>
                                 </div>
                                 <div class="pl-4">
-                                    <h5 class="title text-success">Awesome Support</h5>
-                                    <p>The Arctic Ocean freezes every winter and much of the sea-ice then thaws
-                                        every summer, and that process will continue whatever happens.</p>
-                                    <a href="#" class="text-success">Learn more</a>
+                                    <h5 class="title text-success">Programming language</h5>
+                                    <base-progress :value="100" type="success" label="Java [Expert]"></base-progress>
+                                    <base-progress :value="80" type="success" label="JavaScript [Senior]"></base-progress>
+                                    <!-- <a href="#" class="text-success">Learn more</a> -->
                                 </div>
+                                
                             </div>
                         </card>
+                    
                         <card shadow class="shadow-lg--hover mt-5">
                             <div class="d-flex px-3">
                                 <div>
@@ -48,10 +50,11 @@
                                           rounded></icon>
                                 </div>
                                 <div class="pl-4">
-                                    <h5 class="title text-warning">Modular Components</h5>
-                                    <p>The Arctic Ocean freezes every winter and much of the sea-ice then thaws
-                                        every summer, and that process will continue whatever happens.</p>
-                                    <a href="#" class="text-warning">Learn more</a>
+                                    <h5 class="title text-warning">Framework</h5>
+                                    <base-progress :value="100" type="warning" label="Springboot (JAVA) [Expert]"></base-progress>
+                                    <base-progress :value="100" type="warning" label="Hibernate (JAVA) [Senior]"></base-progress>
+
+                                    <!-- <a href="#" class="text-warning">Learn more</a> -->
                                 </div>
                             </div>
                         </card>
