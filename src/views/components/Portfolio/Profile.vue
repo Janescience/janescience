@@ -1,7 +1,7 @@
 <template>
 <div class="profile-page">
     <section class="section-profile-cover section-shaped my-0">
-            <div class="shape shape-style-1 shape-dark shape-skew alpha-4">
+            <div class="shape  bg-gradient-dark shape-skew ">
                 <span></span>
                 <span></span>
                 <span></span>
@@ -40,7 +40,7 @@
                                         <span class="description">Exp/Years</span>
                                     </div>
                                     <div>
-                                        <span class="heading">7</span>
+                                        <span class="heading">{{ countProjects }}</span>
                                         <span class="description">Projects</span>
                                     </div>
                                 </div>
@@ -50,7 +50,7 @@
                             <h3>Janewit Sirijan</h3>
                             <div class="h6 font-weight-300"><i class="ni location_pin mr-2"></i>Saimai , Bangkok</div>
                             <div class="h6 mt-4"><i class="ni business_briefcase-24 mr-2"></i>Software Developer</div>
-                            <div><i class="ni education_hat mr-2"></i>Suranaree University of Technology (SUT)</div>
+                            <div><i class="ni education_hat mr-2"></i>Suranaree University of Technology</div>
                         </div>
                         <div class="mt-5 py-5 border-top text-center">
                             <div class="row justify-content-center">
@@ -58,7 +58,9 @@
                                     <p>Hi,my name is Jane.I'm currently a Java Developer outsource at Ocean Life Insurance.
                                         I enjoy programming as though playing games and learning never ends.
                                         I am ready to grow and look for good opportunities. You just give me a chance</p>
-                                    <a href="#">Show more</a>
+                                    <!-- <a  href="#">Show more</a> -->
+                                    <base-button  type="info" size="sm" class="float-right">Show more</base-button>
+
                                 </div>
                             </div>
                         </div>
@@ -69,8 +71,11 @@
 </div>
 </template>
 <script>
+import Projects from "./Projects";
+
 export default {
   name : "profile",
+  components:{Projects},
   computed: {
       calculateAge: function() {
           let currentDate = new Date();
@@ -85,6 +90,10 @@ export default {
           let difference = currentDate - startDate;
           let experience = Math.floor(difference/31557600000);
           return experience
+        },
+        countProjects: function() {
+          let countDivProject = document.getElementsByClassName('project');
+          return countDivProject.length
         }
   }
   
