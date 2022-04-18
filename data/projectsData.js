@@ -20,7 +20,7 @@ const projectsData = [
   {
     title: 'E-Property',
     description: ``,
-    imgSrc: '/static/images/contract.jpeg',
+    imgSrc: '/static/images/contract.png',
     href: '/project/e-property',
   },
   {
@@ -32,13 +32,7 @@ const projectsData = [
   {
     title: 'Presale',
     description: ``,
-    imgSrc: '/static/images/payment.jpeg',
-    href: '/project/presale',
-  },
-  {
-    title: 'Enterprise Resource Planning (ERP)',
-    description: ``,
-    imgSrc: '/static/images/erp.jpeg',
+    imgSrc: '/static/images/box.jpeg',
     href: '/project/presale',
   },
   {
@@ -56,13 +50,13 @@ const projectsData = [
   {
     title: 'Centralized Tax Improvement',
     description: ``,
-    imgSrc: '/static/images/tax.jpeg',
+    imgSrc: '/static/images/tax.webp',
     href: '/project/presale',
   },
   {
     title: 'Electronic Policy',
     description: ``,
-    imgSrc: '/static/images/payment.jpeg',
+    imgSrc: '/static/images/epolicy.jpeg',
     href: '/project/presale',
   },
 ]

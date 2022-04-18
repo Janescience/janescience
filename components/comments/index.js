@@ -23,6 +23,7 @@ const DisqusComponent = dynamic(
 const Comments = ({ frontMatter }) => {
   let term
   const comment = siteMetadata?.comment
+  console.log(comment)
   if (!comment || Object.keys(comment).length === 0) return <></>
   switch (
     siteMetadata.comment.giscusConfig.mapping ||
