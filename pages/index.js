@@ -52,7 +52,7 @@ export default function Home({ posts }) {
                         {title}
                       </Link>
                     </h2>
-                    <div className="flex pb-4  items-center justify-between px-4">
+                    <div className="flex items-center  justify-between px-4 pb-4">
                       {tags.map((tag) => (
                         <Tag key={tag} text={tag} />
                       ))}
