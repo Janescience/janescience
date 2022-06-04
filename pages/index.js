@@ -35,7 +35,10 @@ export default function Home({ posts }) {
           {posts.slice(0, MAX_DISPLAY).map((frontMatter) => {
             const { slug, date, title, summary, tags, featureImage } = frontMatter
             return (
-              <div key={slug} className="h-full overflow-hidden rounded-md  dark:bg-gray-800 bg-slate-100">
+              <div
+                key={slug}
+                className="h-full overflow-hidden rounded-md dark:bg-gray-800 bg-slate-100"
+                >
                 <div className="space-y-5">
                   <div className="space-y-6">
                     <Link href={`/blog/${slug}`} aria-label={`Link to ${title}`}>
@@ -61,15 +64,6 @@ export default function Home({ posts }) {
                       </dd>
                     </div>
                   </div>
-                  {/* <div className="inset-x-0 bottom-0 px-4 pb-4 text-base font-medium leading-6">
-                    <Link
-                      href={`/blog/${slug}`}
-                      className="text-base font-medium leading-6 text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
-                      aria-label={`Link to ${title}`}
-                    >
-                      Read more &rarr;
-                    </Link>
-                  </div> */}
                 </div>
               </div>
             )
