@@ -9,7 +9,7 @@ import formatDate from '@/lib/utils/formatDate'
 
 import NewsletterForm from '@/components/NewsletterForm'
 
-const MAX_DISPLAY = 5
+const MAX_DISPLAY = 6
 
 export async function getStaticProps() {
   const posts = await getAllFilesFrontMatter('blog')
@@ -55,11 +55,11 @@ export default function Home({ posts }) {
                         {title}
                       </Link>
                     </h2>
-                    <div className="flex items-center  justify-between px-4 pb-4">
+                    <div className="flex items-center  px-4 pb-4">
                       {tags.map((tag) => (
                         <Tag key={tag} text={tag} />
                       ))}
-                      <dd className="text-xs text-gray-500 dark:text-gray-300">
+                      <dd className="text-xs text-gray-500 dark:text-gray-300 ">
                         <time dateTime={date}>{formatDate(date)}</time>
                       </dd>
                     </div>
