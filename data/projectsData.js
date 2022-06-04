@@ -8,7 +8,7 @@ const projectsData = [
   {
     title: 'Legal Enforcement Action Database',
     description: ``,
-    imgSrc: '/static/images/lead.png',
+    imgSrc: '/static/images/lead.webp',
     href: '/project/lead',
   },
   {

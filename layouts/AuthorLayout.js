@@ -27,6 +27,14 @@ export default function AuthorLayout({ children, frontMatter }) {
             <div className="text-gray-500 dark:text-gray-400">{occupation}</div>
             <div className="text-gray-500 dark:text-gray-400">{company}</div>
             <div className="flex space-x-3 pt-6">
+              <a
+                target="_blank"
+                href="https://drive.google.com/file/d/1p5Laavj2KbDfkDVXr7UfFkCdWpHXdYSw/view?usp=sharing"
+                className="rounded bg-teal-400 py-2 px-4 font-bold text-black hover:bg-teal-300"
+                rel="noreferrer"
+              >
+                Resume
+              </a>
               {/* <SocialIcon kind="mail" href={`mailto:${email}`} />
               <SocialIcon kind="github" href={github} />
               <SocialIcon kind="linkedin" href={linkedin} />

@@ -35,7 +35,7 @@ export default function Home({ posts }) {
           {posts.slice(0, MAX_DISPLAY).map((frontMatter) => {
             const { slug, date, title, summary, tags, featureImage } = frontMatter
             return (
-              <div key={slug} className="h-full overflow-hidden rounded-md  bg-gray-800">
+              <div key={slug} className="h-full overflow-hidden rounded-md  dark:bg-gray-800 bg-slate-100">
                 <div className="space-y-5">
                   <div className="space-y-6">
                     <Link href={`/blog/${slug}`} aria-label={`Link to ${title}`}>
