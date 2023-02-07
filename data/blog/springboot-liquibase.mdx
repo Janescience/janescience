@@ -37,7 +37,8 @@ featureImage : '/static/images/blog/liquibase-springboot/spring-liquibase.jpeg'
 
 ### ทำไมต้องใช้ Liquibase ?
 
-ไม่ต้องมาคอยจัดการ Script database ทุกครั้งที่มีการ Deploy SIT , UAT หรือ Production 
+โครงสร้างข้อมูลและตารางจะเหมือนกันทุก Environment ไม่ว่าจะ Run Project ที่ไหน โดยไม่ต้องมาคอยจัดการ Script Database ทุกครั้งที่มีการ Deploy SIT , UAT หรือ Production 
+รวมถึงการย้าย Server , Environment และเปลี่ยน Database
 
 ### ถ้าไม่ใช้ Liquibase ต้องทำไรบ้าง ?
 1. หลังจาก Run script SQL บน Dev แล้วต้องมีการจัดเก็บ Script ส่วนนี้ไว้ทุกครั้ง โดยต้องมีที่จัดเก็บให้เป็นระเบียบ และมีโอกาสที่ Developer จะลืมหรือตกหล่นไปบาง Script ด้วย
@@ -45,7 +46,7 @@ featureImage : '/static/images/blog/liquibase-springboot/spring-liquibase.jpeg'
 3. หลังจาก ​Deploy แล้วต้องนำ Script ที่เตรียมไว้มา Run อีกรอบบน Environment นั้นๆ ขั้นตอนนี้มีโอกาสที่จะนำ Script มา Run ไม่ครบ หรือ Run ผิด Sequence อาจจะทำให้เกิดปัญหา Deploy ไม่ผ่าน
 
 
-ลองคิดเล่นๆดูนะครับ ถ้าการ Deploy ในรอบนั้น มีอยู่ประมาณ 10 Script และคนที่ Deploy ไม่ใช่ Developer คนนั้น มีหน้าที่แค่เอาทุกอย่างที่เตรียมไว้ไป Deploy ตาม Checklist เมื่อเกิดปัญหาขึ้นมา คงจะเสียเวลาและวุ่นวายน่าดู โดยเฉพาะการ Deploy ที่ Production บางทีอาจจะมีเวลาที่จำกัด
+ลองคิดเล่นๆดูนะครับ ถ้าการ Deploy ในรอบนั้น มีอยู่ประมาณ 10 Script และคนที่ Deploy ไม่ใช่ Developer คนนั้น มีหน้าที่แค่เอาทุกอย่างที่เตรียมไว้ไป Deploy ตาม Check list เมื่อเกิดปัญหาขึ้นมา คงจะเสียเวลาและวุ่นวายน่าดู โดยเฉพาะการ Deploy ที่ Production บางทีอาจจะมีเวลาที่จำกัด
 
 > ถ้าเราใช้ Liquibase ปัญหาหรือความเสี่ยงต่างๆที่กล่าวมานี้ จะไม่เกิดขึ้น เพราะถ้าเกิดปัญหา จะรู้และไม่ผ่านตั้งแต่ตอน Dev แล้ว
 
@@ -389,7 +390,7 @@ Validation Failed:
 ```
 ถ้า `changeSet` ที่เราอ้างอิง เกิดข้อผิดพลาด จะกลับมา `rollback` ที่ `changeSet` นี้
 
-- SQL
+- **SQL**
 ```xml
 <changeSet id="action-entitie-datetime" author="author_name">
 	<createTable tableName="my_table"/>
@@ -405,8 +406,24 @@ Validation Failed:
 
 > ข้อควรระวัง ถ้าเขียนแบบ SQL ต้องอิงตาม Syntax ของ Database แต่ล่ะประเภท
 
+### Entities
 
+### Table
 
+- **createTable**
+
+```xml
+<changeSet id="action-entitie-datetime" author="author_name">
+	<createTable tableName="my_table">
+        <column name="id" type="int">
+           <constraints primaryKey="true"/>
+        </column>
+        <column name="employee_no" type="varchar(10)" remarks="รหัสพนักงาน">
+           <constraints nullable="false"/>
+        </column>
+    </createTable>
+</changeSet>
+```
 
 
 

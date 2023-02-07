@@ -40,6 +40,10 @@
   content: attr(line);
 }
 
+img {
+  @apply rounded-xl
+}
+
 /* Token styles */
 /**
  * MIT License
