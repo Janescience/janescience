@@ -5,7 +5,7 @@ const siteMetadata = {
   description: 'ความรู้เกี่ยวกับ Programming ที่ผมได้ศึกษา สนใจ บันทึกไว้เป็นบทความ',
   language: 'en-us',
   theme: 'system', // system, dark or light
-  siteUrl: 'https://blog-nextjs-tailwind-sigma.vercel.app',
+  siteUrl: 'https://janescience.com',
   siteRepo: 'https://github.com/Janescience/blog-nextjs-tailwind',
   siteLogo: '/static/images/logo.png',
   image: '/static/images/avatar.jpeg',
