@@ -1,21 +1,21 @@
 ---
 title: เขียน Test API Node.js ด้วย Jest ที่มีการต่อ Database
-date: '2023-02-07'
-tags: ['jest','test','node']
+date: "2023-02-07"
+tags: ["jest", "test", "node"]
 draft: false
-summary: 'สำหรับ Node.js ใครที่เริ่มต้นเขียน Test ผมอยากแนะนำให้ลองใช้ JEST'
+summary: "สำหรับ Node.js ใครที่เริ่มต้นเขียน Test ผมอยากแนะนำให้ลองใช้ JEST"
 layout: PostSimple
-featureImage : '/static/images/blog/jest-api/jest-api-cover.png'
+featureImage: "/static/images/blog/jest-api/jest-cover.jpg"
 ---
 
+![Jest Cover](/static/images/blog/jest-api/jest-cover.jpg)
 
-
-![Jest Cover](/static/images/blog/jest-api/jest-api-cover.png)
-*<center>ขอบคุณรูปภาพจาก (https://assets-global.website-files.com/60acbb950c4d66d0ab3e2007/60d8428dec72dd71f6bf41dc_serverless-1-with-technology-names.png) </center>*
+_<center>ขอบคุณรูปภาพจาก (https://ms314006.github.io/static/61b2001ca7ff66bffe5604dc0c52016d/5a4bd/Jest.jpg) </center>_
 
 สวัสดีครับ ผมจะลองยกตัวอย่างการเขียน Test สั้นๆด้วย Jest โปรเจค Node ของผมใช้ Express.js และ DB เป็น MongoDB ส่วนของการ Test เป็นการเขียน Test API ครับ
 
 ## Install - Jest
+
 ```bash
 npm i jest
 ```
@@ -29,178 +29,179 @@ npm i supertest
 ```
 
 ## Install - Mongodb Memory
+
 เราจะใช้ตัวนี้เพื่อเป็นการ Mock mongoDB ขึ้นมาตอน Run test ถ้าใน Function ที่เรา Test มีการต่อ DB ตอน Run test เราจะไม่ต่อ DB จริงๆ
-```bash 
+
+```bash
 npm i mongodb-memory-server
 ```
 
 ## Create /config/conn.memory.js
+
 สร้าง Connection config สำหรับต่อ MongoDB memmory ใช้สำหรับเชื่อมต่อ เคลียร์ และ ดรอป DB
+
 ```js
-const mongoose = require('mongoose');
-const { MongoMemoryServer } = require('mongodb-memory-server')
+const mongoose = require("mongoose")
+const {MongoMemoryServer} = require("mongodb-memory-server")
 
 module.exports.connect = async () => {
-    const mongoDb = await MongoMemoryServer.create();
-    const uri = mongoDb.getUri();
-    const mongooseOpts = {
-        useNewUrlParser : true,
-        useUnifiedTopology : true ,
-        maxPoolSize : 10
-    };
-    await mongoose.connect(uri,mongooseOpts);
+  const mongoDb = await MongoMemoryServer.create()
+  const uri = mongoDb.getUri()
+  const mongooseOpts = {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    maxPoolSize: 10,
+  }
+  await mongoose.connect(uri, mongooseOpts)
 }
 
 module.exports.closeDatabase = async () => {
-    await mongoose.connection.dropDatabase();
-    await mongoose.connection.close();
+  await mongoose.connection.dropDatabase()
+  await mongoose.connection.close()
 }
 
 module.exports.clearDatabase = async () => {
-    const collections = mongoose.connection.collections;
-    for(const key in collections){
-        const collection = collections[key];
-        await collection.deleteMany();
-    }   
+  const collections = mongoose.connection.collections
+  for (const key in collections) {
+    const collection = collections[key]
+    await collection.deleteMany()
+  }
 }
 ```
 
 ## Config package.json
+
 ```json
 "test": "jest --watchAll --coverage "
 ```
 
 - **--watchAll** - Run ทุก test
 - **--coverage** - แสดง % การ test ของแต่ล่ะไฟล์ว่า test ไปกี่ % แล้ว และแสดงด้วยว่าแต่ล่ะไฟล์มี line ไหนที่ยังไม่ได้ test
- 
- ## Function signup in controller
+
+## Function signup in controller
+
 ```js
 exports.signup = async (req, res) => {
+  const countF = await Farm.collection.countDocuments()
+  console.log("farm count : ", countF)
 
-    const countF = await Farm.collection.countDocuments();
-    console.log("farm count : ",countF);
+  const farm = new Farm({
+    code: "F" + String(countF + 1).padStart(4, "0"),
+    name: req.body.farmName,
+    lineToken: null,
+  })
 
-    const farm = new Farm({
-      code : "F" + String(countF + 1).padStart(4,'0'),
-      name : req.body.farmName,
-      lineToken : null
-    })
+  const user = new User({
+    username: req.body.username,
+    password: bcrypt.hashSync(req.body.password, 8),
+    farm: farm,
+  })
 
-    const user = new User({
-      username: req.body.username,
-      password: bcrypt.hashSync(req.body.password, 8),
-      farm : farm,
-    });
+  const farmResp = await farm.save()
+  console.log("farm saved : ", farmResp)
 
-    const farmResp = await farm.save();
-    console.log("farm saved : ",farmResp);
+  const userResp = await user.save()
+  console.log("user saved : ", userResp)
 
-    const userResp = await user.save();
-    console.log("user saved : ",userResp);
-
-    res.status(200).send({message:"Registered Successfully."});
-
-};
+  res.status(200).send({message: "Registered Successfully."})
+}
 ```
 
-## Create file  /test/auth.test.js
+## Create file /test/auth.test.js
 
 ต้องสร้างชื่อไฟล์ตามด้วย .test เสมอ เพื่อให้ jest มองเห็น เมื่อ run มันจะวิ่งหาไฟล์ที่มี .test ทั้งหมด
 
 ```js
-const express = require('express');
-const request = require('supertest');
-const authController = require('../controllers/auth.controller');
-const { verifySignUp } = require("../middlewares");
-const db = require('../config/conn.memory');
+const express = require("express")
+const request = require("supertest")
+const authController = require("../controllers/auth.controller")
+const {verifySignUp} = require("../middlewares")
+const db = require("../config/conn.memory")
 
 //เรียก function นี้ก่อน run test ทั้งหมดสำหรับไฟล์นี้
 beforeAll(async () => {
-    //เชื่อมต่อ db memory
-    await db.connect()
+  //เชื่อมต่อ db memory
+  await db.connect()
 })
 
 //เรียก function นี้ทุกครั้งหลัง run เสร็จแต่ล่ะ test
 afterEach(async () => {
-    //เคลียร์ข้อมูลทั้งหมดใน db memory
-    await db.clearDatabase()
+  //เคลียร์ข้อมูลทั้งหมดใน db memory
+  await db.clearDatabase()
 })
 
 //เรียก function นี้เมื่อ run ครบทุก test
 afterAll(async () => {
-    //ยกเลิกเชื่อมต่อ db และ drop db ทิ้ง
-    await db.closeDatabase()
+  //ยกเลิกเชื่อมต่อ db และ drop db ทิ้ง
+  await db.closeDatabase()
 })
 
 //อธิบายว่ากลุ่มการ test นี้ทำอะไร
-describe('Signup ', () => {
-  let app;
+describe("Signup ", () => {
+  let app
 
   //เรียก Function นี้ก่อนจะ run แต่ล่ะ test
   beforeEach(() => {
-    app = express();
-    app.use(express.json());
+    app = express()
+    app.use(express.json())
 
-    //กำหนด Path API ที่เราจะ Test 
+    //กำหนด Path API ที่เราจะ Test
     //API นี้มี Middleware check dupplicate username ด้วย
-    app.post('/signup',[verifySignUp.checkDuplicateUsername],authController.signup);
-  });
+    app.post("/signup", [verifySignUp.checkDuplicateUsername], authController.signup)
+  })
 
   //Test นี้คือต้องสร้าง user สำเร็จ
-  test('Should create a new user', async () => {
-    const res = await request(app)
-      .post('/signup')
-      .send({
-        username: 'signuptest',
-        farmName: 'signuptest',
-        password: 'P@ssw0rd'
-      });
+  test("Should create a new user", async () => {
+    const res = await request(app).post("/signup").send({
+      username: "signuptest",
+      farmName: "signuptest",
+      password: "P@ssw0rd",
+    })
 
     //status ต้องเท่ากับ 200
-    expect(res.status).toEqual(200);
+    expect(res.status).toEqual(200)
     //body ต้องได้ { message : 'Registered Successfully.'}
-    expect(res.body).toHaveProperty('message','Registered Successfully.')
-  });
+    expect(res.body).toHaveProperty("message", "Registered Successfully.")
+  })
 
   //Test นี้คือต้องสร้าง user ไม่สำเร็จ เพราะมีการใช้ username ซ้ำ
-  test('Should return error if user already exists', async () => {
-    await request(app)
-      .post('/signup')
-      .send({
-        username: 'signuptest',
-        farmName: 'signuptest',
-        password: 'P@ssw0rd'
-      });
-    const res = await request(app)
-      .post('/signup')
-      .send({
-        username: 'signuptest',
-        farmName: 'signuptest',
-        password: 'P@ssw0rd'
-      });
+  test("Should return error if user already exists", async () => {
+    await request(app).post("/signup").send({
+      username: "signuptest",
+      farmName: "signuptest",
+      password: "P@ssw0rd",
+    })
+    const res = await request(app).post("/signup").send({
+      username: "signuptest",
+      farmName: "signuptest",
+      password: "P@ssw0rd",
+    })
     //status ต้องเท่ากับ 400
-    expect(res.status).toEqual(400);
+    expect(res.status).toEqual(400)
     //body ต้องได้ { message : 'Failed! Username is already in use!'}
-    expect(res.body).toHaveProperty('message','Failed! Username is already in use!')
-  });
-});
+    expect(res.body).toHaveProperty("message", "Failed! Username is already in use!")
+  })
+})
 ```
 
 สามารถเข้าไปดูการใช้ `expect` เพิ่มเติมได้ที่ https://jestjs.io/docs/expect
 
 ## Run
 
-```bash 
+```bash
 npm test
 ```
+
 - กรณีผ่านทุก Test
 
-![Test result](/static/images/blog/jest-api/test-result-pass.png)
+<div className="rounded-xl ">![Test result](/static/images/blog/jest-api/test-result-pass.png)</div>
 
 จะเห็นว่าแสดงผล % การ Test ทุกไฟล์ที่มีการ Test เลย และในคอลัมน์สุดท้าย Uncoverd Line บอกด้วยว่าบรรทัดที่เท่าไหร่บ้างที่ไม่ถูก Test
 ซึ่งเราก็ควรจะเขียน Test case ให้ครบจนกว่าจะเป็น 100 และเขียวหมด แสดงว่า Code ทุกบรรทัดที่เราเขียนได้ถูก Test หมดแล้ว
 
 - กรณีมี Test fail
 
-![Test result](/static/images/blog/jest-api/test-result-fail.png)
+<div className="rounded-xl ">![Test result](/static/images/blog/jest-api/test-result-fail.png)</div>
 
+กรณีี Run test ไม่ผ่าน jest จะบอกเลย value ที่ได้มาคืออะไร แล้ว expect อะไร fail ที่บรรทัดไหน
+ในรูปคือ return status 400 มาแต่เรา expect 500 ทำให้ Test ไม่ผ่าน

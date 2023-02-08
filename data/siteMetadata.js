@@ -2,7 +2,7 @@ const siteMetadata = {
   title: 'Janescience',
   author: 'Janewit Sirijan',
   headerTitle: 'Janescience',
-  description: 'A blog created with Next.js and Tailwind.css',
+  description: 'ความรู้เกี่ยวกับ Programming ที่ผมได้ศึกษา สนใจ บันทึกไว้เป็นบทความ',
   language: 'en-us',
   theme: 'system', // system, dark or light
   siteUrl: 'https://blog-nextjs-tailwind-sigma.vercel.app',

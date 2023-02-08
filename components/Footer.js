@@ -13,17 +13,19 @@ export default function Footer() {
         <div className="mb-2 flex space-x-2 text-sm text-gray-500 dark:text-gray-400">
           <div>{siteMetadata.author}</div>
           <div>{` • `}</div>
-          <div>{`© ${new Date().getFullYear()}`}</div>
+          <div>{`© 2022 - ${new Date().getFullYear()}`}</div>
           <div>{` • `}</div>
           <Link href="/">{siteMetadata.title}</Link>
           <div>{` • `}</div>
-          <a href="https://webring.wonderful.software#janescience.com" title="วงแหวนเว็บ">
+          <a href="https://webring.wonderful.software#janescience.com" title="วงแหวนเว็บ" className="flex">
             <img
+              className="mr-2"
               alt="วงแหวนเว็บ"
               width="18"
               height="18"
               src="https://webring.wonderful.software/webring.black.svg"
             />
+            วงแหวนเว็บ
           </a>
         </div>
         <div className="mb-8 text-sm text-gray-500 dark:text-gray-400">

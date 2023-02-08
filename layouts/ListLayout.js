@@ -68,12 +68,12 @@ export default function ListLayout({ posts, title, initialDisplayPosts = [], pag
                   </div>
                   <div className="mt-4 space-y-3 md:col-span-3 md:mt-0">
                     <div>
-                      <dd className="text-sm font-medium leading-7 text-gray-500 dark:text-gray-400">
+                      <dd className="mt-1 text-sm font-medium leading-7 text-gray-500 dark:text-gray-400">
                         <time dateTime={date}>{formatDate(date)}</time>
                       </dd>
                     </div>
                     <div>
-                      <h3 className="mb-2 text-2xl font-bold leading-8 tracking-tight">
+                      <h3 className="mb-3 text-2xl leading-8 tracking-tight">
                         <Link href={`/blog/${slug}`} className="text-gray-900 dark:text-gray-100">
                           {title}
                         </Link>

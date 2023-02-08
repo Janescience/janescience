@@ -1,15 +1,242 @@
 ---
-title: 'สร้างการแจ้งเตือนด้วย Node เข้า LINE ผ่าน LINE Notify'
-date: '2023-02-07'
-tags: ['notification','line','node']
-draft: true
-summary: 'ลองสร้าง Notification ด้วย Node ไปยัง LINE Application'
+title: "สร้างการแจ้งเตือนด้วย Node เข้า LINE ผ่าน LINE Notify"
+date: "2023-02-07"
+tags: ["notification", "line", "node"]
+draft: false
+summary: "ลองสร้าง Notification ด้วย Node ไปยัง LINE Application"
 layout: PostSimple
-featureImage : '/static/images/blog/node-notify-line/node-notify-line-cover.png'
+featureImage: "/static/images/blog/node-notify-line/node-notify-line-cover.png"
 ---
 
 ![Jest Cover](/static/images/blog/node-notify-line/node-notify-line-cover.png)
-*<center>ขอบคุณรูปภาพจาก (https://scdn.line-apps.com/n/line_notice/img/og_160829/og_fb.png) </center>*
 
+_<center>ขอบคุณรูปภาพจาก (https://scdn.line-apps.com/n/line_notice/img/og_160829/og_fb.png) </center>_
 
+## สร้าง LINE Notify Service
 
+### 1. เข้าไป Login ที่ [LINE Notify](https://notify-bot.line.me/en/)
+
+### 2. เลือก "Manage registered services"
+
+![Menu](/static/images/blog/node-notify-line/menu-regis-service.png)
+
+### 3. เลือก "Add Service" เนื่องจากของผมเคยสร้างไว้แล้ว ผมจะสร้างเพิ่ม
+
+![Add Service](/static/images/blog/node-notify-line/add-service.png)
+
+### 4. กรอกรายละเอียด Service
+
+![Jest Cover](/static/images/blog/node-notify-line/add-service-detail.png)
+
+- Service URL - เป็น url ของระบบเราเอง
+- Email address - ใช้ verify หลังจาก add service แล้ว
+- Callback URL - เป็น url ของระบบเราเองที่ให้ service line notify ตอบกลับมาหลังจาก authen แล้ว
+
+### 5. สร้าง Service สำเร็จ
+
+![Jest Cover](/static/images/blog/node-notify-line/client-id.png)
+
+เราจะได้ `client id` กับ `client secret` เพื่อนำมาใช้ในการขอ Token และบอกด้วยว่าตอนนี้มี users จำนวนเท่าไหร่ที่ใช้ service ของเราอยู่
+สามารถใช้งานแบบฟรีได้สูงสุด 5 users
+
+## หลักการทำงาน
+
+![Jest Cover](/static/images/blog/node-notify-line/flow.png)
+
+user ต้องทำการ authorize มาที่ service ของเราก่อน เพื่อบอกว่าเราจะใช้ service การแจ้งเตือนของคุณนะ
+การ authorize จะทำผ่าน browser เท่านั้น เมื่อ authorize สำเร็จ line notify จะ redirect ไปที่ callback url ที่เราระบุไว้
+หลังจาก authorize จะสามารถร้องขอ token ได้ เพื่อนำไปใช้ในการแจ้งเตือนแต่ล่ะครั้ง
+
+## Access Token
+
+หลังจาก authorize แล้ว เราจะให้ไปร้องขอ token ในขั้นตอนการ redirect เลย โดย backend ของผมเป็น express.js
+
+### /services/line.js
+
+สร้าง service สำหรับร้องขอ token
+
+```js
+const axios = require('axios');
+const qs = require('qs');
+
+const url_line_token = "https://notify-bot.line.me/oauth/token";
+
+//Get Token
+exports.token =  async (code,username) => {
+    axios.post(
+        url_line_token,
+        qs.stringify({
+            grant_type : 'authorization_code',
+            code : code,
+            redirect_uri : 'http://localhost:4000/line/redirect',
+            client_id : 'client id',
+            client_secret : 'client secret'
+        }),
+        {
+            headers : {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            }
+        }
+    ).then( (response) => {
+        console.log('Get Token : 'response.data.access_token);
+
+        //Logic process save or update access token
+
+        return response.data;
+    })
+    .catch(function (error) {
+        console.error('Error : ',error.response.data.message);
+        return error;
+    });
+}
+
+```
+
+### /controllers/line.controller.js
+
+สร้าง function redirect ไว้ใน controller เพื่อไปเรียก get token service
+เมื่อเรียก service สำเร็จให้ backend return file line-connected.html
+
+```js
+const line = require("../services/line")
+const path = require("path")
+
+exports.redirect = async (req, res) => {
+  try {
+    await line.token(req.query.code, req.query.state)
+    res.sendFile(path.join(__dirname, "../../views", "line-connected.html"))
+  } catch (error) {
+    return res.json(error)
+  }
+}
+```
+
+### /routes/line.routes.js
+
+สร้าง path "/line/redirect" ตามที่ใส่ไว้ใน callback url และชี้ไปที่ redirect controller
+
+```js
+const controller = require("../controllers/line.controller")
+
+module.exports = function (app) {
+  app.get("/line/redirect", controller.redirect)
+}
+```
+
+## Authorize
+
+1. สร้างปุ่มหรือลิงก์อะไรก็ได้ให้ user กด เพื่อ authorize code ตัวอย่างของผม frontend จะเป็น vue
+
+```js
+<template>
+    <a target="_blank" :href="urlAuth">เชื่อมต่อ LINE</a>
+</template>
+
+<script>
+      export default {
+        computed : {
+            urlAuth(){
+                    const clientId = //client id ใน line notify service
+                    const engine = // url backend สำหรับ redirect
+                    const username = // ผมใช้เป็น username เพื่อในไปใช้หา user ต่อที่ backend
+                    return `https://notify-bot.line.me/oauth/authorize?response_type=code&client_id=${clientId}&redirect_uri=${engine}/line/redirect&scope=notify&state=${username}`
+                }
+            }
+      }
+</script>
+```
+
+2. เมื่อ click ระบบจะเปิด browser ให้ login หรือถ้า login อยู่แล้ว จะเป็นหน้าให้เลือกกลุ่มหรือแชท ที่จะรับการแจ้งเตือน
+   ถ้าสร้างกลุ่มมาใหม่หลังจากเข้ามาหน้านี้ ให้ refresh อีกรอบ ถึงจะเห็นกลุ่มที่สร้างมาใหม่
+
+![Search Group](/static/images/blog/node-notify-line/search-group.png)
+
+3. หลังจากกด "Agree and connect" ระบบจะ redirect ไปที่ callback url (/line/redirect)
+
+![Search Group](/static/images/blog/node-notify-line/connect-group.png)
+
+![Search Group](/static/images/blog/node-notify-line/connected.png)
+
+เขียน logs ไว้เมื่อสร้าง token สำเร็จ
+
+```bash
+Get Token :  {
+  status: 200,
+  message: 'access_token is issued',
+  access_token: 'DmaTHALb0Sydbfsm4aI6Ll0I2YICaBxd8xxxxxxxxxx'
+}
+```
+
+4. ถ้าเรายังไม่ได้เชิญ LINE Notify เข้ากลุ่มที่เราเลือก จะส่งข้อความมาบอกว่า
+   "[Service Name] is now connected. Invite this account to [Group Name] to receive notifications."
+
+5. เชิญ LINE Notify เข้ากลุ่ม
+
+## Notification
+
+### /services/line.js
+
+สร้าง service notify เพื่อส่งแจ้งเตือนเข้า LINE
+
+```js
+...
+
+const url_line_notification = "https://notify-api.line.me/api/notify";
+
+//Notification to Line
+exports.notify = async (text,token) => {
+    await axios.post(
+        url_line_notification,
+        qs.stringify({message:text}),
+        {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Authorization' : 'Bearer ' + token
+            }
+        },
+        ).then(function (response) {
+            console.log('Notify Successfully : ',response.data);
+            //Logic process save notification logs
+            return response.data;
+        })
+        .catch(function (error) {
+            console.error('Notification Error : ',error);
+        });
+}
+```
+
+### /controllers/line.controller.js
+
+```js
+...
+
+exports.notify = async (req, res) => {
+  try {
+    await line.notify(req.body.message,req.body.lineToken)
+    return res.status(200).send({ message: "Notify Successfully." });
+  } catch (error) {
+    return res.json({ error: error.response.data.message });
+  }
+};
+```
+
+### /routes/line.routes.js
+
+```js
+...
+
+module.exports = function(app) {
+    ...
+    app.post("/line/notify",controller.notify);
+};
+```
+
+## ทดสอบ
+
+ยิงใน postman
+
+![Postman](/static/images/blog/node-notify-line/postman.png)
+
+กลุ่ม Line
+
+![Line](/static/images/blog/node-notify-line/line.png)

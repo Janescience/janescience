@@ -24,20 +24,20 @@ export default function Home({ posts }) {
       <div className="divide-y divide-gray-200 dark:divide-gray-700">
         <div className="space-y-2 pt-6 pb-8 md:space-y-5">
           <h1 className="text-3xl font-extrabold leading-9 tracking-tight text-gray-900 dark:text-gray-100 sm:text-4xl sm:leading-10 md:text-6xl md:leading-14">
-            Latest
+            Blog
           </h1>
           <p className="text-lg leading-7 text-gray-500 dark:text-gray-400">
             {siteMetadata.description}
           </p>
         </div>
-        <div className="grid grid-cols-1 gap-4 py-6 md:grid-cols-2 lg:grid-cols-3 lg:gap-10">
+        <div className="grid grid-cols-1 gap-4 py-6 md:grid-cols-2 lg:grid-cols-3 lg:gap-20">
           {!posts.length && 'No posts found.'}
           {posts.slice(0, MAX_DISPLAY).map((frontMatter) => {
             const { slug, date, title, summary, tags, featureImage } = frontMatter
             return (
               <div
                 key={slug}
-                className="h-full overflow-hidden rounded-md dark:bg-gray-800 bg-slate-100"
+                className="h-full overflow-hidden rounded-xl "
                 >
                 <div className="space-y-5">
                   <div className="space-y-6">
@@ -45,21 +45,22 @@ export default function Home({ posts }) {
                       <Image
                         alt={title}
                         src={featureImage}
-                        className="object-cover object-center md:h-36 lg:h-48"
+                        className="object-cover object-center md:h-36 lg:h-48 shadow-2xl"
                         width={544}
                         height={306}
                       />
                     </Link>
-                    <h2 className="mb-3 px-4 text-2xl font-bold leading-8 tracking-tight">
+                    <h2 className="mb-2 text-2xl leading-8 tracking-tight">
                       <Link href={`/blog/${slug}`} aria-label={`Link to ${title}`}>
                         {title}
                       </Link>
                     </h2>
-                    <div className="flex items-center  px-4 pb-4">
+                    <div className="flex items-center ">
                       {tags.map((tag) => (
                         <Tag key={tag} text={tag} />
                       ))}
-                      <dd className="text-xs text-gray-500 dark:text-gray-300 ">
+                      
+                      <dd className="text-xs ml-1 text-gray-500 p-1 dark:text-gray-300 ">
                         <time dateTime={date}>{formatDate(date)}</time>
                       </dd>
                     </div>
@@ -79,11 +80,6 @@ export default function Home({ posts }) {
           >
             All Posts &rarr;
           </Link>
-        </div>
-      )}
-      {siteMetadata.newsletter.provider !== '' && (
-        <div className="flex items-center justify-center pt-4">
-          <NewsletterForm />
         </div>
       )}
     </>
