@@ -10,13 +10,15 @@ featureImage: "/static/images/blog/vue-i18n/vuei18n.jpeg"
 
 ![Vue i18n](/static/images/blog/vue-i18n/vuei18n.jpeg)
 
-เมื่อผมทำ Website portfolio ด้วย vue.js ไปสักพัก มีความคิดอยากให้เว็บมีภาษาไทยด้วย (ตอนแรกตั้งใจว่าจะทำเว็บเป็นภาษาอังกฤษ) เลยเริ่มหา Tools ที่ง่ายที่สุด อยากให้มันง่ายสะจนกดแล้วให้มันแปลภาษาให้เลย แต่ลองอยู่สักพักไม่น่าจะไหว คงต้องทำแบบแยกเขียน 2 ภาษาแล้ว Switch เอา จนไปเจอ [Vue i18n](https://kazupon.github.io/vue-i18n/installation.html#compatibility-note) มาลองทำไปพร้อมกันเลยครับ
+เมื่อผมทำ Website portfolio ด้วย vue.js ไปสักพัก มีความคิดอยากให้เว็บมีภาษาไทยด้วย (ตอนแรกตั้งใจว่าจะทำเว็บเป็นภาษาอังกฤษ) 
+เลยเริ่มหา Tools ที่ง่ายที่สุด อยากให้มันง่ายสะจนกดแล้วให้มันแปลภาษาให้เลย แต่ลองอยู่สักพักไม่น่าจะไหว คงต้องทำแบบแยกเขียน 2 ภาษาแล้ว Switch เอา 
+จนไปเจอ [Vue i18n](https://kazupon.github.io/vue-i18n/installation.html#compatibility-note) มาลองทำไปพร้อมกันเลยครับ
 
 -[Install dependency ผ่าน Vue CLI](#install-dependency-ผ่าน-vue-cli) -[]()
 
 ---
 
-## Install dependency ผ่าน Vue CLI
+### Install dependency ผ่าน Vue CLI
 
 เพิ่ม plugin โดยใช้ `vue add`
 
@@ -61,7 +63,7 @@ $ vue add i18n
 ? Whether to set up a birdge to migrate to vue-i18n@v9.x from vue-i18n@v8.26 ? (y/N) N
 ```
 
-## เมื่อ Install เสร็จแล้วจะสังเกตุเห็นว่ามีไฟล์เพิ่มขึ้นมา และบางไฟล์ถูกแก้ไข
+### เมื่อ Install เสร็จแล้วจะสังเกตุเห็นว่ามีไฟล์เพิ่มขึ้นมา และบางไฟล์ถูกแก้ไข
 
 `vue.config.js` - สำหรับตั้งค่าต่างๆของ Plugin ไม่ต้องแก้ไขอะไร
 
@@ -158,7 +160,7 @@ export default {
 
 ```
 
-## เพิ่มไฟล์ `locales/th.json` ไฟล์นี้เราจะเก็บส่วนที่เป็นภาษาไทย
+### เพิ่มไฟล์ `locales/th.json` ไฟล์นี้เราจะเก็บส่วนที่เป็นภาษาไทย
 
 ```json
 "home" : {
@@ -170,7 +172,7 @@ export default {
 },
 ```
 
-## แก้ไขไฟล์ `locales/en.json`
+### แก้ไขไฟล์ `locales/en.json`
 
 ```json
 "home" : {
@@ -184,7 +186,7 @@ export default {
 
 > จะเห็นว่าเราต้องใช้ Key ที่ชื่อเหมือนกัน
 
-## สร้าง Function สำหรับเอาไว้ Switch ภาษา
+### สร้าง Function สำหรับเอาไว้ Switch ภาษา
 
 เมื่อกำหนดค่าให้กับ `this.$i18n.locale` จะวิ่งไปอ่านไฟล์ `locales/{this.$i18n.locale}.json` และสามารถเข้าถึงตัวแปรนี้ที่ไหนก็ได้ใน Project
 
@@ -201,7 +203,7 @@ methods: {
 }
 ```
 
-## สร้างปุ่ม Switch ภาษาในส่วนของ HTML
+### สร้างปุ่ม Switch ภาษาในส่วนของ HTML
 
 เช็คเงื่อนไขว่าปัจจุบันเป็นภาษาอะไร และแสดงผลเป็นภาษาตรงข้าม
 
@@ -209,7 +211,7 @@ methods: {
 <button @click="switchLocale()">{{ this.$i18n.locale == 'en' ? 'TH' : 'EN' }}</button>
 ```
 
-## การแสดงผลในส่วนของ HTML เรียกใช้ตัวแปร
+### การแสดงผลในส่วนของ HTML เรียกใช้ตัวแปร
 
 ```html
 <div class="home__data">
@@ -228,7 +230,7 @@ methods: {
 </div>
 ```
 
-## ทดสอบ
+### ทดสอบ
 
 EN
 ![EN Example](/static/images/blog/vue-i18n/ex-en.png)

@@ -10,17 +10,17 @@ featureImage: "/static/images/blog/jest-api/jest-cover.jpg"
 
 ![Jest Cover](/static/images/blog/jest-api/jest-cover.jpg)
 
-_<center>ขอบคุณรูปภาพจาก (https://ms314006.github.io/static/61b2001ca7ff66bffe5604dc0c52016d/5a4bd/Jest.jpg) </center>_
+_<center className="text-xs">ขอบคุณรูปภาพจาก [ms314006.github.io](https://ms314006.github.io/static/61b2001ca7ff66bffe5604dc0c52016d/5a4bd/Jest.jpg) </center>_
 
 สวัสดีครับ ผมจะลองยกตัวอย่างการเขียน Test สั้นๆด้วย Jest โปรเจค Node ของผมใช้ Express.js และ DB เป็น MongoDB ส่วนของการ Test เป็นการเขียน Test API ครับ
 
-## Install - Jest
+### Install - Jest
 
 ```bash
 npm i jest
 ```
 
-## Install - Supertest
+### Install - Supertest
 
 ใช้สำหรับ Call API ตอน Run test
 
@@ -28,7 +28,7 @@ npm i jest
 npm i supertest
 ```
 
-## Install - Mongodb Memory
+### Install - Mongodb Memory
 
 เราจะใช้ตัวนี้เพื่อเป็นการ Mock mongoDB ขึ้นมาตอน Run test ถ้าใน Function ที่เรา Test มีการต่อ DB ตอน Run test เราจะไม่ต่อ DB จริงๆ
 
@@ -36,7 +36,7 @@ npm i supertest
 npm i mongodb-memory-server
 ```
 
-## Create /config/conn.memory.js
+### Create /config/conn.memory.js
 
 สร้าง Connection config สำหรับต่อ MongoDB memmory ใช้สำหรับเชื่อมต่อ เคลียร์ และ ดรอป DB
 
@@ -69,7 +69,7 @@ module.exports.clearDatabase = async () => {
 }
 ```
 
-## Config package.json
+### Config package.json
 
 ```json
 "test": "jest --watchAll --coverage "
@@ -78,7 +78,7 @@ module.exports.clearDatabase = async () => {
 - **--watchAll** - Run ทุก test
 - **--coverage** - แสดง % การ test ของแต่ล่ะไฟล์ว่า test ไปกี่ % แล้ว และแสดงด้วยว่าแต่ล่ะไฟล์มี line ไหนที่ยังไม่ได้ test
 
-## Function signup in controller
+### Function signup in controller
 
 ```js
 exports.signup = async (req, res) => {
@@ -107,7 +107,7 @@ exports.signup = async (req, res) => {
 }
 ```
 
-## Create file /test/auth.test.js
+### Create file /test/auth.test.js
 
 ต้องสร้างชื่อไฟล์ตามด้วย .test เสมอ เพื่อให้ jest มองเห็น เมื่อ run มันจะวิ่งหาไฟล์ที่มี .test ทั้งหมด
 
@@ -186,7 +186,7 @@ describe("Signup ", () => {
 
 สามารถเข้าไปดูการใช้ `expect` เพิ่มเติมได้ที่ https://jestjs.io/docs/expect
 
-## Run
+### Run
 
 ```bash
 npm test

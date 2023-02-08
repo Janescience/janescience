@@ -10,29 +10,29 @@ featureImage: "/static/images/blog/node-notify-line/node-notify-line-cover.png"
 
 ![Jest Cover](/static/images/blog/node-notify-line/node-notify-line-cover.png)
 
-_<center>ขอบคุณรูปภาพจาก (https://scdn.line-apps.com/n/line_notice/img/og_160829/og_fb.png) </center>_
+_<center className="text-xs ">ขอบคุณรูปภาพจาก [scdn.line-apps.com](https://scdn.line-apps.com/n/line_notice/img/og_160829/og_fb.png) </center>_
 
-## สร้าง LINE Notify Service
+### สร้าง LINE Notify Service
 
-### 1. เข้าไป Login ที่ [LINE Notify](https://notify-bot.line.me/en/)
+ 1. เข้าไป Login ที่ [LINE Notify](https://notify-bot.line.me/en/)
 
-### 2. เลือก "Manage registered services"
+ 2. เลือก "Manage registered services"
 
 ![Menu](/static/images/blog/node-notify-line/menu-regis-service.png)
 
-### 3. เลือก "Add Service" เนื่องจากของผมเคยสร้างไว้แล้ว ผมจะสร้างเพิ่ม
+ 3. เลือก "Add Service" 
 
 ![Add Service](/static/images/blog/node-notify-line/add-service.png)
 
-### 4. กรอกรายละเอียด Service
+ 4. กรอกรายละเอียด Service
 
 ![Jest Cover](/static/images/blog/node-notify-line/add-service-detail.png)
 
-- Service URL - เป็น url ของระบบเราเอง
-- Email address - ใช้ verify หลังจาก add service แล้ว
-- Callback URL - เป็น url ของระบบเราเองที่ให้ service line notify ตอบกลับมาหลังจาก authen แล้ว
+- **Service URL** - เป็น url ของระบบเราเอง
+- **Email address** - ใช้ verify หลังจาก add service แล้ว
+- **Callback URL** - เป็น url ของระบบเราเองที่ให้ service line notify ตอบกลับมาหลังจาก authen แล้ว
 
-### 5. สร้าง Service สำเร็จ
+ 5. สร้าง Service สำเร็จ
 
 ![Jest Cover](/static/images/blog/node-notify-line/client-id.png)
 
@@ -43,17 +43,16 @@ _<center>ขอบคุณรูปภาพจาก (https://scdn.line-apps.c
 
 ![Jest Cover](/static/images/blog/node-notify-line/flow.png)
 
-user ต้องทำการ authorize มาที่ service ของเราก่อน เพื่อบอกว่าเราจะใช้ service การแจ้งเตือนของคุณนะ
-การ authorize จะทำผ่าน browser เท่านั้น เมื่อ authorize สำเร็จ line notify จะ redirect ไปที่ callback url ที่เราระบุไว้
-หลังจาก authorize จะสามารถร้องขอ token ได้ เพื่อนำไปใช้ในการแจ้งเตือนแต่ล่ะครั้ง
+user ต้องทำการ authorize เพื่อเลือกช่องทางการแจ้งเตือน ต้องทำผ่าน browser เท่านั้น เมื่อ authorize สำเร็จ line notify จะ redirect ไปที่ callback url ที่เราระบุไว้
+หลังจาก authorize เราจะได้ `code` เพื่อนำไปขอ `access token` และใช้ `access token` ในการแจ้งเตือนแต่ล่ะครั้ง
 
 ## Access Token
 
-หลังจาก authorize แล้ว เราจะให้ไปร้องขอ token ในขั้นตอนการ redirect เลย โดย backend ของผมเป็น express.js
+หลังจาก authorize จะได้ `code` เพื่อนำไปขอ `access token` 
 
 ### /services/line.js
 
-สร้าง service สำหรับร้องขอ token
+สร้าง service สำหรับขอ `access token`
 
 ```js
 const axios = require('axios');
@@ -92,6 +91,8 @@ exports.token =  async (code,username) => {
 
 ```
 
+- *code* - ได้มาจาก response authorize 
+
 ### /controllers/line.controller.js
 
 สร้าง function redirect ไว้ใน controller เพื่อไปเรียก get token service
@@ -125,7 +126,7 @@ module.exports = function (app) {
 
 ## Authorize
 
-1. สร้างปุ่มหรือลิงก์อะไรก็ได้ให้ user กด เพื่อ authorize code ตัวอย่างของผม frontend จะเป็น vue
+1. สร้างปุ่มหรือลิงก์อะไรก็ได้ให้ user กด เพื่อ authorize ตัวอย่างของผมจะเป็น vue.js
 
 ```js
 <template>
