@@ -1,18 +1,20 @@
 ---
-title: ลองทำ Liquibase + Spring Boot
+title: ใช้ Liquibase กับ Spring Boot
 date: "2022-03-09"
 tags: ["java"]
 draft: false
-summary: "เป็นเครื่องมือที่ช่วยจัดการในส่วนของ Database ไม่ว่าจะเป็น Insert , Update , Delete ข้อมูล หรือ Create , Drop , Alter  ตาราง หรือ Add , Drop , Alter คอลัมน์ และอื่นๆ "
+summary: "เป็นเครื่องมือที่ช่วยจัดการในส่วนของ Database ไม่ว่าจะเป็น Insert , Update , Delete ข้อมูล หรือ Create , Drop , Alter ตาราง หรือ Add , Drop , Alter คอลัมน์ และอื่นๆ "
 layout: PostSimple
 featureImage: "/static/images/blog/liquibase-springboot/spring-liquibase.jpeg"
 ---
 
-![Liquibase Spring Boot](/static/images/blog/liquibase-springboot/spring-liquibase.jpeg)
+<center>![Liquibase Spring Boot](/static/images/blog/liquibase-springboot/spring-liquibase.jpeg)</center>
 
 _<center className="text-xs">ขอบคุณรูปภาพจาก [javadeveloperzone.com](https://javadeveloperzone.com/wp-content/uploads/2018/09/Spring-Boot-Liquibase-Example.jpg) </center>_
 
 > ก่อนจะเริ่มต้น อย่างน้อยควรจะมีพื้นฐานและเคยใช้ Sprig Boot , SQL มาบ้างไม่มากก็น้อย
+
+### สำหรับคนที่ขี้เกียจอ่านทั้งหมด 😂
 
 - [Liquibase คืออะไร ?](#liquibase-คืออะไร-)
 - [ทำไมต้องใช้ Liquibase ?](#ทำไมต้องใช้-liquibase-)
@@ -30,16 +32,27 @@ _<center className="text-xs">ขอบคุณรูปภาพจาก [java
     - [preConditions มีอะไรให้ใช้บ้าง ?](#preconditions-มีอะไรให้ใช้บ้าง-)
   - [validCheckSum](#validchecksum)
   - [rollback](#rollback)
+- [Entities](#entities)
+  - [Table](#table)
+  - [Column](#column) 
+  - [View](#view) 
+  - [Sequence](#sequence)
+  - [Data](#data)  
+---
 
 ### Liquibase คืออะไร ?
 
 เป็นเครื่องมือที่ช่วยจัดการในส่วนของ Database ไม่ว่าจะเป็น Insert , Update , Delete ข้อมูล หรือ Create , Drop , Alter  ตาราง หรือ Add , Drop , Alter คอลัมน์ และอื่นๆ
 อยู่ในรูปแบบของ XML, SQL, YAML, JSON โดย Syntax ของ Script ไม่ได้ยึดตาม Database นอกจากจะเขียนเป็น SQL
 
+<center>. . .</center>
+
 ### ทำไมต้องใช้ Liquibase ?
 
 โครงสร้างข้อมูลและตารางจะเหมือนกันทุก Environment ไม่ว่าจะ Run Project ที่ไหน โดยไม่ต้องมาคอยจัดการ Script Database ทุกครั้งที่มีการ Deploy SIT , UAT หรือ Production
 รวมถึงการย้าย Server , Environment และเปลี่ยน Database
+
+<center>. . .</center>
 
 ### ถ้าไม่ใช้ Liquibase ต้องทำไรบ้าง ?
 
@@ -47,9 +60,11 @@ _<center className="text-xs">ขอบคุณรูปภาพจาก [java
 2. จากข้อ 1. ที่พูดถึงการจัดเก็บ Script บางครั้ง ถ้า Script นั้น Developer ไม่ได้เป็นคนเขียน แต่เป็น BA , SA หรือตำแหน่งอื่นๆ Script นั้นอาจจะไม่ได้ถูกจัดเก็บไว้ใน Project ซึ่งที่ถูกต้องควรจะอยู่ใน Project นั้นๆ
 3. หลังจาก ​Deploy แล้วต้องนำ Script ที่เตรียมไว้มา Run อีกรอบบน Environment นั้นๆ ขั้นตอนนี้มีโอกาสที่จะนำ Script มา Run ไม่ครบ หรือ Run ผิด Sequence อาจจะทำให้เกิดปัญหา Deploy ไม่ผ่าน
 
-ลองคิดเล่นๆดูนะครับ ถ้าการ Deploy ในรอบนั้น มีอยู่ประมาณ 10 Script และคนที่ Deploy ไม่ใช่ Developer คนนั้น มีหน้าที่แค่เอาทุกอย่างที่เตรียมไว้ไป Deploy ตาม Check list เมื่อเกิดปัญหาขึ้นมา คงจะเสียเวลาและวุ่นวายน่าดู โดยเฉพาะการ Deploy ที่ Production บางทีอาจจะมีเวลาที่จำกัด
+ลองคิดเล่นๆดูนะครับ ถ้าการ Deploy ในรอบนั้น มีอยู่ประมาณ 10 Script และคนที่ Deploy ไม่ใช่ Developer เจ้าของ Script มีหน้าที่แค่เอาทุกอย่างที่เตรียมไว้ไป Deploy ตาม Check list เมื่อเกิดปัญหาขึ้นมา คงจะเสียเวลาและวุ่นวายน่าดู โดยเฉพาะการ Deploy ที่ Production บางทีอาจจะมีเวลาที่จำกัด
 
-> ถ้าเราใช้ Liquibase ปัญหาหรือความเสี่ยงต่างๆที่กล่าวมานี้ จะไม่เกิดขึ้น เพราะถ้าเกิดปัญหา จะรู้และไม่ผ่านตั้งแต่ตอน Dev แล้ว
+> ถ้าเราใช้ Liquibase ปัญหาหรือความเสี่ยงต่างๆที่กล่าวมานี้ จะไม่เกิดขึ้น เพราะถ้าเกิดปัญหา จะรู้และไม่ผ่านตั้งแต่ตอน Dev แล้ว ลดปัญหาที่อาจเกิดจาก Human error นั่นเอง
+
+<center>. . .</center>
 
 ### เพิ่ม Maven Dependency
 
@@ -70,16 +85,20 @@ _<center className="text-xs">ขอบคุณรูปภาพจาก [java
 </dependencies>
 ```
 
+<center>. . .</center>
+
 ### เพิ่ม config ใน application.properties
 
 ```properties
-#เป็นการกำหนด Path file ของ Db changelog ตั้งต้น ถ้าเราไม่กำหนด Spring boot จะมองหา Path file db/changelog/db.changelog-master.yaml เป็น Path ตั้งต้น
+#เป็นการกำหนด Path file ของ Db changelog ตั้งต้น 
+#ถ้าเราไม่กำหนด Spring boot จะมองหา Path file 'db/changelog/db.changelog-master.yaml' เป็น Path ตั้งต้น
 spring.liquibase.change-log = classpath:/db/db-changelog-master.xml
 
 #ตั้งค่า Level logs ได้ ผมใช้เป็น INFO
 logging.level.liquibase = INFO
-
 ```
+
+<center>. . .</center>
 
 ### Structure
 
@@ -110,6 +129,8 @@ logging.level.liquibase = INFO
 
 > ถ้ามีอย่างอื่นนอกเหนือจาก table , view ก็สร้างเพิ่มใน changelogs
 
+<center>. . .</center>
+
 ### db-changelog-master.xml
 
 สร้างไฟล์ใน Path `src/main/resources/db/` และทุกครั้งที่ Run project จะวิ่งมาอ่านไฟล์นี้เพื่อเช็คว่ามีอะไร Change บ้าง และถ้ามีการสร้างไฟล์ `.xml` ใหม่ต้องมาเพิ่มในนี้ด้วย
@@ -131,11 +152,13 @@ logging.level.liquibase = INFO
 </databaseChangeLog>
 ```
 
+<center>. . .</center>
+
 ### การทำงานของ Liquibase
 
 ถ้า Run project ครั้งแรกหลังจากเพิ่ม Maven dependency และ Config เรียบร้อยแล้ว Spring boot จะสร้างตารางที่ชื่อว่า
 
-- databasechangelog - เก็บ Logs ของการ Run script ทุกครั้ง โดยใช้ id เป็น Primary key
+- **databasechangelog** - เก็บ Logs ของการ Run script ทุกครั้ง โดยใช้ id เป็น Primary key
 
 | Column        | Data type    | Description                                   |
 | ------------- | ------------ | --------------------------------------------- |
@@ -147,13 +170,13 @@ logging.level.liquibase = INFO
 | EXECTYPE      | VARCHAR(10)  | EXECUTED, FAILED, SKIPPED, RERAN และ MARK_RAN |
 | DESCRIPTION   | VARCHAR(255) | คำอธิบายสั้นๆ ว่า changeSet นี้ทำอะไร         |
 
-ตัวอย่างข้อมูล
+#### ตัวอย่างข้อมูลในตาราง
 
-![Database Changelog](databasechangelog.png)
+![Database Changelog](/static/images/blog/liquibase-springboot/databasechangelog.png)
 
 > หลักๆแล้ว Column ทีเราสนใจจะมีประมาณนี้ แต่ Column ทั้งหมดมีมากกว่านี้
 
-- databasechangeloglock - ถ้าเกิดมี Developer 2 คน Run script นั้นๆ ไปที่ Database เดียวกันพร้อมกัน Liquibase จะถูก Lock เพื่อป้องกัน Transaction conflict และอัพเดตค่าต่างๆ สามารถ Unlock ได้ด้วยการ `UPDATE DATABASECHANGELOGLOCK SET LOCKED=false`
+- **databasechangeloglock** - ถ้าเกิดมี Developer 2 คน Run script นั้นๆ ไปที่ Database เดียวกันพร้อมกัน Liquibase จะถูก Lock เพื่อป้องกัน Transaction conflict สามารถ Unlock ได้ด้วยการ Run script `UPDATE DATABASECHANGELOGLOCK SET LOCKED=false`
 
 | Column      | Data type    | Description                      |
 | ----------- | ------------ | -------------------------------- |
@@ -162,7 +185,11 @@ logging.level.liquibase = INFO
 | LOCKGRANTED | DATETIME     | วันที่และเวลาที่ Unlocked        |
 | LOCKEDBY    | VARCHAR(255) | ใครเป็นคนทำให้ Locked            |
 
+#### Spring boot จะรู้ได้อย่างไร ?
+
 Spring boot จะรู้ว่ามี Script เพิ่มมาใหม่ก็ต่อเมื่อ id นั้นไม่มีใน Database โดยจะมาเช็คไฟล์ `.xml` และ Compare กับ Database ทุกครั้ง
+
+<center>. . .</center>
 
 ### Syntax
 
@@ -244,6 +271,8 @@ Tags และ Attibutes ทั้งหมดที่มีให้ใช้ 
     </changeSet>
 ```
 
+<center>. . .</center>
+
 ### changeSet
 
 เพื่อแบ่งกลุ่มการทำงานของ Script
@@ -251,11 +280,15 @@ Tags และ Attibutes ทั้งหมดที่มีให้ใช้ 
 - **id** - แต่ล่ะ changeSet ห้ามมี id ที่ซ้ำกัน เพราะจะใช้เป็น Primary key ใน Database ถ้าซ้ำจะเกิด Error และควรตั้งชื่อ id ให้สื่อความหมายด้วย เช่น สร้างตาราง จะตั้งเป็น `create-table-my_table-MMDDYYYhhmm` เพื่อจะได้ไม่ซ้ำกัน
 - **author** - ชื่อคนที่เขียน Script นี้ เพื่อ Track กลับมาได้ ถ้าเกิดมีปัญหา
 
+---
+
 ### Sub tags
 
 #### comment
 
 ระบุรายละเอียดของ `changeSet` ว่าทำอะไร ทำไมต้องทำแบบนี้ เป็นต้น และสามารถเอารายละเอียดไปทำเป็นเอกสารประกอบได้ถ้าต้องการ
+
+<center>. . .</center>
 
 #### preConditions
 
@@ -287,7 +320,7 @@ Tags และ Attibutes ทั้งหมดที่มีให้ใช้ 
 
 > ส่วนตัวแล้วจะผมใช้แค่ MARK_RAN
 
-##### preConditions มีอะไรให้ใช้บ้าง ?
+#### preConditions มีอะไรให้ใช้บ้าง ?
 
 - **changeSetExecuted**
 
@@ -352,6 +385,8 @@ Tags และ Attibutes ทั้งหมดที่มีให้ใช้ 
 
 ```
 
+<center>. . .</center>
+
 #### validCheckSum
 
 Tag นี้ เพื่อ Execute ซ้ำอีกครั้ง โดยที่ไม่ Error เพราะปกติแล้ว เราจะไม่สามารถกลับไปแก้ไข `changeSet` ที่เคย Execute ไปแล้วได้ จะมี Error ต้องสร้าง `changeSet` เป็น id ใหม่เท่านั้น แต่เราไม่ได้ต้องการสร้าง `changeSet` ใหม่ จะทำการแก้ไขที่ `changeSet` เดิม และเพิ่ม `<validCheckSum/>` โดยเอาค่า Sum ใหม่จาก Error
@@ -369,6 +404,8 @@ Validation Failed:
       (new logic here)
 </changeSet>
 ```
+
+<center>. . .</center>
 
 #### rollback
 
@@ -416,15 +453,26 @@ Validation Failed:
 
 > ข้อควรระวัง ถ้าเขียนแบบ SQL ต้องอิงตาม Syntax ของ Database แต่ล่ะประเภท
 
-### Entities
+---
+
+## Entities
+
+หลักๆที่ผมใช้มี แบ่งได้ตามนี้ครับ
 
 ### Table
 
 - **createTable**
 
+เงื่อนไข `preConditions` คือ ต้องไม่มีตาราง employee
+
 ```xml
-<changeSet id="action-entitie-datetime" author="author_name">
-	<createTable tableName="my_table">
+<changeSet id="create_table_employee_DDMMYYYY" author="author_name">
+    <preConditions onFail="MARK_RAN">
+        <not>
+            <tableExists tableName="employee"/>
+        </not>
+    </preConditions>
+	<createTable tableName="employee">
         <column name="id" type="int">
            <constraints primaryKey="true"/>
         </column>
@@ -434,3 +482,233 @@ Validation Failed:
     </createTable>
 </changeSet>
 ```
+
+- **createTable (SQL)**
+
+```xml
+<changeSet id="action-entitie-datetime" author="author_name">
+	<preConditions onFail="MARK_RAN">
+        <not>
+            <tableExists tableName="member"/>
+        </not>
+    </preConditions>
+    <sql>
+        CREATE TABLE public."member" (
+                id int8 NOT NULL GENERATED BY DEFAULT AS IDENTITY,
+                created_by varchar(255) NULL,
+                created_date timestamp NULL,
+                updated_by varchar(255) NULL,
+                updated_date timestamp NULL,
+                "name" varchar(255) NULL,
+                status varchar(255) NULL,
+                CONSTRAINT member_pkey PRIMARY KEY (id)
+        );
+        comment on column public."member".name is 'ชื่อสมาชิก';
+    </sql>
+</changeSet>
+```
+
+- **dropTable** 
+
+เงื่อนไข `preConditions` คือ ต้องมีตาราง users 
+
+```xml
+<changeSet id="drop_table_users_DDMMYYYY" author="author_name">
+    <preConditions onFail="MARK_RAN">
+        <tableExists tableName="users" />
+    </preConditions>
+
+    <dropTable tableName="users"/>
+</changeSet>
+```
+
+<center>. . .</center>
+
+### Column
+
+
+- **addColumn** 
+
+เงื่อนไข `preConditions` คือ ต้องมีตาราง member และ ต้องไม่มี column active
+
+```xml
+<changeSet id="add_column_active_table_member_DDMMYYYY" author="author_name">
+    <preConditions onFail="MARK_RAN">
+        <tableExists tableName="member" />
+        <not>
+            <columnExists tableName="member" columnName="active"/>
+        </not>
+    </preConditions>
+    <addColumn tableName="member">
+        <column name="active" type="varchar(1)" remarks="Flag Y : ใช้งาน , N : ไม่ใช้งาน" defaultValue="Y"/>
+    </addColumn>
+</changeSet>
+```
+
+
+- **dropColumn** 
+
+เงื่อนไข `preConditions` คือ ต้องมีตาราง users และ ต้องมี column version
+
+```xml
+<changeSet id="drop_column_version_table_users_DDMMYYYY" author="author_name">
+    <preConditions onFail="MARK_RAN">
+        <tableExists tableName="users" />
+        <columnExists tableName="users" columnName="version"/>
+    </preConditions>
+    <dropColumn tableName="users" columnName="version"/>
+</changeSet>
+```
+
+- **SQL**
+
+```xml
+<changeSet id="alter_column_phone_number_table_users_DDMMYYYY" author="author_name">
+    <preConditions onFail="MARK_RAN">
+        <tableExists tableName="users" />
+        <columnExists tableName="users" columnName="phone_number"/>
+    </preConditions>
+    <sql>
+        ALTER TABLE users ALTER COLUMN phone_number DROP NOT NULL;
+    </sql>
+</changeSet>
+
+<changeSet id="alter_column_fine_time_table_groups_DDMMYYYY" author="author_name">
+    <preConditions onFail="MARK_RAN">
+        <tableExists tableName="groups" />
+        <columnExists tableName="groups" columnName="fine_time"/>
+    </preConditions>
+    <sql>
+        ALTER TABLE public."groups" DROP COLUMN fine_time;
+        ALTER TABLE public."groups" ADD fine_time int4 NULL;
+    </sql>
+</changeSet>
+```
+
+<center>. . .</center>
+
+### View
+
+ถ้า view มีการแก้ไขอะไรก็ตาม ผมใช้วิธีเปลี่ยน id `changeSet` ไปเรื่อยๆ v1 , v2 , v3 ... และเปลี่ยน DDMMYYYY 
+ไม่ต้องสร้าง `changeSet` ใหม่ ต้องใช้คู่กับการ drop view 
+
+- **createView**
+
+`preConditions` คือ ต้องมีตารางที่เกี่ยวข้องทั้งหมดที่ใช้ใน view v_name_02
+
+```xml
+<changeSet id="create_view_v_name_02_v1_DDMMYYYY" author="author_name">
+    <preConditions onFail="MARK_RAN">
+        <tableExists tableName="groups" />
+        <tableExists tableName="member" />
+        <viewExists viewName="v_name_01" />
+    </preConditions>
+    <sqlFile path="/db/sql/v_name_02.sql" encoding="UTF-8" />
+</changeSet>
+```
+
+**/db/sql/v_name_02.sql**
+
+```sql
+create view v_name_02
+as select
+   ...
+from
+    v_name_01 v01
+    left join "groups" g on ...
+    left join "member" m on ...
+```
+
+- **dropView**
+
+ทกุ `changeSet` การ drop view ผมจะรวมไว้ใน `/db/changelogs/view/drop.xml`
+
+```xml
+<changeSet id="drop_view_v_name_02_v1_DDMMYYYY" author="author_name">
+    <preConditions onFail="MARK_RAN">
+        <viewExists viewName="v_name_02"/>
+    </preConditions>
+    <sql>
+        DROP VIEW v_name_02;
+    </sql>
+</changeSet>
+```
+
+และลำดับการอ่าน `.xml` ใน `db/db-changelog-master.xml` ผมทำแบบนี้ drop ก่อนเสมอแล้วค่อย create
+
+```xml
+<include file="/db/changelogs/view/drop.xml"/>
+
+<include file="/db/changelogs/view/v_name_02.xml"/>
+```
+
+เวลามีการอัพเดต view เราแค่มาเปลี่ยน version และวันที่ใน id `changeSet` ทำให้ Spring Boot เห็นว่าเป็น id ใหม่ และมา Run .xml นั้นๆ
+
+<center>. . .</center>
+
+### Sequence
+
+- **dropSequence**
+
+```xml
+<changeSet id="drop_table_users_DDMMYYYY" author="author_name">
+    <preConditions onFail="MARK_RAN">
+        <sequenceExists sequenceName="seq_users_id" />
+    </preConditions>
+
+    <dropSequence sequenceName="seq_users_id"/>
+</changeSet>
+```
+
+- **SQL**
+
+```xml
+<changeSet id="create_sequence_hibernate_sequence_DMMYYYY" author="author_name">
+    <preConditions onFail="MARK_RAN">
+        <not>
+            <sequenceExists sequenceName="hibernate_sequence"/>
+        </not>
+    </preConditions>
+    <sql>
+        CREATE SEQUENCE hibernate_sequence;
+    </sql>
+</changeSet>
+```
+
+<center>. . .</center>
+
+### Data
+
+สำหรับ master data ที่จำเป็นต้องใช้ในการ set up project เช่น parameter ต่างๆ 
+
+- **Insert**
+
+อันนี้จะเป็น member ตั้งต้น ที่ต้องมี อาจจะเป็น admin ของระบบ เป็นต้น 
+และใน `preConditions` ผมจะเขียน sql เช็คด้วยว่าต้องไม่มี member นี้
+
+```xml
+<changeSet author="author_name" id="insert_member_DDMMYYYY">
+    <preConditions onFail="MARK_RAN">
+        <and>
+            <tableExists tableName="member" />
+        </and>
+        <and>
+            <sqlCheck expectedResult="0">
+                select count(id) from member where name = 'admin';
+            </sqlCheck>
+        </and>
+    </preConditions>
+    <sql>
+        INSERT INTO public."member"
+        (id, created_by, created_date, updated_by, updated_date, name)
+        VALUES(default,'system',now(),'system',null,'admin');
+    </sql>
+</changeSet>
+```
+--- 
+
+ซึ่งการใช้งานส่วนใหญ่ของผมก็จะประมาณนี้ จะมากน้อยขึ้นอยู่กับความซับซ้อน และการออกแบบ Database ด้วย ยังมี Function อีกมากมายที่ผมยังไม่ได้ใช้เหมือนกัน
+ที่ผมได้นำเรื่อง Liquibase มาเขียน Blog เพราะผมได้นำไปช้ใน Project ที่เป็นงานจริงๆ และมันช่วยแก้ปัญหา Human error ได้มากเลยทีเดียว 
+ทุกครั้งที่ Deploy ผมไม่ต้องมานั่งกังวลว่าจะลืม Run script อะไรไปหรือเปล่า มีอะไรตกหล่นไปหรือไม่(ถ้าตอน dev ไม่ได้มีใครไปทำอะไร manual ที่ db อ่ะนะ) 
+ผมหวังว่า Blog นี้จะเป็นประโยชน์ไม่มากก็น้อยแก่ผู้อ่านทุกท่านครับ 😅 
+

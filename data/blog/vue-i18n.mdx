@@ -14,50 +14,48 @@ featureImage: "/static/images/blog/vue-i18n/vuei18n.jpeg"
 เลยเริ่มหา Tools ที่ง่ายที่สุด อยากให้มันง่ายสะจนกดแล้วให้มันแปลภาษาให้เลย แต่ลองอยู่สักพักไม่น่าจะไหว คงต้องทำแบบแยกเขียน 2 ภาษาแล้ว Switch เอา 
 จนไปเจอ [Vue i18n](https://kazupon.github.io/vue-i18n/installation.html#compatibility-note) มาลองทำไปพร้อมกันเลยครับ
 
--[Install dependency ผ่าน Vue CLI](#install-dependency-ผ่าน-vue-cli) -[]()
-
 ---
 
 ### Install dependency ผ่าน Vue CLI
 
-เพิ่ม plugin โดยใช้ `vue add`
+1. เพิ่ม plugin โดยใช้ `vue add`
 
 ```bash
 $ vue add i18n
 ```
 
-ถ้าเราใช้ Git มีการแก้ไขและยังไม่ได้ `commit` vue จะไม่แนะนำให้ติดตั้ง ควรจะ `commit` ก่อน
-เพราะจะเป็นการ import , เพิ่ม file ให้ Auto แต่ในที่นี้ผมไม่สนใจก็จะตอบ y ไป
+2. ถ้าเราใช้ Git มีการแก้ไขและยังไม่ได้ `commit` vue จะไม่แนะนำให้ติดตั้ง ควรจะ `commit` ก่อน
+เพราะจะเป็นการ import และเพิ่ม file ให้ Auto แต่ในที่นี้ผมไม่สนใจก็จะตอบ y ไป
 
 ```bash
 ? Still procees? (y/N) y
 ```
 
-ต้องการให้ภาษา Default เป็นภาษาอะไร ถ้าเราไม่ตอบและ enter จะ Default `en` มาให้
+3. ต้องการให้ภาษา Default เป็นภาษาอะไร ถ้าเราไม่ตอบและ enter จะ Default `en` มาให้ 
 
 ```bash
 ? The locale of project localization. (en)
 ```
 
-ภาษาที่ 2 เราจะใช้ภาษอะไร ของผมเป็น `th`
+4. ภาษาที่ 2 เราจะใช้ภาษอะไร ของผมเป็น `th`
 
 ```bash
 ? The fallback locale of project localization. (en) th
 ```
 
-ต้องการให้ Folder ที่เก็บภาษาทั้งหมด ชื่อว่าอะไร enter ได้เลยจะ Default มาให้ชื่อ `locales`
+5. ต้องการให้ Folder ที่เก็บภาษาทั้งหมด ชื่อว่าอะไร enter ได้เลยจะ Default มาให้ชื่อ `locales`
 
 ```bash
 ? The directory where store localization messages of project. It's stored under `src` directory. (locales)
 ```
 
-ถ้าตอบ y จะสามารถใช้ `<i18n></i18n>` ใน File `.vue` ได้เลย สำหรับเว็บที่มี Component แค่ File เดียว
+6. ถ้าตอบ y จะสามารถใช้ `<i18n></i18n>` ใน File `.vue` ได้เลย สำหรับเว็บที่มี Component แค่ File เดียว
 
 ```bash
 ? Enable locale messages in Single file components ? (y/N) N
 ```
 
-ต้องการอัพ Version หรือไม่ ?
+7. ต้องการอัพ Version หรือไม่ ?
 
 ```bash
 ? Whether to set up a birdge to migrate to vue-i18n@v9.x from vue-i18n@v8.26 ? (y/N) N
@@ -184,7 +182,7 @@ export default {
 },
 ```
 
-> จะเห็นว่าเราต้องใช้ Key ที่ชื่อเหมือนกัน
+> *Key ต้องชื่อเหมือนกัน
 
 ### สร้าง Function สำหรับเอาไว้ Switch ภาษา
 
