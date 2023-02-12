@@ -11,7 +11,6 @@ const CommonSEO = ({ title, description, ogType, ogImage, twImage, canonicalUrl 
       <meta name="robots" content="follow, index" />
       <meta name="description" content={description} />
       <meta name="google-site-verification" content="slsHTwZDcZIh1SgPht9Yzr4qgqIE3UQkTNKiy1tKgYw" />
-      <Analytics/>
       <meta property="og:url" content={`${siteMetadata.siteUrl}${router.asPath}`} />
       <meta property="og:type" content={ogType} />
       <meta property="og:site_name" content={siteMetadata.title} />
