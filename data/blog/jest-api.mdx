@@ -1,9 +1,9 @@
 ---
-title: เขียน Test API Node.js ด้วย Jest ที่มีการต่อ Database
+title: เขียน Test API Node.js ด้วย Jest และใช้ DB เป็น Mongo
 date: "2023-02-07"
 tags: ["jest", "test", "node"]
 draft: false
-summary: "สำหรับ Node.js ใครที่เริ่มต้นเขียน Test ผมอยากแนะนำให้ลองใช้ JEST"
+summary: "สวัสดีครับ ผมจะลองยกตัวอย่างการเขียน Test สั้นๆด้วย Jest โปรเจค Node ของผมใช้ Express.js และ DB เป็น MongoDB ส่วนของการ Test เป็นการเขียน Test API ครับ"
 layout: PostSimple
 featureImage: "/static/images/blog/jest-api/jest-cover.jpg"
 ---
@@ -36,11 +36,13 @@ npm i supertest
 npm i mongodb-memory-server
 ```
 
-### Create /config/conn.memory.js
+<center>. . .</center>
 
-สร้าง Connection config สำหรับต่อ MongoDB memmory ใช้สำหรับเชื่อมต่อ เคลียร์ และ ดรอป DB
+### สร้าง connection สำหรับ mongodb memory
 
-```js
+ใช้สำหรับ connect , clear และ close  mongoDB
+
+```js:/config/con.memory.js
 const mongoose = require("mongoose")
 const {MongoMemoryServer} = require("mongodb-memory-server")
 
@@ -69,18 +71,22 @@ module.exports.clearDatabase = async () => {
 }
 ```
 
-### Config package.json
+<center>. . .</center>
 
-```json
+### แก้ไข config เมื่อใช้ `npm test`
+
+```json:package.json
 "test": "jest --watchAll --coverage "
 ```
 
 - **--watchAll** - Run ทุก test
 - **--coverage** - แสดง % การ test ของแต่ล่ะไฟล์ว่า test ไปกี่ % แล้ว และแสดงด้วยว่าแต่ล่ะไฟล์มี line ไหนที่ยังไม่ได้ test
 
-### Function signup in controller
+<center>. . .</center>
 
-```js
+### Function ที่เราจะ Test
+
+```js:/controller/signup.controller.js
 exports.signup = async (req, res) => {
   const countF = await Farm.collection.countDocuments()
   console.log("farm count : ", countF)
@@ -107,11 +113,13 @@ exports.signup = async (req, res) => {
 }
 ```
 
-### Create file /test/auth.test.js
+<center>. . .</center>
+
+### สร้างไฟล์สำหรับ Test
 
 ต้องสร้างชื่อไฟล์ตามด้วย .test เสมอ เพื่อให้ jest มองเห็น เมื่อ run มันจะวิ่งหาไฟล์ที่มี .test ทั้งหมด
 
-```js
+```js:/test/auth.test.js
 const express = require("express")
 const request = require("supertest")
 const authController = require("../controllers/auth.controller")
@@ -186,22 +194,26 @@ describe("Signup ", () => {
 
 สามารถเข้าไปดูการใช้ `expect` เพิ่มเติมได้ที่ https://jestjs.io/docs/expect
 
+<center>. . .</center>
+
 ### Run
 
 ```bash
 npm test
 ```
 
-- กรณีผ่านทุก Test
+- **กรณีผ่านทุก Test**
 
 <div className="rounded-xl ">![Test result](/static/images/blog/jest-api/test-result-pass.png)</div>
 
 จะเห็นว่าแสดงผล % การ Test ทุกไฟล์ที่มีการ Test เลย และในคอลัมน์สุดท้าย Uncoverd Line บอกด้วยว่าบรรทัดที่เท่าไหร่บ้างที่ไม่ถูก Test
 ซึ่งเราก็ควรจะเขียน Test case ให้ครบจนกว่าจะเป็น 100 และเขียวหมด แสดงว่า Code ทุกบรรทัดที่เราเขียนได้ถูก Test หมดแล้ว
 
-- กรณีมี Test fail
+- **กรณีมี Test fail**
 
 <div className="rounded-xl ">![Test result](/static/images/blog/jest-api/test-result-fail.png)</div>
 
-กรณีี Run test ไม่ผ่าน jest จะบอกเลย value ที่ได้มาคืออะไร แล้ว expect อะไร fail ที่บรรทัดไหน
+กรณี Run test ไม่ผ่าน jest จะบอกเลย value ที่ได้มาคืออะไร แล้ว expect อะไร fail ที่บรรทัดไหน
 ในรูปคือ return status 400 มาแต่เรา expect 500 ทำให้ Test ไม่ผ่าน
+
+---
