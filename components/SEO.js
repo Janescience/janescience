@@ -1,5 +1,4 @@
 import Head from 'next/head'
-import Script from 'next/script'
 import { useRouter } from 'next/router'
 import siteMetadata from '@/data/siteMetadata'
 import Analytics from '@/components/analytics'
@@ -12,21 +11,7 @@ const CommonSEO = ({ title, description, ogType, ogImage, twImage, canonicalUrl 
       <meta name="robots" content="follow, index" />
       <meta name="description" content={description} />
       <meta name="google-site-verification" content="slsHTwZDcZIh1SgPht9Yzr4qgqIE3UQkTNKiy1tKgYw" />
-      <Script
-        strategy="lazyOnload"
-        src={`https://www.googletagmanager.com/gtag/js?id=${siteMetadata.analytics.googleAnalyticsId}`}
-      />
-
-      <Script strategy="lazyOnload" id="ga-script">
-        {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', '${siteMetadata.analytics.googleAnalyticsId}', {
-              page_path: window.location.pathname,
-            });
-        `}
-      </Script>
+      <Analytics/>
       <meta property="og:url" content={`${siteMetadata.siteUrl}${router.asPath}`} />
       <meta property="og:type" content={ogType} />
       <meta property="og:site_name" content={siteMetadata.title} />
