@@ -41,7 +41,7 @@
 }
 
 img {
-  @apply rounded-xl
+  @apply rounded-lg shadow-sm
 }
 
 /* Token styles */
