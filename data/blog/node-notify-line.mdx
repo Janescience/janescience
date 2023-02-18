@@ -12,43 +12,48 @@ featureImage: "/static/images/blog/node-notify-line/node-notify-line-cover.png"
 
 _<center className="text-xs ">ขอบคุณรูปภาพจาก [scdn.line-apps.com](https://scdn.line-apps.com/n/line_notice/img/og_160829/og_fb.png) </center>_
 
-### สร้าง LINE Notify Service
+<center>. . .</center>
 
- 1. เข้าไป Login ที่ [LINE Notify](https://notify-bot.line.me/en/)
+## สร้าง LINE Notify Service
 
- 2. เลือก "Manage registered services"
+1.  เข้าไป Login ที่ [LINE Notify](https://notify-bot.line.me/en/)
+
+2.  เลือก **"Manage registered services"**
 
 ![Menu](/static/images/blog/node-notify-line/menu-regis-service.png)
 
- 3. เลือก "Add Service" 
+3.  เลือก **"Add Service"**
 
 ![Add Service](/static/images/blog/node-notify-line/add-service.png)
 
- 4. กรอกรายละเอียด Service
+4.  กรอกรายละเอียด **Service**
 
 ![Jest Cover](/static/images/blog/node-notify-line/add-service-detail.png)
 
-- **Service URL** - เป็น url ของระบบเราเอง
-- **Email address** - ใช้ verify หลังจาก add service แล้ว
-- **Callback URL** - เป็น url ของระบบเราเองที่ให้ service line notify ตอบกลับมาหลังจาก authen แล้ว
+    - **Service URL** - เป็น url ของระบบเราเอง
+    - **Email address** - ใช้ verify หลังจาก add service แล้ว
+    - **Callback URL** - เป็น url ของระบบเราเองที่ให้ service line notify ตอบกลับมาหลังจาก authen แล้ว
 
- 5. สร้าง Service สำเร็จ
+5.  สร้าง **Service** สำเร็จ
 
 ![Jest Cover](/static/images/blog/node-notify-line/client-id.png)
 
-เราจะได้ `client id` กับ `client secret` เพื่อนำมาใช้ในการขอ Token และบอกด้วยว่าตอนนี้มี users จำนวนเท่าไหร่ที่ใช้ service ของเราอยู่
-สามารถใช้งานแบบฟรีได้สูงสุด 5 users
+เราจะได้ `client id` กับ `client secret` เพื่อนำมาใช้ในการขอ **Token**
+
+---
 
 ## หลักการทำงาน
 
 ![Jest Cover](/static/images/blog/node-notify-line/flow.png)
 
-user ต้องทำการ authorize เพื่อเลือกช่องทางการแจ้งเตือน ต้องทำผ่าน browser เท่านั้น เมื่อ authorize สำเร็จ line notify จะ redirect ไปที่ callback url ที่เราระบุไว้
-หลังจาก authorize เราจะได้ `code` เพื่อนำไปขอ `access token` และใช้ `access token` ในการแจ้งเตือนแต่ล่ะครั้ง
+**User** ต้องทำการ **Authorize** เพื่อเลือกช่องทางการแจ้งเตือน ต้องทำผ่าน **Browser** เท่านั้น เมื่อ **Authorize** สำเร็จ **Line notify** จะ **Redirect** ไปที่ **Callback URL** ที่เราระบุไว้
+หลังจาก **Authorize** เราจะได้ `code` เพื่อนำไปขอ `access token` และใช้ `access token` ในการแจ้งเตือนแต่ล่ะครั้ง
+
+---
 
 ## Access Token
 
-หลังจาก authorize จะได้ `code` เพื่อนำไปขอ `access token` 
+หลังจาก authorize จะได้ `code` เพื่อนำไปขอ `access token`
 
 ### /services/line.js
 
@@ -91,7 +96,7 @@ exports.token =  async (code,username) => {
 
 ```
 
-- *code* - ได้มาจาก response authorize 
+> **code** - ได้มาจาก response authorize
 
 ### /controllers/line.controller.js
 
@@ -124,9 +129,11 @@ module.exports = function (app) {
 }
 ```
 
+---
+
 ## Authorize
 
-1. สร้างปุ่มหรือลิงก์อะไรก็ได้ให้ user กด เพื่อ authorize ตัวอย่างของผมจะเป็น vue.js
+1. สร้างปุ่มหรือลิงก์อะไรก็ได้ให้ **User** กด เพื่อ **Authorize** ตัวอย่างของผมจะเป็น Vue.js
 
 ```js
 <template>
@@ -147,18 +154,20 @@ module.exports = function (app) {
 </script>
 ```
 
-2. เมื่อ click ระบบจะเปิด browser ให้ login หรือถ้า login อยู่แล้ว จะเป็นหน้าให้เลือกกลุ่มหรือแชท ที่จะรับการแจ้งเตือน
-   ถ้าสร้างกลุ่มมาใหม่หลังจากเข้ามาหน้านี้ ให้ refresh อีกรอบ ถึงจะเห็นกลุ่มที่สร้างมาใหม่
+2. เมื่อ **Click** ระบบจะเปิด **Browser** ให้ **Login** หรือถ้า **Login** อยู่แล้ว จะเป็นหน้าให้เลือกกลุ่มหรือแชท ที่จะรับการแจ้งเตือน
+   ถ้าสร้างกลุ่มมาใหม่หลังจากเข้ามาหน้านี้ ให้ **Refresh** อีกรอบ ถึงจะเห็นกลุ่มที่สร้างมาใหม่
 
 ![Search Group](/static/images/blog/node-notify-line/search-group.png)
 
-3. หลังจากกด "Agree and connect" ระบบจะ redirect ไปที่ callback url (/line/redirect)
+3. หลังจากกด **"Agree and connect"** ระบบจะ **Redirect** ไปที่ **Callback URL (/line/redirect)**
 
 ![Search Group](/static/images/blog/node-notify-line/connect-group.png)
 
+เมื่อ **Connect** สำเร็จ และได้ **Token** มาจะแสดง **line-connected.html**
+
 ![Search Group](/static/images/blog/node-notify-line/connected.png)
 
-เขียน logs ไว้เมื่อสร้าง token สำเร็จ
+เขียน **Logs** ไว้เมื่อสร้าง **Token** สำเร็จ
 
 ```bash
 Get Token :  {
@@ -168,16 +177,18 @@ Get Token :  {
 }
 ```
 
-4. ถ้าเรายังไม่ได้เชิญ LINE Notify เข้ากลุ่มที่เราเลือก จะส่งข้อความมาบอกว่า
-   "[Service Name] is now connected. Invite this account to [Group Name] to receive notifications."
+4. ถ้าเรายังไม่ได้เชิญ **LINE Notify** เข้ากลุ่มที่เราเลือก จะส่งข้อความมาบอกว่า
+   **"[Service Name] is now connected. Invite this account to [Group Name] to receive notifications."**
 
 5. เชิญ LINE Notify เข้ากลุ่ม
+
+---
 
 ## Notification
 
 ### /services/line.js
 
-สร้าง service notify เพื่อส่งแจ้งเตือนเข้า LINE
+สร้าง **Service notify** เพื่อส่งแจ้งเตือนเข้า **Line**
 
 ```js
 ...
@@ -232,12 +243,16 @@ module.exports = function(app) {
 };
 ```
 
-## ทดสอบ
+---
 
-ยิงใน postman
+## ลองส่งแจ้งเตือน
+
+### ใช้ Postman
+
+ส่งแค่ **Message** และ **Token** เข้า **Service** ที่เราสร้างไว้
 
 ![Postman](/static/images/blog/node-notify-line/postman.png)
 
-กลุ่ม Line
+ดูในกลุ่ม Line
 
 ![Line](/static/images/blog/node-notify-line/line.png)
