@@ -1,0 +1,534 @@
+---
+title: "สร้าง Excel Timesheet ด้วย Python กับ ChatGPT"
+date: "2023-02-17"
+tags: ["excel", "timesheet", "python","chatgpt"]
+draft: false
+summary: "เนื่องจากขี้เกียจมานั่งสร้าง Timesheet ใหม่เองทุกเดือน เลยลองเขียนโปรแกรมด้วย Python กับ ChatGPT ให้สามารถสร้าง Timesheet แบบ Auto ด้วยการ Run เพียงคำสั่งเดียว"
+layout: PostSimple
+featureImage: "/static/images/blog/timesheet-python-chatgpt/cover.png"
+---
+
+<center>![Timesheet Cover](/static/images/blog/timesheet-python-chatgpt/cover.png)</center>
+
+_<center className="text-xs ">ขอบคุณรูปภาพจาก [blog-cdn.everhour.com](https://blog-cdn.everhour.com/blog/wp-content/uploads/2019/08/timesheet-template.png) </center>_
+
+
+### สำหรับคนที่ขี้เกียจอ่านทั้งหมด 😂
+
+- [จุดเริ่มต้น](#จุดเริ่มต้น)
+- [Installations](#installations)
+  - [python](#python)
+  - [openpyxl](#python)
+- [Template excel ที่ต้องการ](#template-excel-ที่ต้องการ)
+- [คุยกับ ChatGPT](#คุยกับ-chatgpt)
+  - [สร้างไฟล์ Excel timesheet ด้วย Python และเป็นของเดือนปัจจุบัน](#สร้างไฟล์-excel-timesheet-ด้วย-python-และเป็นของเดือนปัจจุบัน)
+  - [ผมอยากรู้ว่าต้อง Run code นี้ยังไง](#ผมอยากรู้ว่าต้อง-run-code-นี้ยังไง)
+  - [Run แล้วเจอ Error](#run-แล้วเจอ-error)
+  - [แก้ไข วันที่ ให้ถูกต้อง](#แก้ไข-วันที่-ให้ถูกต้อง)
+  - [หาวันหยุด](#หาวันหยุด)
+  - [หาวันเสาร์-อาทิตย์](#หาวันเสาร์-อาทิตย์)
+- [Refactor code](#refactor-code)
+- [หาข้อมูลวันหยุดจาก API](#หาข้อมูลวันหยุดจาก-api)
+- [เลือก เดือน,ปี ได้](#เลือก-เดือน,ปี-ได้)
+- [ลบไฟล์ Excel](#ลบไฟล์-excel)
+---
+
+## จุดเริ่มต้น
+
+พนักงาน Outsource คงเข้าใจกันดีว่า การที่ต้องมานั่งทำ Timesheet ทุกเดือน ไม่ใช้เรื่องสนุก แน่นอนว่า รายละเอียดการทำงานเปลี่ยนไปในทุกๆเดือนอยู่แล้ว
+แต่การที่ต้องมานั่งสร้าง Template อ้างอิงตาม Calendar นั้น เป็นอะไรที่ซ้ำซากมาก ไหนจะมีวันเสาร์ - อาทิตย์ และ วันหยุดต่างๆ ที่ไม่เหมือนกันเลยในแต่ล่ะเดือน
+สำหรับบางคนอาจจะมองว่ามันคืองานที่เล็กน้อย แต่สำหรับผมมองว่า การทำไรซ้ำๆเดิมๆ มันก็ควรจะ Automation ได้ ด้วยการทำเพียงแค่คลิกเดียวหรือรันคำสั่งเดียว แล้วได้ Template ออกมาเลย
+
+> บริษัทไหนมี Template ให้ครบทุกเดือนทั้งปีหรือมีระบบให้กรอก บอกเลยว่าคุณโชคดีมาก แต่ของผมไม่มี 😭
+
+<center>. . .</center>
+
+## Installations
+
+### python
+สามารถดาวน์โหลดและติดตั้งได้ที่ [Python](https://www.python.org/downloads/)
+
+ถ้าติดตั้งแล้วแต่ยังไม่สามารถใช้คำสั่ง `python` ใน `cmd` ได้ ทำตามนี้ 
+- [Window](https://www.educative.io/answers/how-to-add-python-to-path-variable-in-windows) 
+- [Mac](https://nextflow.in.th/2017/set-path-on-macos-osx-for-mac-developer-beginner-thai/)
+
+### openpyxl
+
+ติดตั้งผ่าน `cmd` ด้วยคำสั่ง `pip install openpyxl`
+
+<center>. . .</center>
+
+## Template excel ที่ต้องการ
+
+|Day | Time in | Time out | Details   | ... |
+|----|---------|----------|-----------|-----|
+| 1  |   วันหยุดปีใหม่
+| 2  | 08.30 | 17.30 |
+| 3  |08.30 | 17.30 |
+| 4  |08.30 | 17.30 |
+| 5  |08.30 | 17.30 |
+| 6  |  วันเสาร์ 
+| 7  |  วันอาทิตย์ 
+|    |
+|    |
+| 30 |08.30 | 17.30 |
+
+- จำนวนวันต้องเป็นของเดือนปัจจุบัน หรือ สามารถเลือกเดือนและปีได้
+- ต้องรู้วันหยุดของประเทศไทย โดยอ้างอิงตามวันหยุดธนาคาร (สร้างไฟล์ data สำหรับวันหยุดหรือดึงข้อมูลจาก API)
+- ต้องรู้ว่าวันไหนคือวันเสาร์และอาทิตย์
+
+<center>. . .</center>
+
+## คุยกับ [ChatGPT](https://openai.com/blog/chatgpt/)
+
+ผมเองไม่ได้ถนัด python และไม่เคยเขียนแบบจริงจัง รู้แค่ว่าส่วนมากเค้าใช้ pyhton ไปทำอะไรกัน ถ้าผม research เองคงใช้เวลาพอสมควรเลย
+มีทั้งต้องใช้ Lib อะไร สร้าง Excel , Syntax ต่างๆเขียนยังไง ถ้าทำเอง เราก็คงลองผิดลองถูกไปสักพัก
+
+### สร้างไฟล์ Excel timesheet ด้วย Python และเป็นของเดือนปัจจุบัน
+
+#### คำถาม
+
+```txt
+Create excel timesheet with python and month is current
+```
+
+ผมอยากลองด้วยถ้าบอกแค่ว่า **month is current** บอทมันจะเข้าใจและทำให้เราแค่ไหน
+
+#### ChatGPT
+
+```py
+import openpyxl
+from datetime import datetime
+
+# Create a new Excel workbook
+workbook = openpyxl.Workbook()
+
+# Get the current month
+today = datetime.today()
+month = today.strftime("%B")
+
+# Add a new sheet with the name of the current month
+sheet = workbook.active
+sheet.title = month
+
+# Add the header row with the day names
+days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+for i, day in enumerate(days):
+    sheet.cell(row=1, column=i+1, value=day)
+
+# Calculate the number of days in the current month
+num_days = (today.replace(day=1) - today.replace(day=28)).days + 28
+
+# Add the dates to the sheet
+current_day = today.replace(day=1)
+for i in range(num_days):
+    day_of_week = current_day.weekday()
+    sheet.cell(row=i+2, column=day_of_week+1, value=current_day.day)
+    current_day = current_day + timedelta(days=1)
+
+# Save the workbook to a file
+workbook.save(f"{month} timesheet.xlsx")
+```
+
+ผมเห็นเลยว่า มันไม่ใช่แบบที่ผมต้องการ และยังมี Bug อยู่ด้วย ตรง `num_days =` ค่าที่ได้คือ 1 เท่ากับว่ามันจะออกมาแค่วันเดียว
+(เค้าคงพยายามกำหนดจำนวนวันทั้งหมดของเดือนปัจจุบัน) ซึ่งเราสามารถบอกให้เค้าปรับแก้ได้ แต่ที่ดีคือขึ้นโครงมาได้โอเคเลย ผมเห็นเลยว่า syntax เป็นประมาณไหน
+
+<center>* * *</center>
+
+### ผมอยากรู้ว่าต้อง Run code นี้ยังไง
+
+#### คำถาม
+
+```txt
+How to run this file 
+```
+
+ผมพอรู้มาว่าต้องใช้คำสั่ง `python [filename]` แต่อาจจะมี lib ที่ต้อง install หรือเปล่า ก็เลยอยากถามก่อน เพื่อทดสอบ code ที่เค้าเขียนมาให้
+
+#### ChatGPT
+
+เค้าบอกว่าคุณจะต้อง install `openpyxl` ก่อนนะ ด้วยการใช้ `pip install openpyxl` แล้ว run ด้วยคำสั่ง `python timesheet.py`
+
+<center>* * *</center>
+
+### Run แล้วเจอ Error
+
+Error ว่า **"name 'timedelta' is not defined"**
+
+#### คำถาม
+
+```txt
+I found error is "name 'timedelta' is not defined"
+```
+ดูจาก code แล้วมีการเรียกใช้ `timedelta` โดยที่ไม่ได้ `import`
+
+#### ChatGPT
+
+I apologize for the error in my previous response. 
+The `timedelta` class needs to be imported from the `datetime` module in order to use it in the code. 
+You can add the following import statement at the beginning of the code:
+
+```py
+from datetime import datetime, timedelta
+```
+
+จะเห็นว่าเค้ามีการขอโทษด้วย ซึ่งผมค่อนข้างชอบเพราะให้ความรู้สึกเหมือนมีผู้ช่วยที่เป็นคนจริงๆ เค้ายังบอกจุดที่ผิด และเขียน code ที่ถูกให้ใหม่อีกรอบ
+
+<center>* * *</center>
+
+### แก้ไข วันที่ ให้ถูกต้อง
+
+ตอนนี้ไม่มี error แล้ว แต่ยังผิดอยู่เพราะวันที่มันออกแค่ 1 วัน
+
+#### คำถาม
+
+```txt
+Why num_days is 1 ? , I need all day in this month
+```
+
+#### ChatGPT
+
+I apologize for the confusion. 
+If the `num_days` variable is 1, it's likely because the today.day attribute is returning 1, which means that the current day is the first day of the month.
+
+To get the total number of days in the current month, you can use the `calendar.monthrange()` function. 
+Here's an updated example that uses this function to get the number of days in the current month:
+
+```py
+import calendar
+
+# Get the current month and year
+today = date.today()
+month = today.strftime("%B %Y")
+
+# Get the number of days in the current month
+num_days = calendar.monthrange(today.year, today.month)[1]
+
+# Create a new workbook and select the first sheet
+workbook = openpyxl.Workbook()
+sheet = workbook.active
+
+# Define the headers
+headers = ["Day", "Time In", "Time Out", "Detail"]
+
+# Add the headers to the first row
+for i, header in enumerate(headers):
+    sheet.cell(row=1, column=i+1, value=header)
+
+# Add the dates and log cells to the sheet
+current_day = today.replace(day=1)
+for i in range(num_days):
+    sheet.cell(row=i+2, column=1, value=current_day.strftime("%d %b %Y"))
+    for j in range(4, 9):
+        sheet.cell(row=i+2, column=j, value="")
+    current_day = current_day + timedelta(days=1)
+
+# Save the workbook to a file
+workbook.save(f"{month} timesheet.xlsx")
+```
+
+เค้าบอกว่างั้นก็ต้องใช้ lib `calendar` และวันที่ของเราก็ออกมาครบตามเดือนแล้ว
+
+<center>* * *</center>
+
+### หาวันหยุด
+
+#### คำถาม
+
+```txt
+How to know day is holiday ? 
+```
+
+#### ChatGPT
+
+```py
+import datetime
+
+# Define a list of holidays as date strings
+holidays = ['2023-01-01', '2023-04-14', '2023-05-01', '2023-06-12', '2023-08-15', '2023-11-02', '2023-11-15', '2023-12-25']
+
+# Convert the holiday strings to date objects
+holiday_dates = [datetime.datetime.strptime(h, '%Y-%m-%d').date() for h in holidays]
+
+# Check if a date is a holiday
+date_to_check = datetime.date(2023, 4, 14)
+if date_to_check in holiday_dates:
+    print(f"{date_to_check} is a holiday!")
+else:
+    print(f"{date_to_check} is not a holiday.")
+```
+
+ซึ่งโอเคเลย วิธีนี้ใช้ได้ แต่ผมคงไม่มานั่งกำหนดวันหยุดของทุกเดือนและทุกปีใน code ผมจะใช้วิธีเก็บแยกเป็นไฟล์ `.json` โดยแยกตามปี 
+เพราะวันหยุดแต่ล่ะปีไม่น่าเกิน 20 วัน เป็นประมาณนี้
+
+```json:2023.json
+{
+        "2023-01-01" : "วันหยุด"
+}
+```
+
+> ซึ่งตอนนี้ผมยังหา API วันหยุดของไทยไม่ได้ ก็เลยจะเก็บเป็นไฟล์ไว้ก่อน
+
+#### คำถาม
+
+ผมบอกต่อว่าข้อมูลวันหยุดอยู่ในไฟล์ json โดยมี key = date : description
+
+```txt
+Holidays data in json file and has key is date and description
+```
+
+#### ChatGPT
+
+```py
+import json
+import datetime
+
+# Load the holidays data from a JSON file
+with open("holidays.json", "r") as f:
+    holidays = json.load(f)
+
+# Convert the date strings in the holiday data to date objects
+holiday_dates = [datetime.datetime.strptime(date, "%Y-%m-%d").date() for date in holidays.keys()]
+
+# Check if a date is a holiday
+date_to_check = datetime.date(2023, 4, 14)
+if date_to_check in holiday_dates:
+    holiday_description = holidays[date_to_check.strftime("%Y-%m-%d")]
+    print(f"{date_to_check} is a holiday ({holiday_description})")
+else:
+    print(f"{date_to_check} is not a holiday.")
+```
+
+แต่เหมือนว่าจะมี error เกี่ยวกับไฟล์ json **"decode return codecs.charmap_decode(input,self.errors,decoding_table)[0]"**
+เพราะเรามี description เป็นภาษาไทย และมันอ่านไม่ออก เราต้อง decode ให้มันก่อน ซึ่งเราถาม ChatGPT อีกรอบและบอกว่าต้องแก้แบบนี้
+
+```py
+with open("holidays.json", "r", encoding="utf-8") as f:
+    holidays = json.load(f)
+```
+
+ซึ่งเราก็ยังเจอ error อีก เกี่ยวกับ `datetime` บอกว่า **"type object 'datetime.datetime' has no attribute 'datetime'"**
+เห็นแค่นี้เราก็รู้แล้วว่า มันไม่ควรจะเป็น `datetime.datetime` แก้เป็นแบบนี้
+
+```py
+holiday_dates = [datetime.strptime(date, "%Y-%m-%d").date() for date in holidays.keys()]
+```
+
+<center>* * *</center>
+
+### หาวันเสาร์-อาทิตย์
+
+#### คำถาม
+
+```txt
+How to know date is Saturday or Sunday ?
+```
+
+#### ChatGPT
+
+```py
+import datetime
+
+# Create a datetime object for a given date
+d = datetime.date(2023, 2, 16)
+
+# Use the weekday() method to get the day of the week (0=Monday, 6=Sunday)
+weekday = d.weekday()
+
+# Check if the day is a Saturday (5) or Sunday (6)
+if weekday == 5 or weekday == 6:
+    print("It's a weekend!")
+else:
+    print("It's a weekday.")
+```
+
+ซึ่งผมคุยกับ ChatGPT ถึงแค่ตรงนี้ จะเห็นได้ว่า AI ไม่ได้ให้ผลลัพธ์ที่ถูกต้อง 100% ขึ้นอยู่กับคำถามของเราด้วย
+และอันนี้เป็น Free version ทำให้ข้อมูลที่เค้ามีมันไม่ได้ล่าสุด มันถึงแค่ปี 2021 แต่ Library,Framework ต่างๆก็มีการอัพเดตอยู่เสมอ 
+ทำให้บาง Function ที่เรียกใช้ไม่มีอยู่แล้ว หรือเปลี่ยนชื่อ เปลี่ยนวิธีการเรียกใช้ไปแล้ว หรืออันไหนเพิ่ง Release มาหลังปี 2021 AI ก็จะไม่รู้จัก
+ถ้าอยากใช้งานได้เต็มประสิทธิภาพ คงต้องใช้แบบจ่ายเงินรายเดือน ตอนนี้ตกเเดือนล่ะ 20 USD หรือประมาณ 600 กว่าบาท
+
+<center>. . .</center>
+
+## Refactor code
+
+จากที่ ChatGPT พาเราขึ้นโปรเจ็คมาแล้วค่อนข้างเยอะ ทำให้ผมรู้ Syntax ของ Python มากขึ้นแล้ว ผมเลยมาเก็บรายละเอียด และปรับ Code 
+ให้ทำงานตามที่เราต้องการแบบ 100 % สุดท้ายแล้วจะเขียนได้แบบนี้
+
+```py
+import openpyxl
+from datetime import date,datetime, timedelta
+import calendar
+import json
+
+# Create a new Excel workbook
+workbook = openpyxl.Workbook()
+
+# Get the current month
+today = date.today()
+month = today.strftime("%m")
+year = today.strftime("%Y")
+
+# Load the holidays data from a JSON file
+with open(f"./holidays/{year}.json", "r",encoding="utf-8") as f:
+    holidays = json.load(f)
+
+# Convert the date strings in the holiday data to date objects
+holiday_dates = [datetime.strptime(year + "-" + date, "%Y-%m-%d").date() for date in holidays.keys()]
+
+# Add a new sheet with the name of the current month
+sheet = workbook.active
+sheet.title = "Timesheet_"+month+year
+
+# Define the headers
+headers = ["Day", "Time In", "Time Out", "OT Start", "OT Finish", "Manager Approve", "Detail", "Remark"]
+
+# Add the headers to the first row
+for i, header in enumerate(headers):
+    sheet.cell(row=1, column=i+1, value=header)
+
+# Get the number of days in the current month
+num_days = calendar.monthrange(today.year, today.month)[1]
+
+current_day = today.replace(day=1)
+for i in range(num_days):
+    date_to_check = datetime(year=int(year),month=int(month),day=i+1).date()
+    
+    weekday = date_to_check.weekday()
+
+    sheet.cell(row=i+2, column=1, value=current_day.strftime("%d"))
+    if date_to_check in holiday_dates:
+        holiday_description = holidays[date_to_check.strftime("%Y-%m-%d")]
+        sheet.cell(row=i+2, column=2, value=holiday_description)
+    else:
+        if weekday == 5:
+            sheet.cell(row=i+2, column=2, value="วันเสาร์")
+        elif weekday == 6:
+            sheet.cell(row=i+2, column=2, value="วันอาทิตย์")
+        else:
+            sheet.cell(row=i+2, column=2, value="08:30")
+            sheet.cell(row=i+2, column=3, value="17:30")
+            
+    current_day = current_day + timedelta(days=1)
+
+# Save the workbook to a file
+workbook.save(f"Timesheet_{month}{year}.xlsx")
+```
+
+- สร้าง Template excel ได้แล้ว แต่ได้แค่เดือนและปีปัจจุบัน
+- ดึงข้อมูลวันหยุดจากไฟล์ `.json` ตามปีปัจจุบัน
+- รู้ว่าวันไหน คือวันเสาร์-อาทิตย์
+- ชื่อ Excel format `Timesheet_MMYYYY.xlsx`
+- เหมาะกับ Template ที่ไม่อ้างอิงวันหยุดตามธนาคาร เป็นการกำหนดวันหยุดเองสะมากกว่า
+
+<center>. . .</center>
+
+## หาข้อมูลวันหยุดจาก API
+
+สุดท้ายแล้วผมก็เจอ API วันหยุดของไทย [ธนาคารแห่งประเทศไทย](https://apiportal.bot.or.th/bot/public/node/104) 
+ซึ่งต้องสมัครสมาชิกก่อนแล้วไป Subscribe API ที่เราต้องการใช้ แล้วจะได้ Client ID มาใช้ในขอข้อมูลจาก API 
+
+Response structure
+
+```json
+{
+  "result": {
+    "api": "API_V2.FIHolidays",
+    "timestamp": "2023-02-21 13:18:42",
+    "data": [
+      {
+        "HolidayWeekDay": "Monday",
+        "HolidayWeekDayThai": "วันจันทร์",
+        "Date": "2023-01-02",
+        "DateThai": "02/01/2566",
+        "HolidayDescription": "Substitution for New Year's Eve and New Year's Day (Saturday 31st  December 2022 and Saturday 1st January 2023)",
+        "HolidayDescriptionThai": "ชดเชยวันสิ้นปีและวันขึ้นปีใหม่ (วันเสาร์ที่ 31 ธันวาคม 2565 และวันอาทิตย์ที่ 1 มกราคม 2566)"
+      }
+    ]
+  }
+}
+```
+
+เราต้องแก้ไข Code อยู่ 2-3 จุด แบบนี้
+
+```py
+import http.client
+
+...
+
+conn = http.client.HTTPSConnection("apigw1.bot.or.th")
+headers = {
+    'X-IBM-Client-Id': "d872355e-4bae-4f1b-9c59-xxxxxxxxxxxx",
+    'accept': "application/json"
+}
+
+...
+
+# Call API thai holidays
+conn.request("GET", "/bot/public/financial-institutions-holidays/?year="+year, headers=headers)
+res = conn.getresponse().read().decode("utf-8")
+data = json.loads(res)
+
+holidays = data['result']['data']
+
+# Convert the date strings in the holiday data to date objects
+holiday_dates = [datetime.strptime(holiday['Date'], "%Y-%m-%d").date() for holiday in holidays]
+
+...
+
+for i in range(num_days):
+
+...
+
+        holiday = [holiday for holiday in holidays if holiday['Date'] == date_to_check.strftime("%Y-%m-%d")]
+        sheet.cell(row=i+2, column=2, value=holiday[0]['HolidayDescriptionThai'])
+
+```
+
+<center>. . .</center>
+
+## เลือก เดือน,ปี ได้
+
+ผมอยากเลือกว่าจะสร้าง Excel template ของเดือนและปีไหน ไม่อยากให้มัน Fix แค่เดือนและปีปัจจุบัน 
+เป็นการใส่ Parameter เพิ่มตอน Run แบบนี้ `python timesheet.py 02 2023` และถ้าไม่ใส่จะ Default เดือนและปีปัจจุบัน
+
+```py
+import sys
+
+#Input Argv
+monthIput = sys.argv[1] if len(sys.argv) == 3 else ""
+yearInput = sys.argv[2] if len(sys.argv) == 3 else ""
+
+...
+
+# Get the current month
+today = date.today()
+month = monthIput if monthIput != "" else today.strftime("%m")
+year = yearInput if yearInput != "" else today.strftime("%Y")
+```
+
+<center>. . .</center>
+
+## ลบไฟล์ Excel
+
+อันนี้เป็น Step สุดท้ายแล้ว ทุกครั้งที่ Run ผมอยากให้ลบไฟล์เดิมก่อน เท่ากับว่าจะมีไฟล์ Excel ไฟล์เดียวและล่าสุดเสมอ
+
+```py
+import glob, os
+ 
+...
+
+#Delete all file .xlsx
+for f in glob.glob("*.xlsx"):
+    os.remove(f)
+
+# Save the workbook to a file
+workbook.save(f"Timesheet_{month}{year}.xlsx")
+```
+
+---
+
+นี่เป็นครั้งแรกเลยที่ผมเขียน Python แบบที่สามารถนำมาใช้งานได้จริงๆ ที่ไม่ใช่แค่ฝึกเขียน เข้าใจเลยว่าทำไม Python 
+ยังคงติดอันดับต้นๆของทุกปีเสมอในเรื่องของความฮิต เป็นภาษาที่เข้าใจง่าย เขียนสั้นกว่าภาษาอื่นๆ ไม่ต้อง config หรือ install อะไรมากมาย ก็สามารถขึ้นเป็นโปรเจ็คได้แล้ว
+
+และอีกอย่างเลยถ้าไม่มี ChatGPT ผมคงไม่ได้เริ่มโปรเจคนี้สักที เพราะรู้สึกว่าการเริ่มต้นมันใช้เวลาเยอะ ถ้าเทียบกับงานที่ต้องมานั่งสร้าง Timesheet template 
+เอาง่ายๆว่ารู้สึกไม่คุ้มที่จะเขียนโปรแกรมขึ้นมาเพื่อทำสิ่งนี้ ซึ่งผมใช้ ChatGPT ช่วยในหลายเรื่องจริงๆ โดยเฉพาะผมสงสัยอะไร หรือ อยากทำอะไรที่ไม่เคยทำมาก่อน อีกนานผมได้เสียเงินแน่ๆ 🤣
