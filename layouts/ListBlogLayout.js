@@ -6,7 +6,7 @@ import { useState } from 'react'
 import Pagination from '@/components/Pagination'
 import formatDate from '@/lib/utils/formatDate'
 
-export default function ListLayout({ posts, title, initialDisplayPosts = [], pagination }) {
+export default function ListLayout({ posts, title,subTitle, initialDisplayPosts = [], pagination }) {
   const [searchValue, setSearchValue] = useState('')
   const filteredBlogPosts = posts.filter((frontMatter) => {
     const searchContent = frontMatter.title + frontMatter.summary + frontMatter.tags.join(' ')
@@ -24,6 +24,9 @@ export default function ListLayout({ posts, title, initialDisplayPosts = [], pag
           <h1 className="text-3xl font-extrabold leading-9 tracking-tight text-gray-900 dark:text-gray-100 sm:text-4xl sm:leading-10 md:text-6xl md:leading-14">
             {title}
           </h1>
+          <p className="text-lg leading-7 text-gray-500 dark:text-gray-400">
+            { subTitle }
+          </p>
           <div className="relative max-w-lg">
             <input
               aria-label="Search articles"
@@ -55,7 +58,7 @@ export default function ListLayout({ posts, title, initialDisplayPosts = [], pag
             return (
               <li key={slug} className="py-4">
                 <article className="grid gap-2 space-y-2 xl:grid-flow-col xl:grid-cols-4 xl:grid-rows-1 xl:gap-4 xl:space-y-0">
-                  <div className="mt-2 xl:row-span-2">
+                  {featureImage ? <div className="mt-2 xl:row-span-2">
                     <Link href={`/blog/${slug}`} className="text-gray-900 dark:text-gray-100">
                       <Image
                         alt="feature-image"
@@ -65,7 +68,7 @@ export default function ListLayout({ posts, title, initialDisplayPosts = [], pag
                         height="330"
                       />
                     </Link>
-                  </div>
+                  </div> : null}
                   <div className="mt-4 space-y-3 md:col-span-3 md:mt-0">
                     <div>
                       <dd className="mt-1 text-sm font-medium leading-7 text-gray-500 dark:text-gray-400">
