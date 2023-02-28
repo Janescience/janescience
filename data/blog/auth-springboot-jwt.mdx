@@ -1,16 +1,115 @@
 ---
-title: Auth API ด้วย Spring Boot + JWT
-date: '2022-04-30'
+title: Authentication ด้วย Spring Security & JWT & Docker
+date: '2023-02-28'
 tags: ['java']
 draft: true
 summary: ''
 layout: PostSimple
-featureImage : '/static/images/blog/auth-springboot-jwt/spring-jwt.png'
+featureImage : '/static/images/blog/auth-springboot-jwt/cover.png'
 ---
 
-![Auth API Spring Boot](/static/images/blog/auth-springboot-jwt/spring-jwt.png)
-*<center>ขอบคุณรูปภาพจาก (https://uploads.toptal.io/blog/image/125553/toptal-blog-image-1520247340412-dc6cfd3e7760ea9a8d75a8f9d0b93a77.png) </center>*
+<center>![Auth API Spring Boot](/static/images/blog/auth-springboot-jwt/cover.png)</center>
+*<center className="text-xs">ขอบคุณรูปภาพจาก [https://nullpointerexception.pl](https://nullpointerexception.pl/wp-content/uploads/2019/10/springsecurity-jwt.png) </center>*
 
+> แนะนำสำหรับคนที่เคยเขียนหรือเข้าใจ Spring Boot มาบ้างแล้ว
 
+ก่อนจะเริ่มเรามาทำความเข้าใจกันก่อนว่า ในบทความนี้ผมจะไม่ได้อธิบายเกี่ยวกับ JWT มากนัก 
+และถ้ายังไม่รู้จักหรือเข้าใจ JWT ผมแนะนำให้ไปอ่านบทความของ [Chainarong Tangsurakit](https://medium.com/rootusercc/json-web-token-มาตรฐานใหม่-ในการทำ-authentication-b0760dd9acd1)
+เค้าเขียนอธิบายไว้ค่อนข้างละเอียดและเห็นภาพชัดเจนตั้งแต่ปี 2016
+
+ส่วน Docker เราเสริมเข้ามาเพื่อให้ง่ายสำหรับการต่อ Database สามารถ Clone แล้ว Run ได้เลยที่ Environment ไหนก็ได้เพียงแค่มี Docker
+(ไม่อย่างงั้นต้องติดตั้ง Postgres service ในเครื่องก่อนเพื่อให้สามารถต่อ localhost:5432 ได้ ซึ่งยุ่งยากกว่า เชื่อผมเหอะ)
+
+## Technology
+
+- Java 8 
+- Spring Boot 2
+  - Spring Security
+  - Spring Web
+  - Spring Data JPA
+- Swagger UI
+- jjwt 0.9.1
+- PostgresSQL
+- Maven 3.8.2
+- Docker
+  - Docker Compose
+
+## Setup
+
+```xml:pom.xml
+<!-- Spring -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-web</artifactId>
+</dependency>
+
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-security</artifactId>
+</dependency>
+
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-jpa</artifactId>
+</dependency>
+
+<!-- JWT -->
+<dependency>
+    <groupId>io.jsonwebtoken</groupId>
+    <artifactId>jjwt</artifactId>
+    <version>0.9.1</version>
+</dependency>
+
+<!-- Postgresql	-->
+<dependency>
+    <groupId>org.postgresql</groupId>
+    <artifactId>postgresql</artifactId>
+    <scope>runtime</scope>
+</dependency>
+
+<!-- Swagger UI-->
+<dependency>
+    <groupId>io.springfox</groupId>
+    <artifactId>springfox-swagger-ui</artifactId>
+    <version>2.9.2</version>
+    <scope>compile</scope>
+</dependency>
+
+<dependency>
+    <groupId>io.springfox</groupId>
+    <artifactId>springfox-swagger2</artifactId>
+    <version>2.9.2</version>
+</dependency>
+
+<dependency>
+    <groupId>io.springfox</groupId>
+    <artifactId>springfox-data-rest</artifactId>
+    <version>2.9.2</version>
+</dependency>
+```
+
+```properties:application.properties
+server.servlet.context-path=/api
+server.port=8008
+
+#HTTP
+spring.data.rest.defaultMediaType=application/json
+spring.messages.encoding=UTF-8
+server.tomcat.uri-encoding=UTF-8
+spring.http.encoding.charset=UTF-8
+spring.http.encoding.enabled=true
+spring.http.encoding.force=true
+
+#JWT
+jwt.secret=auth-sp-jwt
+
+#Postgresql
+spring.datasource.url=jdbc:postgresql://localhost:5432/postgres
+spring.datasource.driverClassName=org.postgresql.Driver
+spring.datasource.username=postgres
+spring.datasource.password=p@stgres
+
+spring.jpa.hibernate.ddl-auto=update
+```
 
 
