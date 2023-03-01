@@ -2,7 +2,7 @@
 title: Authentication ด้วย Spring Security & JWT & Docker
 date: "2023-02-28"
 tags: ["java"]
-draft: false
+draft: true
 summary: ""
 layout: PostSimple
 featureImage: "/static/images/blog/auth-springboot-jwt/cover.png"
@@ -107,12 +107,18 @@ Consider the following:
     สร้างไฟล์ Shell script สำหรับ Run ชุดคำสั่ง Docker
 
       ```bash:build.sh
+      #Pack file .jar with mvn
+      mvn clean compile package -Dmaven.test.skip=true
+      #สร้าง Folder build
+      mkdir build
+      #ย้าย .jar ไปยัง build/
+      mv target/auth-0.0.1-SNAPSHOT.jar build/
       docker rm -f app db
       docker build -t api_backend .
       docker-compose up
       ```
 
-    สร้าง Dockerfile และเปลี่ยน [app-name] เป็นชื่อที่ต้องการ
+    สร้าง Dockerfile และเปลี่ยน [app-name] ตาม `<name>...</name>` ใน `pom.xml`
 
     ```docker:Dockerfile
     FROM openjdk:8-jdk
