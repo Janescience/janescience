@@ -1,0 +1,1967 @@
+---
+title: Authentication ด้วย Spring Security & JWT และ Run ด้วย Docker
+date: "2023-03-11"
+tags: ["springboot","jwt","docker"]
+draft: false
+summary: ""
+layout: PostSimple
+featureImage: "/static/images/blog/auth-springsecurity-jwt-docker/cover.png"
+---
+
+<center>![Auth API Spring Boot](/static/images/blog/auth-springsecurity-jwt-docker/cover.png)</center>*<center className="text-xs">
+  ขอบคุณรูปภาพจาก
+  [https://nullpointerexception.pl](https://nullpointerexception.pl/wp-content/uploads/2019/10/springsecurity-jwt.png){" "}
+</center>*
+
+> แนะนำสำหรับคนที่เคยเขียนหรือเข้าใจ Spring Boot มาบ้างแล้ว
+
+ขอท้าวความก่อนว่า ผมได้เขียน Service นี้ขึ้นมาตั้งนานแล้ว แต่จะเป็น Spring Boot 2 ซึ่งผมว่าผมเขียนไว้งงๆ แถม Structure ดูยาก และรู้สึกว่าไม่ Clean ([ดู Source Code](https://github.com/Janescience/auth-java-api-jwt))
+เพราะตอนนั้นผมเพิ่งเขียนโปรแกรมใหม่ๆ ยังไม่ค่อยเข้าใจมากนัก จริงๆผมอยากจะเขียน Blog เรื่องนี้ตั้งนานแล้ว พอมีเวลาก็เลยอยากเขียน Service ขึ้นมาใหม่พร้อมกับเขียน Blog ไปด้วยเลย โดยจะได้อัพเดต Tech ที่ใช้ด้วย
+
+ก่อนจะเริ่มอ่านเรามาทำความเข้าใจกันก่อนว่า ในบทความนี้ผมจะไม่ได้อธิบายเกี่ยวกับ JWT มากนัก
+และถ้ายังไม่รู้จักหรือเข้าใจ JWT ผมแนะนำให้ไปอ่านบทความของ [Chainarong Tangsurakit](https://medium.com/rootusercc/json-web-token-มาตรฐานใหม่-ในการทำ-authentication-b0760dd9acd1)
+เค้าเขียนอธิบายไว้ค่อนข้างละเอียดและเห็นภาพชัดเจนตั้งแต่ปี 2016 เพราะว่า JWT ไม่ใช่เรื่องใหม่อะไร มีมานานมากแล้ว แต่ก็ยังนิยมถูกใช้อยู่ในปัจจุบัน เพราะมันเข้าใจง่าย ไม่ซับซ้อนอะไรมาก
+
+ส่วน Docker เราเสริมเข้ามาเพื่อให้ง่ายสำหรับการต่อ Database สามารถ Clone แล้ว Run ได้เลยที่ Environment ไหนก็ได้เพียงแค่มี Docker
+(ไม่อย่างงั้นต้องติดตั้ง Postgres service ในเครื่องก่อนเพื่อให้สามารถต่อ `localhost:5432` ได้ ซึ่งยุ่งยากกว่า เชื่อผมเหอะ)
+
+### สำหรับคนขี้เกียจอ่านทั้งหมด 
+
+- [Technology](#technology)
+- [Design](#design)
+  - [APIs](#apis)
+  - [Database](#database)
+- [Setup](#setup)
+  - [Spring Boot](#spint-boot)
+  - [Maven & Java 18](#maven-&-java-18)
+  - [Docker](#docker)
+  - [Config application.properties](#config-application.properties)
+- [Implement](#implement)
+  - [Entity](#entity)
+  - [Repositories](#repositories)
+  - [UserDetails](#userDetails)
+  - [Json Web Token (JWT)](#json-web-token-(jwt))
+  - [Spring Security](#spring-security)
+  - [POJO Class](#pojo-class)
+  - [Controllers](#controllers)
+  - [SQL Init](#sql-init)
+  - [Swagger UI](#swagger-ui)
+
+---
+
+## Technology
+
+- [Spring Boot 3](#spring-boot)
+  - Spring Security
+  - Spring Web
+  - Spring Data JPA
+  - Spring Validation
+- [Java 18](#maven-&-java-18)
+- [Maven 3.8.2](#maven-&-java-18)
+- [Docker](#docker)
+- PostgresSQL
+- Swagger UI
+- JWT (jjwt 0.9.1)
+
+---
+
+## Design
+
+### APIs
+
+|  Name| URL  | Permission | HTTP Method |
+|---|---|---|---|
+|  Signup | /auth/signup | All | POST |
+|  Signin | /auth/signin | All | POST |
+| Get All User | /user/all | Authentication Role ADMIN | GET |
+| Get User | /user | Authentication All Roles | GET |
+| Get Moderator User | /user/mod | Authentication Role MODERATOR | GET |
+
+### Database
+
+![ER Diagram](/static/images/blog/auth-springsecurity-jwt-docker/er-diagram.png)
+
+---
+
+## Setup
+
+### Spring Boot
+
+เข้าเว็บ [Spring Boot](https://start.spring.io/#!type=maven-project&language=java&platformVersion=3.0.3&packaging=jar&jvmVersion=19&groupId=com.demo&artifactId=auth&name=auth&description=Demo%20project%20for%20Spring%20Security%20%26%20JWT%20%26%20Docker&packageName=com.demo.auth&dependencies=web,lombok,security,data-jpa,postgresql)
+เพื่อสร้าง Spring boot project starter และ Dependencies ที่ผมใช้ตามรูปเลย
+
+![Spring Init](/static/images/blog/auth-springsecurity-jwt-docker/spring-init.png)
+
+หลังจาก Download project มาแล้วลอง Run ดูจะพบว่ามี Error แบบนี้
+
+```bash
+***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+Failed to configure a DataSource: 'url' attribute is not specified and no embedded datasource could be configured.
+
+Reason: Failed to determine a suitable driver class
+
+
+Action:
+
+Consider the following:
+        If you want an embedded database (H2, HSQL or Derby), please put it on the classpath.
+        If you have database settings to be loaded from a particular profile you may need to activate it (no profiles are currently active).
+```
+
+เพราะมันถามหา Datasource และเรายังไม่ได้กำหนดให้มันใน application.properties
+
+<center>. . .</center>
+
+### [Maven](https://maven.apache.org/download.cgi) & [JAVA 18](https://www.oracle.com/java/technologies/javase/jdk18-archive-downloads.html)
+
+ดาวน์โหลดแล้วทำการ set JAVA_HOME,M2_HOME ผมใช้ mac จะเป็นการ set ใน `.bash_profile`
+
+```bash
+export JAVA_HOME="/Library/Java/JavaVirtualMachines/jdk-18.0.2.1.jdk/Contents/Home/"
+
+export M2_HOME="/Users/xxxxxx/space/tools/apache-maven-3.8.2"
+export PATH="$PATH:$M2_HOME/bin"
+```
+
+หลังจาก set ให้ใช้คำสั่ง `source ~/.bash_profile` แล้วลองใช้  `mvn -v` ต้องแสดงแบบนี้
+
+```bash
+Apache Maven 3.8.2 (ea98e05a04480131370aa0c110b8c54cf726c06f)
+Maven home: /Users/janescience/space/tools/apache-maven-3.8.2
+Java version: 18.0.2.1, vendor: Oracle Corporation, runtime: /Library/Java/JavaVirtualMachines/jdk-18.0.2.1.jdk/Contents/Home
+Default locale: en_TH, platform encoding: UTF-8
+OS name: "mac os x", version: "13.2", arch: "aarch64", family: "mac"
+```
+
+> Java version ในเครื่องเราต้องตาม `<java.version>...</java.version>` ใน `pom.xml` ไม่งั้นจะ compile ไม่ผ่าน
+
+<center>. . .</center>
+
+### [Docker](https://www.docker.com/) 
+
+ใช้เป็น Local server และ Local database โดยจะใช้ [Docker Compose](https://medium.com/touch-technologies/ทำความรู้จัก-docker-compose-b6688fc98c6f)
+
+    สร้างไฟล์สำหรับ Docker Compose
+
+      ```yml:docker-compose.yml
+      version: '3'
+
+      services:
+        app:
+          image: api_backend:latest
+          container_name: app
+          depends_on:
+            - db
+          environment:
+            - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/postgres
+            - SPRING_DATASOURCE_USERNAME=postgres
+            - SPRING_DATASOURCE_PASSWORD=p@stgres
+            - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+          ports:
+            - 8008:8080
+        db:
+          image: postgres:10.4
+          container_name: db
+          volumes:
+                - /var/db/data/postgresql:/var/lib/postgresql
+          environment:
+            - POSTGRES_USER=postgres
+            - POSTGRES_PASSWORD=p@stgres
+          ports:
+            - 5432:5432
+      ```
+
+    > เราจะสร้าง 2 Container เป็น app และ db
+
+<br/>
+
+    สร้างไฟล์ Shell script สำหรับ Run ชุดคำสั่ง Docker
+
+      ```bash:build.sh
+      #Pack file .jar with mvn
+      mvn clean compile package -Dmaven.test.skip=true
+      #สร้าง Folder build
+      mkdir build
+      #ย้าย .jar ไปยัง build/
+      mv target/auth-0.0.1-SNAPSHOT.jar build/
+      docker rm -f app db
+      docker build -t api_backend .
+      docker-compose up
+      ```
+
+<br/>
+
+    สร้าง Dockerfile และเปลี่ยน [app-name] ตาม `<name>...</name>` ใน `pom.xml`
+    ตอนนี้ Hub ของ Docker openjdk ล่าสุดแค่ 18
+
+    ```docker:Dockerfile
+    FROM openjdk:18-jdk
+    EXPOSE 8080
+    RUN export LC_ALL=en_US.UTF-8
+    RUN export LANG=en_US.UTF-8
+    RUN export LC_TIME=th_TH.UTF-8
+    RUN apt-get clean && apt-get -y update && apt-get install -y locales && locale-gen en_US.UTF-8 && locale-gen th_TH.UTF-8
+    RUN locale-gen en_US.UTF-8
+    ENV TZ=Asia/Bangkok
+    RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+    ARG JAR_FILE=build/[app-name]-0.0.1-SNAPSHOT.jar
+    COPY ${JAR_FILE} [app-name].jar
+    ENTRYPOINT ["java","-jar","-Dserver.port=8080","/[app-name].jar"]
+    ```
+
+    Run `./build.sh` (ต้อง Start Docker ก่อน) ถ้าสำเร็จ
+        
+        - จะเห็น Logs ของ app,db 
+        - สามารถเข้า http://localhost:8008 ได้
+        - ดู Containers ใน Docker desktop app จะเห็นว่า Run อยู่
+        - เชื่อมต่อ DB ผ่าน DB Client ด้วย Config ตาม docker-compose.yml ต้องเชื่อมต่อได้
+
+--- 
+
+## Config `application.properties`
+
+เรา Setup ให้สามารถ Run ผ่าน Docker ได้แล้วแถมได้ PostgresSQL มาด้วย 
+Step นี้เราจะ Config ให้สามารถ Run project นี้ได้ด้วยเครื่องของเราเอง และเชื่อมต่อ Database ไปยัง PostgresSQL
+
+```properties
+server.servlet.context-path=/api
+server.port=8008
+
+spring.datasource.url= jdbc:postgresql://localhost:5432/postgres
+spring.datasource.username= postgres
+spring.datasource.password= p@stgres
+
+spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation= true
+spring.jpa.properties.hibernate.dialect= org.hibernate.dialect.PostgreSQLDialect
+
+# Hibernate ddl auto (create, create-drop, validate, update)
+spring.jpa.hibernate.ddl-auto= update
+```
+
+> Run project อีกครั้ง ต้องสามารถ Run ได้ ผมใช้ vscode ก็เลือก Run มุมขวาบนได้เลย
+
+--- 
+
+## Implement
+
+ถึงเวลาเริ่มเขียน Code จริงจัง DB ของผมจะมีแค่ 2 ตาราง User , MemberType 
+เก็บข้อมูลของ User และแยกประเภทได้ตามเงินเดือน
+
+### Entity
+
+- app เก็บตารางต่างๆ 
+- base จะแยกเป็นส่วนที่ต้องมีในทุกตารางเช่น id,version,createdDate,updatedDate 
+- enums เก็บค่าที่เป็น constants ต่างๆ 
+
+```
+ entity
+  └── app
+  │   ├── User
+  │   └── MemberType
+  │   └── Role
+  └── enums
+  │   └── ERole
+  │   └── EMemberType
+  └── base
+      └── BaseEntity
+      └── EntityListener
+```
+
+<br/>
+
+```java:EntityListener.java
+package com.demo.auth.entity.base;
+
+import com.demo.auth.security.services.UserDetailsImpl;
+import com.demo.auth.util.AppUtil;
+import com.demo.auth.util.DateUtil;
+import lombok.SneakyThrows;
+
+import org.apache.commons.beanutils.BeanUtils;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Component;
+import org.springframework.util.ReflectionUtils;
+
+import jakarta.persistence.*;
+
+import java.lang.reflect.Field;
+
+@Component
+public class EntityListener {
+
+    @PrePersist
+    public void prePersistFunction(Object object) {
+        this.assignValueToCommonFields(object, "CREATE");
+    }
+
+    @PreUpdate
+    public void preUpdateFunction(Object object) {
+        this.assignValueToCommonFields(object,"UPDATE");
+    }
+
+    @SneakyThrows
+    private void assignValueToCommonFields(Object arg, String status) {
+
+        String user = null;
+        Authentication authen = SecurityContextHolder.getContext().getAuthentication();
+        if (AppUtil.isNotNull(authen) && authen.getPrincipal() != "anonymousUser") {
+            UserDetails userDetails = (UserDetails) authen.getPrincipal();
+            if (AppUtil.isNotNull(userDetails) && AppUtil.isNotNull(userDetails.getUsername())) {
+                user = userDetails.getUsername();
+            }
+        }
+
+        if (status.equals("CREATE")) {
+            BeanUtils.setProperty(arg, "createdBy", user != null ? user : "SYSTEM");
+            BeanUtils.setProperty(arg, "createdDate", DateUtil.getCurrentDate());
+        }else{
+            BeanUtils.setProperty(arg, "updatedBy", user != null ? user : "SYSTEM");
+            BeanUtils.setProperty(arg, "updatedDate", DateUtil.getCurrentDate());
+        }
+
+        Class<?> cls = arg.getClass();
+        for (Field field : cls.getDeclaredFields()) {
+            
+            Field strField = ReflectionUtils.findField(cls, field.getName());
+            if (strField.getType().equals(String.class)) {
+
+                strField.setAccessible(true);
+                Object value = ReflectionUtils.getField(strField, arg);
+
+                if (AppUtil.isNotNull(value) && AppUtil.isEmpty(value.toString())) {
+                    ReflectionUtils.makeAccessible(strField); //set null when emptyString
+                    ReflectionUtils.setField(strField, arg, null);
+                }
+            }
+        }
+    }
+}
+
+```
+
+> ไฟล์นี้สำหรับ Set value ให้กับ createdDate,createdBy,updatedBy,updatedDate ก่อนจะ insert หรือ update จะเข้ามาทำไฟล์นี้ก่อน
+
+<br/>
+
+```xml:pom.xml
+<dependency>
+    <groupId>commons-beanutils</groupId>
+    <artifactId>commons-beanutils</artifactId>
+    <version>1.9.4</version>
+</dependency>
+```
+
+> เพิ่ม Dependency สำหรับ BeanUtils
+
+<br/>
+
+```java:BaseEntity.java
+package com.demo.auth.entity.base;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.Data;
+
+import jakarta.persistence.*;
+import java.io.Serializable;
+import java.util.Date;
+
+@Data
+@MappedSuperclass
+@EntityListeners(EntityListener.class)
+@JsonIgnoreProperties({"hibernateLazyInitializer","handler"})
+public abstract class BaseEntity implements Serializable {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @JsonIgnore
+    private Long id;
+
+    @Version
+    @Column(name = "version")
+    @JsonIgnore
+    private Integer version;
+
+    private String createdBy;
+
+    private String updatedBy;
+
+
+    @Temporal(TemporalType.TIMESTAMP)
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private Date createdDate;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private Date updatedDate;
+}
+```
+
+> ทุกตารางจะต้องมา Extends class นี้
+
+<br/>
+
+```java:ERole.java
+package com.demo.auth.entity.enums;
+
+public enum ERole {
+    ROLE_USER,
+    ROLE_MODERATOR,
+    ROLE_ADMIN
+}
+```
+
+<br/>
+
+```java:EMemberType.java
+package com.demo.auth.entity.enums;
+
+public enum EMemberType {
+    PLATINUM,
+    GOLD,
+    SILVER
+}
+```
+
+<br/>
+
+```java:Role.java
+package com.demo.auth.entity.app;
+
+import com.demo.auth.entity.base.BaseEntity;
+import com.demo.auth.entity.enums.ERole;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Table;
+import lombok.Data;
+
+@Entity
+@Table(name = "roles")
+@Data
+public class Role extends BaseEntity{
+
+  @Enumerated(EnumType.STRING)
+	@Column(length = 20)
+	private ERole name;
+    
+}
+```
+
+<br/>
+
+```java:MemberType.java
+package com.demo.auth.entity.app;
+
+import com.demo.auth.entity.base.BaseEntity;
+import com.demo.auth.entity.enums.EMemberType;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import lombok.Data;
+
+@Entity
+@Data
+public class MemberType extends BaseEntity{
+
+    @Enumerated(EnumType.STRING)
+	@Column(length = 20)
+	private EMemberType name;
+}
+```
+
+<br/>
+
+```java:User.java
+package com.demo.auth.entity.app;
+
+import jakarta.persistence.*;
+import jakarta.annotation.*;
+
+import com.demo.auth.entity.base.BaseEntity;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+@Entity
+@Table(	name = "users")
+@Data
+public class User extends BaseEntity{
+
+	@Nonnull
+	@Column(unique = true)
+	private String username;
+
+	@Nonnull
+	@JsonIgnore
+	private String password;
+
+	@Column(length = 1000)
+	private String address;
+
+	@Nonnull
+	@Column(unique = true,length = 10)
+	private String phoneNumber;
+
+	@Nonnull
+	@Column(unique = true,length = 12)
+	private String refCode;
+
+	@Nonnull
+	private Double salary;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "memberType")
+	private MemberType memberType;
+
+  @ManyToMany(fetch = FetchType.LAZY)
+	@JoinTable(	name = "user_roles", 
+				joinColumns = @JoinColumn(name = "user_id"), 
+				inverseJoinColumns = @JoinColumn(name = "role_id"))
+	private Set<Role> roles = new HashSet<>();
+}
+```
+
+> @JoinTable แบบนี้หมายความว่า เราจะให้ข้อมูลมัน Join กันที่ตาราง user_roles 
+เพราะ 1 User สามารถมีได้หลาย Roles ถ้าดูใน DB เราจะเห็นว่ามีตาราง user_roles เพิ่มมา โดยที่เราไม่ได้สร้างเป็น Entity 
+
+- `@Data`  เป็น annotation ของ lombok เพื่อจะใช้ get, set ได้โดยไม่ต้องเขียน get , set 
+- `@Table` เราใช้เพราะใน db กับ class ไม่สามารถใช้ชื่อเดียวกันได้ ในโปรแกรมใช้ User แต่ใน DB ตารางจะชื่อ users
+- `@Entity` ถ้า Class ไหนใช้อันนี้โปรแกรมจะมองว่าเป็นตาราง และทำการ auto create , update ให้ใน DB
+
+> หลังจากเสร็จ Step นี้ลอง Run project อีกครั้ง ถ้าถูกต้อง จะสามารถ Run ได้และตารางจะถูกสร้างใน DB
+
+<br/>
+
+<center>. . .</center>
+
+<br/>
+
+### Utils
+
+เป็น Commons ต่างๆที่เราต้องเรียกใช้บ่อยๆ ใช้ในหลายๆไฟล์ จะมาสร้างไว้เป็น Util เช่น เช็ค Null, เช็คค่าว่าง , ดึงวันที่ปัจจุบัน
+
+> เป็นผลดีมากๆในกรณีทำงานเป็นทีม ไม่งั้น Dev แต่ล่ะคน อาจจะไปเขียนเช็คเงื่อนไขต่างๆเอาเอง แบบผิดๆ
+
+```
+util
+  └── AppUtil
+  └── DateUtil
+```
+
+<br/>
+
+```java:AppUtil.java
+package com.demo.auth.util;
+
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
+
+public class AppUtil {
+
+    public static Object getDefaultValueIfNull(final Object value, final Object defaultValue) {
+        Object result = defaultValue;
+        if (value != null) {
+            result = value;
+        }
+        return (result);
+    }
+
+    public static boolean isEmpty(final BigDecimal d) {
+        final boolean b = AppUtil.isNull(d);
+        return (b);
+    }
+
+    public static boolean isEmpty(final Byte byt) {
+        final boolean b = AppUtil.isNull(byt);
+        return (b);
+    }
+
+    public static boolean isEmpty(final Character c) {
+        final boolean b = AppUtil.isNull(c);
+        return (b);
+    }
+
+    public static boolean isEmpty(final Double d) {
+        final boolean b = AppUtil.isNull(d);
+        return (b);
+    }
+
+    public static boolean isEmpty(final Float f) {
+        final boolean b = AppUtil.isNull(f);
+        return (b);
+    }
+
+    public static boolean isEmpty(final Integer integer) {
+        final boolean b = AppUtil.isNull(integer);
+        return (b);
+    }
+
+    public static boolean isEmpty(final List<?> ls) {
+        boolean b = true;
+        if ((ls != null) && !ls.isEmpty()) {
+            b = false;
+        }
+        return (b);
+    }
+
+    public static boolean isEmpty(final Long l) {
+        final boolean b = AppUtil.isNull(l);
+        return (b);
+    }
+
+    public static boolean isEmpty(final Map<?, ?> map) {
+        boolean b = true;
+        if ((map != null) && !map.isEmpty()) {
+            b = false;
+        }
+        return (b);
+    }
+
+    public static boolean isEmpty(final Number num) {
+        final boolean b = AppUtil.isNull(num);
+        return (b);
+
+    }
+
+    public static boolean isEmpty(final Short s) {
+        final boolean b = AppUtil.isNull(s);
+        return (b);
+    }
+
+    public static boolean isEmpty(final String st) {
+        boolean b = true;
+        if ((st != null) && (st.trim().length() > 0)) {
+            b = false;
+        }
+        return (b);
+    }
+
+    public static boolean isEmpty(final StringBuilder st) {
+        boolean b = true;
+        if ((st != null) && (st.toString().trim().length() > 0)) {
+            b = false;
+        }
+        return (b);
+    }
+
+    public static boolean isEmpty(final String[] st) {
+        boolean b = true;
+        if ((st != null) && (st.length > 0)) {
+            b = false;
+        }
+        return (b);
+    }
+
+    public static boolean isNotEmpty(final BigDecimal d) {
+        final boolean b = AppUtil.isNotNull(d);
+        return (b);
+    }
+
+    public static boolean isNotEmpty(final Byte byt) {
+        final boolean b = AppUtil.isNotNull(byt);
+        return (b);
+    }
+
+    public static boolean isNotEmpty(final Character c) {
+        final boolean b = AppUtil.isNotNull(c);
+        return (b);
+
+    }
+
+    public static boolean isNotEmpty(final Double d) {
+        final boolean b = AppUtil.isNotNull(d);
+        return (b);
+
+    }
+
+    public static boolean isNotEmpty(final Float f) {
+        final boolean b = AppUtil.isNotNull(f);
+        return (b);
+
+    }
+
+    public static boolean isNotEmpty(final Integer integer) {
+        final boolean b = AppUtil.isNotNull(integer);
+        return (b);
+
+    }
+
+    public static boolean isNotEmpty(final List<?> ls) {
+        boolean b = false;
+        if ((ls != null) && !ls.isEmpty()) {
+            b = true;
+        }
+        return (b);
+
+    }
+
+    public static boolean isNotEmpty(final Long l) {
+        final boolean b = AppUtil.isNotNull(l);
+        return (b);
+
+    }
+
+    public static boolean isNotEmpty(final Map<?, ?> map) {
+        boolean b = false;
+        if ((map != null) && !map.isEmpty()) {
+            b = true;
+        }
+        return (b);
+    }
+
+    public static boolean isNotEmpty(final Number num) {
+        final boolean b = AppUtil.isNotNull(num);
+        return (b);
+
+    }
+
+    public static boolean isNotEmpty(final Object obj) {
+        boolean b = false;
+        if (obj != null) {
+            b = true;
+        }
+        return (b);
+    }
+
+    public static boolean isNotEmpty(final Short s) {
+        final boolean b = AppUtil.isNotNull(s);
+        return (b);
+    }
+
+    public static boolean isNotEmpty(final String st) {
+        boolean b = true;
+        if ((st == null) || (st.trim().length() == 0)) {
+            b = false;
+        }
+        return (b);
+    }
+
+    public static boolean isNotEmpty(final String[] st) {
+        boolean b = true;
+        if ((st == null) || (st.length == 0)) {
+            b = false;
+        }
+        return (b);
+    }
+
+    public static boolean isNotNull(final Object obj) {
+        boolean b = false;
+        if (obj != null) {
+            b = true;
+        }
+        return (b);
+    }
+
+    public static boolean isNull(final Object obj) {
+        boolean b = true;
+        if (obj != null) {
+            b = false;
+        }
+        return (b);
+    }
+
+    public static String toString(Object obj) {
+        String r = "";
+        if(AppUtil.isNotNull(obj)) {
+            r = obj.toString();
+        }
+        return r;
+    }
+}
+```
+<br/>
+
+
+```java:DateUtil.java
+package com.demo.auth.util;
+
+import java.sql.Timestamp;
+import java.util.Calendar;
+import java.util.Date;
+
+import lombok.extern.log4j.Log4j2;
+
+import org.springframework.stereotype.Component;
+
+@Log4j2
+@Component
+public class DateUtil {
+    public static Timestamp getCurrentDate() {
+        Timestamp today = null;
+        try {
+            Date nowDate = Calendar.getInstance().getTime();
+            today = new Timestamp(nowDate.getTime());
+        } catch (Exception e) {
+            log.error("error msg : {} ", e);
+            throw new RuntimeException(e);
+        }
+        return today;
+    }
+}
+```
+> ถ้าเพิ่งเริ่มเขียนโปรแกรม AppUtil และ DateUtil ผมแนะนำให้ไปดู Open source ที่เป็น Best practice มีหลายคนเคยทำไว้หมดแล้ว ไม่ควรเขียนเอง 
+
+<br/>
+
+<center>. . .</center>
+
+<br/>
+
+
+### [Repositories](https://medium.com/@nutron/repository-pattern-c66f1cb37f2a)
+
+สำหรับ Entity ต้องมี Repository เพื่อ Insert,Update,Delete และ Access ข้อมูล 
+เราจะสร้าง Repository ตาม Entity เลย และสามารถหาข้อมูลได้ง่ายๆ ไม่ต้องเขียน SQL
+ส่วน pattern จะเป็นประมาณนี้ `findBy[field]And[field]Or[field]` ซึ่งสามารถเขียนได้หลายแบบ
+
+```java:UserReposity.java
+package com.demo.auth.repository;
+
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import com.demo.auth.entity.app.Role;
+import com.demo.auth.entity.app.User;
+
+@Repository
+public interface UserRepository extends JpaRepository<User,Long>{
+    Optional<User> findByUsername(String username);
+
+    List<User> findByRoles(Role role);
+
+    Boolean existsByUsername(String username);
+
+    Boolean existsByPhoneNumber(String phoneNumber);
+    
+    Boolean existsByRefCode(String refCode);
+}
+```
+
+<br/>
+
+
+```java:RoleReposity.java
+package com.demo.auth.repository;
+
+import org.springframework.stereotype.Repository;
+
+import com.demo.auth.entity.app.Role;
+import com.demo.auth.entity.enums.ERole;
+
+import java.util.Optional;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+@Repository
+public interface RoleRepository extends JpaRepository<Role,Long>{
+    Optional<Role> findByName(ERole name);
+}
+```
+
+<br/>
+
+
+```java:MemberTypeReposity.java
+package com.demo.auth.repository;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import com.demo.auth.entity.app.MemberType;
+import com.demo.auth.entity.enums.EMemberType;
+
+@Repository
+public interface MemberTypeRepository extends JpaRepository<MemberType,Long>{
+    MemberType findByName(EMemberType name);
+}
+```
+
+<br/>
+
+
+ซึ่งถ้ามีความซับซ้อนกว่านี้ ก็สามารถเขียนเป็น [@Query](https://www.baeldung.com/spring-data-jpa-query) 
+
+```java:Example
+// Native
+@Query(value = "SELECT * FROM USERS where username = :username",nativeQuery = true)
+User findByUsername(String username);
+
+// JPQL
+@Query(SELECT u FROM User u WHERE u.username = :username)
+User findByUsername(String username);
+```
+
+<br/>
+
+
+<center>. . .</center>
+
+### UserDetails
+
+เนื่องจากข้อมูล User ของเราไม่ได้มีแค่ Username และ Password 
+จะต้องมีการ Overide UserDetails ใหม่ เพื่อเปลี่ยนโครงสร้างตามที่เราต้องการ
+
+```
+security
+  └── services
+      └── UserDetailsImpl
+      └── UserDetailsServiceImpl
+```
+
+```java:UserDetailsImpl.java
+package com.demo.auth.security.services;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
+import com.demo.auth.entity.app.MemberType;
+import com.demo.auth.entity.app.User;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import lombok.Data;
+
+@Data
+public class UserDetailsImpl implements UserDetails {
+
+    private static final long serialVersionUID = 1L;
+
+    private Long id;
+
+    private String username;
+
+    @JsonIgnore
+    private String password;
+
+    private String address;
+
+    private String phoneNumber;
+
+    private String refCode;
+
+    private Double salary;
+
+    private MemberType memberType;
+
+    public Collection<? extends GrantedAuthority> authorities;
+
+    public UserDetailsImpl(
+        Long id, 
+        String username, 
+        String address, 
+        String phoneNumber,
+        String refCode,
+        Double salary,
+        MemberType memberType,
+        String password,
+			Collection<? extends GrantedAuthority> authorities) {
+      this.id = id;
+      this.username = username;
+      this.address = address;
+      this.phoneNumber = phoneNumber;
+      this.refCode = refCode;
+      this.salary = salary;
+      this.memberType = memberType;
+      this.password = password;
+      this.authorities = authorities;
+    }
+
+    public static UserDetailsImpl build(User user) {
+		List<GrantedAuthority> authorities = user.getRoles().stream()
+				.map(role -> new SimpleGrantedAuthority(role.getName().name()))
+				.collect(Collectors.toList());
+
+		return new UserDetailsImpl(
+				user.getId(), 
+				user.getUsername(), 
+				user.getAddress(),
+				user.getPhoneNumber(),
+				user.getRefCode(),
+				user.getSalary(),
+				user.getMemberType(),
+				user.getPassword(), 
+				authorities);
+	  }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o)
+        return true;
+      if (o == null || getClass() != o.getClass())
+        return false;
+      UserDetailsImpl user = (UserDetailsImpl) o;
+      return Objects.equals(id, user.id);
+    }
+}
+```
+
+<br/>
+
+
+```java:UserDetailsServiceImpl.java
+package com.demo.auth.security.services;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+
+import com.demo.auth.entity.app.User;
+import com.demo.auth.repository.UserRepository;
+
+import jakarta.transaction.Transactional;
+
+@Service
+public class UserDetailsServiceImpl implements UserDetailsService{
+
+    @Autowired
+    UserRepository userRepository;
+
+    @Override
+    @Transactional
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        User user = userRepository.findByUsername(username)
+        .orElseThrow(() -> new UsernameNotFoundException("User Not Found with username : " + username));
+
+        return UserDetailsImpl.build(user);
+    }
+}
+```
+
+<br/>
+
+
+<center>. . .</center>
+
+<br/>
+
+
+### Json Web Token (JWT)
+
+มาถึงส่วนที่เราจะต้องเขียน Code เพื่อนจัดการกับ JWT แล้ว
+
+```
+└── security
+|   └── jwt
+|       └── AuthEntryPointJwt
+|       └── AuthTokenFilter
+└── util
+    └── JwtUtil
+```
+
+<br/>
+
+```xml:pom.xml
+    <!-- JWT -->
+	<dependency>
+        <groupId>io.jsonwebtoken</groupId>
+        <artifactId>jjwt</artifactId>
+        <version>0.9.1</version>
+    </dependency>
+```
+
+<br/>
+
+มีด้วยกัน 3 Functions
+- สร้าง Token
+- ดึง Usernamse จาก Token
+- Validate Token
+
+```java:JwtUtil.java
+package com.demo.auth.util;
+
+import java.util.Date;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Component;
+
+import com.demo.auth.security.services.UserDetailsImpl;
+
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.SignatureException;
+import io.jsonwebtoken.UnsupportedJwtException;
+import lombok.extern.log4j.Log4j2;
+
+@Log4j2
+@Component
+public class JwtUtil {
+    
+    @Value("${jwtSecret}")
+    private String jwtSecret;
+
+    @Value("${jwtExpirationMs}")
+	  private int jwtExpirationMs;
+
+    public String generateJwtToken(Authentication authentication) {
+
+      UserDetailsImpl userPrincipal = (UserDetailsImpl) authentication.getPrincipal();
+
+      return Jwts.builder()
+          .setSubject((userPrincipal.getUsername()))
+          .setIssuedAt(new Date())
+          .setExpiration(new Date((new Date()).getTime() + jwtExpirationMs))
+          .signWith(SignatureAlgorithm.HS512, jwtSecret)
+          .compact();
+	  }
+
+    public String getUserNameFromJwtToken(String token) {
+      return Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(token).getBody().getSubject();
+    }
+
+    public boolean validateJwtToken(String authToken) {
+      try {
+        Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(authToken);
+        return true;
+      } catch (SignatureException e) {
+        log.error("Invalid JWT signature: {}", e.getMessage());
+      } catch (MalformedJwtException e) {
+        log.error("Invalid JWT token: {}", e.getMessage());
+      } catch (ExpiredJwtException e) {
+        log.error("JWT token is expired: {}", e.getMessage());
+      } catch (UnsupportedJwtException e) {
+        log.error("JWT token is unsupported: {}", e.getMessage());
+      } catch (IllegalArgumentException e) {
+        log.error("JWT claims string is empty: {}", e.getMessage());
+      }
+
+      return false;
+    }
+}
+```
+
+- **@Value** เป็นการดึงค่าจากตัวแปรใน `application.propperties`
+
+<br/>
+
+```properties:application.properties
+# JWT Config
+jwtSecret=auth-spring-jwt-docker-secret-key
+# 24 hours.
+jwtExpirationMs=86400000
+```
+
+<br/>
+
+```java:AuthTokenFilter.java
+package com.demo.auth.security.jwt;
+
+import java.io.IOException;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.util.StringUtils;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import com.demo.auth.security.services.UserDetailsServiceImpl;
+import com.demo.auth.util.JwtUtil;
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.log4j.Log4j2;
+
+@Log4j2
+public class AuthTokenFilter extends OncePerRequestFilter{
+
+    @Autowired
+	private JwtUtil jwtUtil;
+
+    @Autowired
+	private UserDetailsServiceImpl userDetailsService;
+
+    @Override
+	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+			throws ServletException, IOException {
+		try {
+			String jwt = parseJwt(request);
+			if (jwt != null && jwtUtil.validateJwtToken(jwt)) {
+				String username = jwtUtil.getUserNameFromJwtToken(jwt);
+
+				UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+				UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+						userDetails, null, userDetails.getAuthorities());
+				authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+				SecurityContextHolder.getContext().setAuthentication(authentication);
+			}
+		} catch (Exception e) {
+			log.error("Cannot set user authentication: {}", e);
+		}
+
+		filterChain.doFilter(request, response);
+	}
+
+    private String parseJwt(HttpServletRequest request) {
+      String headerAuth = request.getHeader("Authorization");
+
+      if (StringUtils.hasText(headerAuth) && headerAuth.startsWith("Bearer ")) {
+        return headerAuth.substring(7, headerAuth.length());
+      }
+
+      return null;
+    }
+    
+}
+```
+> ทุกครั้งที่มีการ Request เข้ามาแล้ว Config ไว้ว่า Endpoint นี้ต้องผ่านการ Authen จะเข้ามาทำที่ `doFilterInternal` อันดับแรกเสมอ
+
+<br/>
+
+```java:AuthEntryPointJwt.java
+package com.demo.auth.security.jwt;
+
+import java.io.IOException;
+
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.stereotype.Component;
+
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.log4j.Log4j2;
+
+@Log4j2
+@Component
+public class AuthEntryPointJwt implements AuthenticationEntryPoint{
+
+    @Override
+	public void commence(HttpServletRequest request, HttpServletResponse response,
+		AuthenticationException authException) throws IOException, ServletException {
+		log.error("Unauthorized error: {}", authException.getMessage());
+		response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Error: Unauthorized");
+	}
+}
+```
+> ทุกครั้งที่ Unauthorized จะวิ่งเข้า `commence` เสมอ เป็นการบอกว่าถ้า Authen ไม่ผ่านจะให้ทำอะไร
+
+<br/>
+
+<center>. . .</center>
+
+<br/>
+
+### Spring Security
+
+```java:WebSecurityConfig.java
+package com.demo.auth.security;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+
+import com.demo.auth.security.jwt.AuthEntryPointJwt;
+import com.demo.auth.security.jwt.AuthTokenFilter;
+import com.demo.auth.security.services.UserDetailsServiceImpl;
+
+@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true)
+public class WebSecurityConfig  {
+    @Autowired
+    UserDetailsServiceImpl userDetailsService;
+
+    @Autowired
+	private AuthEntryPointJwt unauthorizedHandler;
+
+    @Bean
+    public AuthTokenFilter authenticationJwtTokenFilter(){
+        return new AuthTokenFilter();
+    }
+
+    @Bean
+    public DaoAuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        
+        authProvider.setUserDetailsService(userDetailsService);
+        authProvider.setPasswordEncoder(passwordEncoder());
+    
+        return authProvider;
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
+        return authConfig.getAuthenticationManager();
+    }
+
+	@Bean
+	public PasswordEncoder passwordEncoder() {
+		return new BCryptPasswordEncoder();
+	}
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http.cors().and().csrf().disable()
+            .authorizeHttpRequests()
+            .requestMatchers("/auth/**").permitAll()
+            .requestMatchers("/user/**").authenticated()
+            .anyRequest().authenticated()
+            .and()
+            .exceptionHandling().authenticationEntryPoint(unauthorizedHandler).and()
+            .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                                         
+        http.authenticationProvider(authenticationProvider());
+        http.addFilterBefore(authenticationJwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
+                
+        return http.build();
+    }
+}
+```
+
+- **@EnableWebSecurity** ก็ตรงตามชื่อเลย เป็นการบอกว่าเราจะใช้ Web Security และมีการ Config ที่ Class นี้
+- **@EnableMethodSecurity** เป็นการเพิ่ม AOP ให้กับ Method เพื่อเปิดการใช้งาน `@PreAuthorize` และ `@PostAuthorize`
+- ส่วนใน `filterChain` เป็นการทำ Security config ต่างๆ ว่าเราจะเปิดใช้งาน หรือปิดใช้งานอะไรบ้าง , Url อันไหนสามารถเข้าได้หรืออันไหนต้อง
+ผ่านการ Authenticated ก่อน เป็นต้น ซึ่งสามารถ Config ได้เยอะแยะมากมาย [อ่านเพิ่มเติม](https://docs.spring.io/spring-security/reference/index.html) 
+    - `.requestMatchers("...").permitAll()` เป็นการบอกว่า Url อันไหนไม่ต้องผ่านการ Authenticated สามารถเข้าได้เลย
+    - `.requestMatchers("...").authenticated()` เป็นการบอกว่า Url ต้องผ่านการ Authenticated ก่อน
+    - `.anyRequest().authenticated()` เป็นการบอกว่า Url อะไรก็ตามที่ไม่ได้กำหนดไว้ ต้องผ่านการ Authenticated
+    - `.exceptionHandling().authenticationEntryPoint(unauthorizedHandler)` ถ้า Error ติด Security จะให้ทำอะไร ของผมก็ให้ Response error logs ปกติ 
+    - `.authenticationProvider` เราจะใช้อะไรเพิ่มเติมบ้างในการ Authen ผมใช้แค่ `UserDetailsService , PasswordEncoder`
+    - `.addFilterBefore` ทุกครั้งที่ Request เข้ามา ก่อนจะเข้า Controller ไม่ว่า Url นั้นจะต้อง Authen หรือไม่ เราจะให้มัน Filter อะไรบ้าง ของผมทำไว้ที่ `AuthTokenFilter.java`
+
+<br/>
+
+<center>. . .</center>
+
+<br/>
+
+### POJO Class
+
+ผมจะกำหนด Request,Response model โดยการสร้าง Class ไว้เลย เรียกว่า POJO Class
+และมีการ Validation ไปในตัว เพื่อเอาไปใช้ใน Controllers
+
+```
+ └── payload
+       └── request
+       │    └── SigninRequest
+       │    └── SignupRequest
+       └── response
+            └── JwtResponse
+            └── MessageResponse
+```
+
+<br/>
+ต้องเพิ่ม Dependency ก่อน ถึงจะใช้ Annotation ต่างๆของ Validation ได้
+```xml:pom.xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-validation</artifactId>
+</dependency>
+```
+
+<br/>
+
+```java:SigninRequest.java
+package com.demo.auth.payload.request;
+
+import jakarta.validation.constraints.NotBlank;
+import lombok.Data;
+
+@Data
+public class SigninRequest {
+    @NotBlank
+    private String username;
+    @NotBlank
+    private String password;
+}
+```
+
+<br/>
+
+```java:SignupRequest.java
+package com.demo.auth.payload.request;
+
+import lombok.Data;
+import java.util.Set;
+
+import jakarta.validation.constraints.*;
+
+@Data
+public class SignupRequest {
+    
+    @NotBlank
+    @Size(min = 3,max = 20)
+    private String username;
+
+    @NotBlank
+    @Size(min = 6, max = 40)
+    private String password;
+
+    @Pattern(regexp="[0-9]{10}")
+    private String phoneNumber;
+
+    @Size(max = 1000)
+    private String address;
+
+    @NotNull
+    private Double salary;    
+
+    private Set<String> role;
+}
+
+```
+
+<br/>
+
+```java:JwtResponse.java
+package com.demo.auth.payload.response;
+
+import java.util.List;
+
+import com.demo.auth.entity.app.MemberType;
+
+import lombok.Data;
+
+@Data
+public class JwtResponse {
+    private String token;
+    private String type = "Bearer";
+    private Long id;
+    private String username;
+    private String phoneNumber;
+    private Double salary;
+    private String address;
+    private String refCode;
+    private MemberType memberType;
+    private List<String> roles;
+
+    public JwtResponse(
+        String accessToken, 
+        Long id, 
+        String username, 
+        String phoneNumber, 
+        Double salary, 
+        String address, 
+        String refCode, 
+        MemberType memberType, 
+        List<String> roles) 
+    {
+        this.token = accessToken;
+        this.id = id;
+        this.username = username;
+        this.phoneNumber = phoneNumber;
+        this.salary = salary;
+        this.address = address;
+        this.refCode = refCode;
+        this.memberType = memberType;
+        this.roles = roles;
+    }
+}
+```
+
+<br/>
+
+```java:MessageResponse.java
+package com.demo.auth.payload.response;
+
+import lombok.Data;
+
+@Data
+public class MessageResponse {
+
+    private String message;
+    private String code;
+    private Object data;
+    private String status;
+
+    public MessageResponse(String message,String code,String status,Object data) {
+        this.message = message;
+        this.data = data;
+        this.code = code;
+        this.status = status;
+    }
+}
+```
+
+<br/>
+
+<center>. . .</center>
+
+<br/>
+
+### Controllers
+
+```
+ └── controllers
+      └── AuthController
+      └── UserController
+```
+
+<br/>
+
+```java:AuthController.java
+package com.demo.auth.controllers;
+
+import java.text.SimpleDateFormat;
+import java.util.*;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.demo.auth.entity.app.Role;
+import com.demo.auth.entity.app.User;
+import com.demo.auth.entity.enums.EMemberType;
+import com.demo.auth.entity.enums.ERole;
+import com.demo.auth.payload.request.*;
+import com.demo.auth.payload.response.*;
+import com.demo.auth.repository.*;
+import com.demo.auth.security.services.UserDetailsImpl;
+import com.demo.auth.util.DateUtil;
+import com.demo.auth.util.JwtUtil;
+
+import jakarta.validation.Valid;
+
+@CrossOrigin(origins = "*", maxAge = 3600)
+@RestController
+@RequestMapping("/auth")
+public class AuthController {
+
+	private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyyMMdd", Locale.US);
+	
+    @Autowired
+	AuthenticationManager authenticationManager;
+
+	@Autowired
+	UserRepository userRepository;
+
+	@Autowired
+	RoleRepository roleRepository;
+
+	@Autowired
+	MemberTypeRepository memberTypeRepository;
+
+	@Autowired
+	PasswordEncoder encoder;
+
+	@Autowired
+	JwtUtil jwtUtil;
+
+	@PostMapping("/signin")
+	public ResponseEntity<?> authenticateUser(@Valid @RequestBody SigninRequest req) {
+
+		Authentication authentication = authenticationManager.authenticate(
+				new UsernamePasswordAuthenticationToken(req.getUsername(), req.getPassword()));
+
+		SecurityContextHolder.getContext().setAuthentication(authentication);
+		String jwt = jwtUtil.generateJwtToken(authentication);
+		
+		UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();		
+		List<String> roles = userDetails.getAuthorities().stream()
+				.map(item -> item.getAuthority())
+				.collect(Collectors.toList());
+
+		return ResponseEntity.ok(new JwtResponse(jwt, 
+												 userDetails.getId(), 
+												 userDetails.getUsername(), 
+												 userDetails.getPhoneNumber(), 
+												 userDetails.getSalary(), 
+												 userDetails.getAddress(), 
+												 userDetails.getRefCode(), 
+												 userDetails.getMemberType(), 
+												 roles));
+	}
+
+	@PostMapping("/signup")
+	public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest req){
+		if (userRepository.existsByUsername(req.getUsername())) {
+			return ResponseEntity
+					.badRequest()
+					.body(new MessageResponse("Username is already taken!","400","error",null));
+		}
+
+		if (userRepository.existsByPhoneNumber(req.getPhoneNumber())) {
+			return ResponseEntity
+					.badRequest()
+					.body(new MessageResponse("PhoneNumber is already in use!","400","error",null));
+		}
+
+		String refCode = DATE_FORMAT.format(DateUtil.getCurrentDate()) + req.getPhoneNumber().substring(req.getPhoneNumber().length() - 4);
+
+		if (userRepository.existsByRefCode(refCode)) {
+			return ResponseEntity
+					.badRequest()
+					.body(new MessageResponse("RefCode (YYYYMMDD)(4 last digit phone number) is already in use!","400","error",null));
+		}
+
+		User user = new User();
+		user.setUsername(req.getUsername());
+		user.setPassword(encoder.encode(req.getPassword()));
+		user.setPhoneNumber(req.getPhoneNumber());
+		user.setAddress(req.getAddress());
+		user.setRefCode(refCode);
+		user.setSalary(req.getSalary());
+
+        if (user.getSalary() >= 80000) {
+            user.setMemberType(memberTypeRepository.findByName(EMemberType.PLATINUM));
+        } else if (user.getSalary() >= 40000) {
+			user.setMemberType(memberTypeRepository.findByName(EMemberType.GOLD));
+        } else{
+			user.setMemberType(memberTypeRepository.findByName(EMemberType.SILVER));
+        }
+
+		Set<String> strRoles = req.getRole();
+		Set<Role> roles = new HashSet<br>();
+
+		if (strRoles == null) {
+			Role userRole = roleRepository.findByName(ERole.ROLE_USER)
+					.orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+			roles.add(userRole);
+		} else {
+			strRoles.forEach(role -> {
+				switch (role) {
+				case "admin":
+					Role adminRole = roleRepository.findByName(ERole.ROLE_ADMIN)
+							.orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+					roles.add(adminRole);
+
+					break;
+				case "mod":
+					Role modRole = roleRepository.findByName(ERole.ROLE_MODERATOR)
+							.orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+					roles.add(modRole);
+
+					break;
+				default:
+					Role userRole = roleRepository.findByName(ERole.ROLE_USER)
+							.orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+					roles.add(userRole);
+				}
+			});
+		}
+
+		user.setRoles(roles);
+		userRepository.save(user);
+
+		return ResponseEntity.ok(new MessageResponse("User registered successfully.","200","success",user));
+
+	}
+}
+```
+
+- `/signin`
+    - เข้าไปเช็ค Username , Header มี Token หรือไม่ และ สร้าง UserDetais ใน `AuthenTokenFilter.doFilterInternal()` ก่อน ถ้าผ่านจะ Authen ด้วย Username , Password 
+    - สร้าง Token ใน `JwtUtil.generateJwtToken()`
+    - ดึงข้อมูล UserDetails , Roles จาก Authentication ของ Spring Security
+    - Return data ด้วย POJO Class 
+
+- `/signup`
+    - เช็คเงื่อนไขต่างๆ อันนี้ก็ตาม Logic business ของแต่ล่ะโปรเจ็คเลย
+
+<br/>
+
+```java:UserController.java
+package com.demo.auth.controllers;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.demo.auth.security.services.UserDetailsServiceImpl;
+import com.demo.auth.repository.RoleRepository;
+import com.demo.auth.repository.UserRepository;
+import com.demo.auth.entity.app.User;
+import com.demo.auth.entity.app.Role;
+import com.demo.auth.entity.enums.ERole;
+import com.demo.auth.payload.response.MessageResponse;
+
+
+
+@CrossOrigin(origins = "*", maxAge = 3600)
+@RestController
+@RequestMapping("/user")
+public class UserController {
+
+    @Autowired
+    UserRepository userRepository;
+
+	@Autowired
+	RoleRepository roleRepository;
+
+	@Autowired
+	UserDetailsServiceImpl userDetailsService;
+
+    @GetMapping("/all")
+    @PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<?> allAccess() {
+        List<User> users = userRepository.findAll();
+		return ResponseEntity.ok(new MessageResponse("Get all users", "200", "success", users));
+	}
+	
+	@GetMapping
+	@PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
+	public ResponseEntity<?> userAccess() {
+		UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		UserDetails user = userDetailsService.loadUserByUsername(userDetails.getUsername());
+		return ResponseEntity.ok(new MessageResponse("Get data user", "200", "success", user));
+	}
+
+	@GetMapping("/mod")
+	@PreAuthorize("hasRole('MODERATOR')")
+	public ResponseEntity<?> moderatorAccess() {
+		Role role = roleRepository.findByName(ERole.ROLE_MODERATOR).get();
+		List<User> users = userRepository.findByRoles(role);
+		return ResponseEntity.ok(new MessageResponse("Get moderator users", "200", "success", users));
+	}
+}
+```
+
+- `@PreAuthorize` สามารถใช้ Filter role ได้เลย ว่า Url ไหนจะให้ Role อะไร สามารถ Access ได้บ้าง
+
+
+<br/>
+
+<center>. . .</center>
+
+<br/>
+
+### SQL Init
+
+เริ่มต้นมาระบบของเราจะทำงานได้ ต้องมี Master data ถ้าเรา Run project ครั้งแรก แล้ว Database ยังไม่มีข้อมูล จะทำการ Insert data ด้วยการ Run SQL script
+
+```
+ └── resources
+        └── sql
+            └── member_type.sql
+            └── rolse.sql
+```
+
+<br/>
+
+เพิ่ม Config
+```properties:application.properties
+#SQL Script
+spring.sql.init.encoding=utf-8
+spring.sql.init.continue-on-error=true
+spring.sql.init.data-locations=classpath*:/sql/*.sql
+spring.sql.init.mode=always
+```
+
+<br/>
+
+```sql:member_type.sql
+INSERT INTO member_type(id, created_by, created_date, updated_by, updated_date, "version","name")
+VALUES(1, 'SYSTEM', current_timestamp, null, null, 0,'PLATINUM');
+
+INSERT INTO member_type(id, created_by, created_date, updated_by, updated_date, "version","name")
+VALUES(2, 'SYSTEM', current_timestamp, null, null, 0,'GOLD');
+
+INSERT INTO member_type(id, created_by, created_date, updated_by, updated_date, "version","name")
+VALUES(3, 'SYSTEM', current_timestamp, null, null, 0,'SILVER');
+```
+
+<br/>
+
+```sql:rolse.sql
+INSERT INTO roles(id, created_by, created_date, updated_by, updated_date, "version","name")
+VALUES(1, 'SYSTEM', current_timestamp, null, null, 0,'ROLE_USER');
+
+INSERT INTO roles(id, created_by, created_date, updated_by, updated_date, "version","name")
+VALUES(2, 'SYSTEM', current_timestamp, null, null, 0,'ROLE_MODERATOR');
+
+INSERT INTO roles(id, created_by, created_date, updated_by, updated_date, "version","name")
+VALUES(3, 'SYSTEM', current_timestamp, null, null, 0,'ROLE_ADMIN');
+```
+
+เราจะกำหนด id ไปเลย เพื่อไม่ให้มัน Insert เพิ่มเรื่อยๆ จะ Insert แค่ครั้งแรกเท่านั้น นอกจากจะเปลี่ยน id หรือมี id เพิ่มเข้ามา
+
+<br/>
+
+<center>. . .</center>
+
+<br/>
+
+### Swagger UI
+
+Swagger คืออะไร ? ถ้าจะให้พูดสั้นๆ มันก็คือ API documents นั่นเอง ที่สามารถทดสอบเรียก Service ได้เลยเหมือน Postman
+และบอกรายละเอียดต่างๆ ของ API แต่ล่ะเส้น ว่าจะต้องเรียกใช้ยังไง สามารถใช้แทนการทำ Technical document ได้เลย
+
+สำหรับ Spring Boot 3 จะไม่สามรถใช้ Swagger 2 ได้อีกแล้ว ต้องใช้เป็น Swagger 3 ขึ้นไปเท่านั้น
+ซึ่งการ Config ต่างๆก็จะไม่เหมือนกันเลย
+
+```xml:pom.xml
+<!-- Swagger UI-->
+<dependency>
+    <groupId>org.springdoc</groupId>
+    <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+    <version>2.0.2</version>
+</dependency>
+```
+
+<br/>
+
+```java:SwaggerConfiguration.java
+package com.demo.auth.config;
+
+import org.springdoc.core.models.GroupedOpenApi;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import io.swagger.v3.oas.models.Components;
+import io.swagger.v3.oas.models.ExternalDocumentation;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Info;
+
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
+
+@Configuration
+public class SwaggerConfiguration {
+
+    final String securitySchemeName = "bearerAuth";
+
+    @Bean
+    public OpenAPI openApi() {
+        return new OpenAPI()
+            .info(
+                new Info()
+                    .title("Authentication Service")
+                    .description("Spring Security with JWT")
+                    .version("1.0.0"))
+            .externalDocs(
+                new ExternalDocumentation()
+                    .description("Blog - janescience.com")
+                    .url("https://janescience.com/blog/auth-springsecurity-jwt-docker"))
+            // With Authentication by JWT
+            .addSecurityItem(new SecurityRequirement()
+                    .addList(securitySchemeName))
+            .components(new Components()
+                .addSecuritySchemes(securitySchemeName, new SecurityScheme()
+                    .name(securitySchemeName)
+                    .type(SecurityScheme.Type.HTTP)
+                    .scheme("bearer")
+                    .bearerFormat("JWT")));
+    }
+
+    @Bean
+    public GroupedOpenApi authApi() {
+        return GroupedOpenApi.builder()
+            .group("Authentication API")
+            .pathsToMatch("/auth/**")
+            .build();
+    }
+
+    @Bean
+    public GroupedOpenApi userApi() {
+        return GroupedOpenApi.builder()
+            .group("User API")
+            .pathsToMatch("/user/**")
+            .build();
+    }
+}
+```
+> ถ้าระบบมีการ Authen ต้องเพิ่ม Config เรื่องการ Authen เข้าไปด้วย
+
+<br/>
+
+```java:WebSecurityConfig.java
+
+    //...
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+
+        //...
+
+        http.cors().and()
+            //...
+            .requestMatchers("/swagger-ui/**","/v3/api-docs/**").permitAll()
+                    
+        return http.build();
+    }
+```
+> เพิ่ม Url ของ Swagger ใน `WebSecurityConfig` ด้วย ไม่งั้นจะใช้ Swagger UI ไม่ได้
+
+<br/>
+
+ลองเข้า http://localhost:8008/api/swagger-ui/index.html
+
+![Swagger UI](/static/images/blog/auth-springsecurity-jwt-docker/swagger-1.png)
+
+<br/>
+
+![Swagger UI](/static/images/blog/auth-springsecurity-jwt-docker/swagger-2.png)
+
+--- 
+
+บทความนี้ใช้เวลาเขียนค่อนข้างนานเลย เพราะผม Dev ไปด้วยเขียนไปด้วย พร้อมๆกัน และใช้ Spring Boot 3 
+ซึ่งหลายๆคนที่เขียน Spring Boot มาคงทราบดีว่ามีการเปลี่ยนแปลงมากแค่ไหน จาก 2 ไป 3 ซึ่งถ้าให้ผม Migrate จาก 2 ไป 3 
+บอกเลยว่าเขียนใหม่คงง่ายกว่า555 
