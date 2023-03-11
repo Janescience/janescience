@@ -1,92 +1,113 @@
 ---
-title: Spring Boot & Docker
+title: Run Spring Boot ด้วย Docker Compose
 date: '2023-03-12'
 tags: ['docker','springboot']
-draft: true
+draft: false
 summary: ''
 layout: PostSimple
+featureImage: "/static/images/blog/springboot-docker/cover.png"
 ---
 
-ส่วน Docker เราเสริมเข้ามาเพื่อให้ง่ายสำหรับการต่อ Database สามารถ Clone แล้ว Run ได้เลยที่ Environment ไหนก็ได้เพียงแค่มี Docker
-(ไม่อย่างงั้นต้องติดตั้ง Postgres service ในเครื่องก่อนเพื่อให้สามารถต่อ `localhost:5432` ได้ ซึ่งยุ่งยากกว่า เชื่อผมเหอะ)
+<center>
+    ![Cover](/static/images/blog/springboot-docker/cover.png)
+</center>
+<center className="text-xs">
+  ขอบคุณรูปภาพจาก [www.codeprimers.com](https://www.codeprimers.com/images/multiple-spring-boot-container-using-docker-compose/feature-image.png)
+</center>
 
-### [Docker](https://www.docker.com/) 
+> แนะนำสำหรับคนที่เข้าใจและเคยใช้ Docker มาบ้างแล้ว
 
-ใช้เป็น Local server และ Local database โดยจะใช้ [Docker Compose](https://medium.com/touch-technologies/ทำความรู้จัก-docker-compose-b6688fc98c6f)
+Spring boot service ผมจะไม่สร้างใหม่ แต่ผมจะใช้อันเดียวกับบทความนี้ [Authentication ด้วย Spring Security & JWT](https://janescience.com/blog/auth-springsecurity-jwt)
+เอามา Implement ต่อ
 
-    สร้างไฟล์สำหรับ Docker Compose
+## Docker Compose คืออะไร ?
 
-      ```yml:docker-compose.yml
-      version: '3'
+เป็น Plugin อีกตัวของ Docker ที่อยู่ในรูปแบบของ Script เพื่อมาช่วยในการสร้าง Container และ Config หลายๆอันขึ้นมาพร้อมกัน โดยใช้คำสั่งเดียว `docker-compose up` 
 
-      services:
-        app:
-          image: api_backend:latest
-          container_name: app
-          depends_on:
-            - db
-          environment:
-            - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/postgres
-            - SPRING_DATASOURCE_USERNAME=postgres
-            - SPRING_DATASOURCE_PASSWORD=p@stgres
-            - SPRING_JPA_HIBERNATE_DDL_AUTO=update
-          ports:
-            - 8008:8080
-        db:
-          image: postgres:10.4
-          container_name: db
-          volumes:
-                - /var/db/data/postgresql:/var/lib/postgresql
-          environment:
-            - POSTGRES_USER=postgres
-            - POSTGRES_PASSWORD=p@stgres
-          ports:
-            - 5432:5432
-      ```
+ผมจะไม่ขออธิบายลงรายละเอียดเพราะมี Blogger ท่านอื่นๆ ได้เขียนบทความอธิบายไว้ค่อนข้างดีมากๆแล้ว 
+ผมแนะนำบทความนี้ [[Docker EP.011] ทำความรู้จัก Docker compose](https://medium.com/touch-technologies/ทำความรู้จัก-docker-compose-b6688fc98c6f) ของ [Natthakarn Pruksapong](https://medium.com/@580307030033)
 
-    > เราจะสร้าง 2 Container เป็น app และ db
+
+## Require 
+- [Docker](https://www.docker.com/) 
+- [Docker Compose](https://docs.docker.com/compose/install/linux/#install-using-the-repository)
+
+## Implement 
+
+### สร้างไฟล์ docker-compose.yml
+
+```yml:docker-compose.yml
+version: '3'
+
+services:
+app:
+    image: api_backend:latest
+    container_name: app
+    depends_on:
+    - db
+    environment:
+    - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/postgres
+    - SPRING_DATASOURCE_USERNAME=postgres
+    - SPRING_DATASOURCE_PASSWORD=p@stgres
+    - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+    ports:
+    - 8008:8080
+db:
+    image: postgres:10.4
+    container_name: db
+    volumes:
+        - /var/db/data/postgresql:/var/lib/postgresql
+    environment:
+    - POSTGRES_USER=postgres
+    - POSTGRES_PASSWORD=p@stgres
+    ports:
+    - 5432:5432
+```
+
+- **app** ผมใช้ Image api_backend:latest และบอกว่าจะใช้ db container
+- **db** ผมใช้ Image postgres:10.4
 
 <br/>
 
-    สร้างไฟล์ Shell script สำหรับ Run ชุดคำสั่ง Docker
-
-      ```bash:build.sh
-      #Pack file .jar with mvn
-      mvn clean compile package -Dmaven.test.skip=true
-      #สร้าง Folder build
-      mkdir build
-      #ย้าย .jar ไปยัง build/
-      mv target/auth-0.0.1-SNAPSHOT.jar build/
-      docker rm -f app db
-      docker build -t api_backend .
-      docker-compose up
-      ```
+<center>. . .</center>
 
 <br/>
 
-    สร้าง Dockerfile และเปลี่ยน [app-name] ตาม `<name>...</name>` ใน `pom.xml`
-    ตอนนี้ Hub ของ Docker openjdk ล่าสุดแค่ 18
+### สร้าง Dockerfile 
 
-    ```docker:Dockerfile
-    FROM openjdk:18-jdk
-    EXPOSE 8080
-    RUN export LC_ALL=en_US.UTF-8
-    RUN export LANG=en_US.UTF-8
-    RUN export LC_TIME=th_TH.UTF-8
-    RUN apt-get clean && apt-get -y update && apt-get install -y locales && locale-gen en_US.UTF-8 && locale-gen th_TH.UTF-8
-    RUN locale-gen en_US.UTF-8
-    ENV TZ=Asia/Bangkok
-    RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
-    ARG JAR_FILE=build/[app-name]-0.0.1-SNAPSHOT.jar
-    COPY ${JAR_FILE} [app-name].jar
-    ENTRYPOINT ["java","-jar","-Dserver.port=8080","/[app-name].jar"]
-    ```
+เปลี่ยน [app-name] ตาม `<name>...</name>` ใน `pom.xml` และตอนนี้ Hub ของ Docker openjdk ล่าสุดแค่ 18
 
-    Run `./build.sh` (ต้อง Start Docker ก่อน) ถ้าสำเร็จ
-        
-        - จะเห็น Logs ของ app,db 
-        - สามารถเข้า http://localhost:8008 ได้
-        - ดู Containers ใน Docker desktop app จะเห็นว่า Run อยู่
-        - เชื่อมต่อ DB ผ่าน DB Client ด้วย Config ตาม docker-compose.yml ต้องเชื่อมต่อได้
+```docker:Dockerfile
+FROM openjdk:18-jdk
+EXPOSE 8080
+RUN export LC_ALL=en_US.UTF-8
+RUN export LANG=en_US.UTF-8
+RUN export LC_TIME=th_TH.UTF-8
+RUN apt-get clean && apt-get -y update && apt-get install -y locales && locale-gen en_US.UTF-8 && locale-gen th_TH.UTF-8
+RUN locale-gen en_US.UTF-8
+ENV TZ=Asia/Bangkok
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+ARG JAR_FILE=build/[app-name]-0.0.1-SNAPSHOT.jar
+COPY ${JAR_FILE} [app-name].jar
+ENTRYPOINT ["java","-jar","-Dserver.port=8080","/[app-name].jar"]
+```
+
+<br/>
+
+<center>. . .</center>
+
+<br/>
+
+### ใช้คำสั่ง `docker-compose up` 
+
+ถ้าสำเร็จเช็คตามนี้ (ต้อง Satrt Docker ในเครื่องก่อน)
+- จะเห็น Logs ของ app,db 
+- สามารถเข้า http://localhost:8008/api ได้
+- ดู Containers ใน Docker desktop app จะเห็นว่า Run อยู่
+- เชื่อมต่อ DB ผ่าน DB Client ด้วย Config ตาม `docker-compose.yml` ต้องเชื่อมต่อได้
 
 --- 
+
+จะเห็นว่าขั้นตอนการ Config น้อยมากๆ แถมไม่ต้องมาเสียเวลา Setup environment อีกต่างหาก
+ถ้าเราไม่ใช้ Docker ในเครื่องเราจะต้องมี Maven , Java , PostgresSQL และเป็น Version ตามที่ Project กำหนดด้วย
+เพื่อที่จะ Run Spring Boot

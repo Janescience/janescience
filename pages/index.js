@@ -9,7 +9,7 @@ import formatDate from '@/lib/utils/formatDate'
 
 import NewsletterForm from '@/components/NewsletterForm'
 
-const MAX_DISPLAY = 6
+const MAX_DISPLAY = 9
 
 export async function getStaticProps() {
   const posts = await getAllFilesFrontMatter('blog')
