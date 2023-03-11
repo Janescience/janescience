@@ -1,14 +1,14 @@
 ---
-title: Authentication ด้วย Spring Security & JWT และ Run ด้วย Docker
+title: Authentication ด้วย Spring Security & JWT
 date: "2023-03-11"
-tags: ["springboot","jwt","docker"]
+tags: ["springboot","jwt"]
 draft: false
 summary: "จริงๆผมอยากจะเขียน Blog เรื่องนี้ตั้งนานแล้ว พอมีเวลาก็เลยอยากเขียน Service ขึ้นมาใหม่พร้อมกับเขียน Blog ไปด้วยเลย โดยจะได้อัพเดต Tech ที่ใช้ด้วย"
 layout: PostSimple
-featureImage: "/static/images/blog/auth-springsecurity-jwt-docker/cover.png"
+featureImage: "/static/images/blog/auth-springsecurity-jwt/cover.png"
 ---
 
-<center>![Auth API Spring Boot](/static/images/blog/auth-springsecurity-jwt-docker/cover.png)</center>*<center className="text-xs">
+<center>![Auth API Spring Boot](/static/images/blog/auth-springsecurity-jwt/cover.png)</center>*<center className="text-xs">
   ขอบคุณรูปภาพจาก
   [https://nullpointerexception.pl](https://nullpointerexception.pl/wp-content/uploads/2019/10/springsecurity-jwt.png){" "}
 </center>*
@@ -22,9 +22,6 @@ featureImage: "/static/images/blog/auth-springsecurity-jwt-docker/cover.png"
 และถ้ายังไม่รู้จักหรือเข้าใจ JWT ผมแนะนำให้ไปอ่านบทความของ [Chainarong Tangsurakit](https://medium.com/rootusercc/json-web-token-มาตรฐานใหม่-ในการทำ-authentication-b0760dd9acd1)
 เค้าเขียนอธิบายไว้ค่อนข้างละเอียดและเห็นภาพชัดเจนตั้งแต่ปี 2016 เพราะว่า JWT ไม่ใช่เรื่องใหม่อะไร มีมานานมากแล้ว แต่ก็ยังนิยมถูกใช้อยู่ในปัจจุบัน เพราะมันเข้าใจง่าย ไม่ซับซ้อนอะไรมาก
 
-ส่วน Docker เราเสริมเข้ามาเพื่อให้ง่ายสำหรับการต่อ Database สามารถ Clone แล้ว Run ได้เลยที่ Environment ไหนก็ได้เพียงแค่มี Docker
-(ไม่อย่างงั้นต้องติดตั้ง Postgres service ในเครื่องก่อนเพื่อให้สามารถต่อ `localhost:5432` ได้ ซึ่งยุ่งยากกว่า เชื่อผมเหอะ)
-
 ### สำหรับคนขี้เกียจอ่านทั้งหมด 
 
 - [Technology](#technology)
@@ -34,7 +31,6 @@ featureImage: "/static/images/blog/auth-springsecurity-jwt-docker/cover.png"
 - [Setup](#setup)
   - [Spring Boot](#spint-boot)
   - [Maven & Java 18](#maven-&-java-18)
-  - [Docker](#docker)
   - [Config application.properties](#config-application.properties)
 - [Implement](#implement)
   - [Entity](#entity)
@@ -58,7 +54,6 @@ featureImage: "/static/images/blog/auth-springsecurity-jwt-docker/cover.png"
   - Spring Validation
 - [Java 18](#maven-&-java-18)
 - [Maven 3.8.2](#maven-&-java-18)
-- [Docker](#docker)
 - PostgresSQL
 - Swagger UI
 - JWT (jjwt 0.9.1)
@@ -79,7 +74,7 @@ featureImage: "/static/images/blog/auth-springsecurity-jwt-docker/cover.png"
 
 ### Database
 
-![ER Diagram](/static/images/blog/auth-springsecurity-jwt-docker/er-diagram.png)
+![ER Diagram](/static/images/blog/auth-springsecurity-jwt/er-diagram.png)
 
 ---
 
@@ -90,7 +85,7 @@ featureImage: "/static/images/blog/auth-springsecurity-jwt-docker/cover.png"
 เข้าเว็บ [Spring Boot](https://start.spring.io/#!type=maven-project&language=java&platformVersion=3.0.3&packaging=jar&jvmVersion=19&groupId=com.demo&artifactId=auth&name=auth&description=Demo%20project%20for%20Spring%20Security%20%26%20JWT%20%26%20Docker&packageName=com.demo.auth&dependencies=web,lombok,security,data-jpa,postgresql)
 เพื่อสร้าง Spring boot project starter และ Dependencies ที่ผมใช้ตามรูปเลย
 
-![Spring Init](/static/images/blog/auth-springsecurity-jwt-docker/spring-init.png)
+![Spring Init](/static/images/blog/auth-springsecurity-jwt/spring-init.png)
 
 หลังจาก Download project มาแล้วลอง Run ดูจะพบว่ามี Error แบบนี้
 
@@ -142,91 +137,10 @@ OS name: "mac os x", version: "13.2", arch: "aarch64", family: "mac"
 
 <center>. . .</center>
 
-### [Docker](https://www.docker.com/) 
-
-ใช้เป็น Local server และ Local database โดยจะใช้ [Docker Compose](https://medium.com/touch-technologies/ทำความรู้จัก-docker-compose-b6688fc98c6f)
-
-    สร้างไฟล์สำหรับ Docker Compose
-
-      ```yml:docker-compose.yml
-      version: '3'
-
-      services:
-        app:
-          image: api_backend:latest
-          container_name: app
-          depends_on:
-            - db
-          environment:
-            - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/postgres
-            - SPRING_DATASOURCE_USERNAME=postgres
-            - SPRING_DATASOURCE_PASSWORD=p@stgres
-            - SPRING_JPA_HIBERNATE_DDL_AUTO=update
-          ports:
-            - 8008:8080
-        db:
-          image: postgres:10.4
-          container_name: db
-          volumes:
-                - /var/db/data/postgresql:/var/lib/postgresql
-          environment:
-            - POSTGRES_USER=postgres
-            - POSTGRES_PASSWORD=p@stgres
-          ports:
-            - 5432:5432
-      ```
-
-    > เราจะสร้าง 2 Container เป็น app และ db
-
-<br/>
-
-    สร้างไฟล์ Shell script สำหรับ Run ชุดคำสั่ง Docker
-
-      ```bash:build.sh
-      #Pack file .jar with mvn
-      mvn clean compile package -Dmaven.test.skip=true
-      #สร้าง Folder build
-      mkdir build
-      #ย้าย .jar ไปยัง build/
-      mv target/auth-0.0.1-SNAPSHOT.jar build/
-      docker rm -f app db
-      docker build -t api_backend .
-      docker-compose up
-      ```
-
-<br/>
-
-    สร้าง Dockerfile และเปลี่ยน [app-name] ตาม `<name>...</name>` ใน `pom.xml`
-    ตอนนี้ Hub ของ Docker openjdk ล่าสุดแค่ 18
-
-    ```docker:Dockerfile
-    FROM openjdk:18-jdk
-    EXPOSE 8080
-    RUN export LC_ALL=en_US.UTF-8
-    RUN export LANG=en_US.UTF-8
-    RUN export LC_TIME=th_TH.UTF-8
-    RUN apt-get clean && apt-get -y update && apt-get install -y locales && locale-gen en_US.UTF-8 && locale-gen th_TH.UTF-8
-    RUN locale-gen en_US.UTF-8
-    ENV TZ=Asia/Bangkok
-    RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
-    ARG JAR_FILE=build/[app-name]-0.0.1-SNAPSHOT.jar
-    COPY ${JAR_FILE} [app-name].jar
-    ENTRYPOINT ["java","-jar","-Dserver.port=8080","/[app-name].jar"]
-    ```
-
-    Run `./build.sh` (ต้อง Start Docker ก่อน) ถ้าสำเร็จ
-        
-        - จะเห็น Logs ของ app,db 
-        - สามารถเข้า http://localhost:8008 ได้
-        - ดู Containers ใน Docker desktop app จะเห็นว่า Run อยู่
-        - เชื่อมต่อ DB ผ่าน DB Client ด้วย Config ตาม docker-compose.yml ต้องเชื่อมต่อได้
-
---- 
-
 ## Config `application.properties`
 
-เรา Setup ให้สามารถ Run ผ่าน Docker ได้แล้วแถมได้ PostgresSQL มาด้วย 
-Step นี้เราจะ Config ให้สามารถ Run project นี้ได้ด้วยเครื่องของเราเอง และเชื่อมต่อ Database ไปยัง PostgresSQL
+เพิ่ม Config เชื่อมต่อ Database ไปยัง PostgresSQL
+> ต้อง Install [PostgresSQL](https://www.postgresqltutorial.com/postgresql-getting-started/install-postgresql-macos/) ก่อน
 
 ```properties
 server.servlet.context-path=/api
@@ -249,14 +163,13 @@ spring.jpa.hibernate.ddl-auto= update
 
 ## Implement
 
-ถึงเวลาเริ่มเขียน Code จริงจัง DB ของผมจะมีแค่ 2 ตาราง User , MemberType 
-เก็บข้อมูลของ User และแยกประเภทได้ตามเงินเดือน
+ถึงเวลาเริ่มเขียน Code จริงจัง DB ของผมจะมีแค่ 4 ตาราง User , MemberType , UserRoles , Roles
 
 ### Entity
 
-- app เก็บตารางต่างๆ 
-- base จะแยกเป็นส่วนที่ต้องมีในทุกตารางเช่น id,version,createdDate,updatedDate 
-- enums เก็บค่าที่เป็น constants ต่างๆ 
+- **app** เก็บตารางต่างๆ 
+- **base** จะแยกเป็นส่วนที่ต้องมีในทุกตารางเช่น id,version,createdDate,updatedDate 
+- **enums** เก็บค่าที่เป็น constants ต่างๆ 
 
 ```
  entity
@@ -1899,7 +1812,7 @@ public class SwaggerConfiguration {
             .externalDocs(
                 new ExternalDocumentation()
                     .description("Blog - janescience.com")
-                    .url("https://janescience.com/blog/auth-springsecurity-jwt-docker"))
+                    .url("https://janescience.com/blog/auth-springsecurity-jwt"))
             // With Authentication by JWT
             .addSecurityItem(new SecurityRequirement()
                     .addList(securitySchemeName))
@@ -1954,11 +1867,11 @@ public class SwaggerConfiguration {
 
 ลองเข้า http://localhost:8008/api/swagger-ui/index.html
 
-![Swagger UI](/static/images/blog/auth-springsecurity-jwt-docker/swagger-1.png)
+![Swagger UI](/static/images/blog/auth-springsecurity-jwt/swagger-1.png)
 
 <br/>
 
-![Swagger UI](/static/images/blog/auth-springsecurity-jwt-docker/swagger-2.png)
+![Swagger UI](/static/images/blog/auth-springsecurity-jwt/swagger-2.png)
 
 --- 
 
