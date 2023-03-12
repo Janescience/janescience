@@ -1169,7 +1169,7 @@ public class AuthTokenFilter extends OncePerRequestFilter{
     
 }
 ```
-> ทุกครั้งที่มีการ Request เข้ามาแล้ว Config ไว้ว่า Endpoint นี้ต้องผ่านการ Authen จะเข้ามาทำที่ `doFilterInternal` อันดับแรกเสมอ
+> ทุกครั้งที่มีการ Request เข้ามา จะเข้ามาทำที่ `doFilterInternal` อันดับแรกเสมอ ไม่ว่า Url นั้นจะต้อง Authen หรือไม่
 
 <br/>
 
@@ -1293,7 +1293,19 @@ public class WebSecurityConfig  {
     - `.requestMatchers("...").authenticated()` เป็นการบอกว่า Url ต้องผ่านการ Authenticated ก่อน
     - `.anyRequest().authenticated()` เป็นการบอกว่า Url อะไรก็ตามที่ไม่ได้กำหนดไว้ ต้องผ่านการ Authenticated
     - `.exceptionHandling().authenticationEntryPoint(unauthorizedHandler)` ถ้า Error ติด Security จะให้ทำอะไร ของผมก็ให้ Response error logs ปกติ 
-    - `.authenticationProvider` เราจะใช้อะไรเพิ่มเติมบ้างในการ Authen ผมใช้แค่ `UserDetailsService , PasswordEncoder`
+    - `.authenticationProvider` ซึ่งมีให้เลือกหลายวิธีดังนี้
+        - DaoAuthenticationProvider
+        - PreAuthenticatedAuthenticationProvider
+        - LdapAuthenticationProvider
+        - ActiveDirectoryLdapAuthenticationProvider
+        - JaasAuthenticationProvider
+        - CasAuthenticationProvider
+        - RememberMeAuthenticationProvider
+        - AnonymousAuthenticationProvider
+        - RunAsImplAuthenticationProvider
+        - OpenIDAuthenticationProvider
+    
+        ผมเลือกใช้ `DaoAuthenticationProvider` เป็นการ Authen ที่ Simple ที่สุด โดยเอา Username,Password ไป Compare กับ Database และเก็บข้อมูลของ User ผ่าน `UserDetailsService` และจัดการกับ Password ด้วย `PasswordEncoder`
     - `.addFilterBefore` ทุกครั้งที่ Request เข้ามา ก่อนจะเข้า Controller ไม่ว่า Url นั้นจะต้อง Authen หรือไม่ เราจะให้มัน Filter อะไรบ้าง ของผมทำไว้ที่ `AuthTokenFilter.java`
 
 <br/>
@@ -1318,6 +1330,7 @@ public class WebSecurityConfig  {
 ```
 
 <br/>
+
 ต้องเพิ่ม Dependency ก่อน ถึงจะใช้ Annotation ต่างๆของ Validation ได้
 ```xml:pom.xml
 <dependency>
