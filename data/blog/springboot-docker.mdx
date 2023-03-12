@@ -41,7 +41,8 @@ version: '3'
 
 services:
 app:
-    image: api_backend:latest
+    image: api_backend
+    build: .
     container_name: app
     depends_on:
     - db
@@ -64,8 +65,21 @@ db:
     - 5432:5432
 ```
 
-- **app** ผมใช้ Image api_backend:latest และบอกว่าจะใช้ db container
-- **db** ผมใช้ Image postgres:10.4
+- **version:** เลือกได้ว่าจะใช้ service เวอร์ชันไหน
+- **services:** เราจะมีกี่ service ก็ได้ อย่างของผมมี 2 services app, db
+- **app** 
+    - `image: api_backend` ผมใช้ image ชื่อ api_backend 
+    - `build: .` เป็นคำสั่งในการ Build โดย `.` คือบอกว่า Dockerfile อยู่ใน Directory เดียวกัน ถ้าเราไม่สั่งให้มัน Build เราจะต้อง Run คำสั่ง `docker build -t api_backend .` เพื่อสร้าง Image ที่ชื่อ `api_backend` ขึ้นมาก่อน
+    - `container_name: app` ตั้งชื่อ container ว่า app
+    - `depends_on:` คือ จะรัน container นี้ได้ก็ต่อเมื่อมี container ชื่อ db
+    - `environment` คือ กำหนดค่า config ต่างๆให้กับตัวแปรตาม environment คล้ายกับไฟล์ .env
+    - `ports` โดยที่ Host จะเปิด port TCP 8008 ไปยัง port TCP 8080 ของ container นี้ 
+- **db**
+    - `image: postgres:10.4` ผมใช้ image เป็น postgres:10.4 ซึ่งอันนี้ทาง docker จะทำการ `pull` มาให้เลยมาเรารันคำสั่ง `docker-compose up`
+    - `container_name: db` ตั้งชื่อ container ว่า db
+    - `volumes` คือ การบอกว่าเราจะเก็บข้อมูลไว้ที่ไหน เป็นการ map path จาก `/var/db/data/postgresql` ไปยัง `/var/lib/postgresql`
+    - `environment` คือ กำหนดค่า config ต่างๆให้กับตัวแปรตาม environment คล้ายกับไฟล์ .env
+    - `ports` เปิด port ตรงกันคือ 5432
 
 <br/>
 
@@ -75,22 +89,33 @@ db:
 
 ### สร้าง Dockerfile 
 
-เปลี่ยน [app-name] ตาม `<name>...</name>` ใน `pom.xml` และตอนนี้ Hub ของ Docker openjdk ล่าสุดแค่ 18
-
 ```docker:Dockerfile
+
+# Build stage 1 : Compile & build application
+FROM maven:3.8.7-openjdk-18-slim AS build
+COPY src /home/app/src
+COPY pom.xml /home/app
+RUN mvn -f /home/app/pom.xml clean package -DskipTests
+
+# Build stage 2 : Run application
 FROM openjdk:18-jdk
+COPY --from=build /home/app/target/auth-0.0.1-SNAPSHOT.jar /home/app/build/auth.jar
 EXPOSE 8080
-RUN export LC_ALL=en_US.UTF-8
-RUN export LANG=en_US.UTF-8
-RUN export LC_TIME=th_TH.UTF-8
-RUN apt-get clean && apt-get -y update && apt-get install -y locales && locale-gen en_US.UTF-8 && locale-gen th_TH.UTF-8
-RUN locale-gen en_US.UTF-8
-ENV TZ=Asia/Bangkok
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
-ARG JAR_FILE=build/[app-name]-0.0.1-SNAPSHOT.jar
-COPY ${JAR_FILE} [app-name].jar
-ENTRYPOINT ["java","-jar","-Dserver.port=8080","/[app-name].jar"]
+ENTRYPOINT ["java","-jar","-Dserver.port=8080","/home/app/build/auth.jar"]
+
 ```
+
+- `FROM maven:3.8.7-openjdk-18-slim AS build` เป็นการบอกว่าเราจะใช้ Docker image `maven:3.8.7-openjdk-18-slim` และตั้งชื่อ build stage ว่า `build` เพื่อเรียกใช้ต่อไป
+- `COPY src /home/app/src` เป็นการ Copy folder `src` ไปยัง `/home/app/src` ใน container
+- `COPY pom.xml /home/app` เป็นการ Copy ไฟล์ `pom.xml` ไปยัง `/home/app` ใน container
+- `RUN mvn -f /home/app/pom.xml clean package -DskipTests` เป็น Compile ด้วย Maven และจะได้ไฟล์ `.jar` ออกมาใน `/home/app/target`
+
+- `FROM openjdk:18-jdk` เป็นการ Build stage 2 สำหรับ Run application เราจะใช้ image `openjdk:18-jdk` ซึ่งต้องตรงตาม Java version ใน Project
+- `COPY --from=build /home/app/target/auth-0.0.1-SNAPSHOT.jar /home/app/build/auth.jar` เป็นการ Copy ข้าม Stage เพราะว่าเรา Build file `.jar` ไว้ใน stage 1 ที่เราตั้งชื่อว่า `build`
+Copy จาก `/home/app/target/auth-0.0.1-SNAPSHOT.jar` มายัง `/home/app/build/auth.jar` ใน stage นี้
+- `EXPOSE 8080` เราจะ Run container นี้ด้วย port 8080
+- `ENTRYPOINT ["java","-jar","-Dserver.port=8080","/home/app/build/auth.jar"]` เป็นการ Run java project จากไฟล์ `.jar` ที่เรา Build และ Copy มา
+
 
 <br/>
 
@@ -100,14 +125,174 @@ ENTRYPOINT ["java","-jar","-Dserver.port=8080","/[app-name].jar"]
 
 ### ใช้คำสั่ง `docker-compose up` 
 
-ถ้าสำเร็จเช็คตามนี้ (ต้อง Satrt Docker ในเครื่องก่อน)
-- จะเห็น Logs ของ app,db 
-- สามารถเข้า http://localhost:8008/api ได้
-- ดู Containers ใน Docker desktop app จะเห็นว่า Run อยู่
-- เชื่อมต่อ DB ผ่าน DB Client ด้วย Config ตาม `docker-compose.yml` ต้องเชื่อมต่อได้
+```bash
+➜  auth-spring-jwt-docker git:(master) ✗ docker-compose up
+[+] Running 15/16
+ ⠿ db Pulled                                                                                                                                                                         10.4s
+   ⠿ 74a932489409 Pull complete                                                                                                                                                       2.5s
+   ⠿ a082493027d6 Pull complete                                                                                                                                                       2.6s
+   ⠿ c73249adce99 Pull complete                                                                                                                                                       2.7s
+   ⠿ 2d6bce912451 Pull complete                                                                                                                                                       2.7s
+   ⠿ 89de2b1286c6 Pull complete                                                                                                                                                       2.9s
+   ⠿ d8c1cda7fb4f Pull complete                                                                                                                                                       2.9s
+   ⠿ 04bf7b5c55f8 Pull complete                                                                                                                                                       3.4s
+   ⠿ cad383a66059 Pull complete                                                                                                                                                       3.4s
+   ⠿ 6733f43ea70c Pull complete                                                                                                                                                       6.9s
+   ⠿ 707e351a3a19 Pull complete                                                                                                                                                       6.9s
+   ⠿ 86646d71e3bf Pull complete                                                                                                                                                       6.9s
+   ⠿ 0847117bacb4 Pull complete                                                                                                                                                       7.0s
+   ⠿ af6840a317bd Pull complete                                                                                                                                                       7.0s
+   ⠿ 7679a4a015cb Pull complete                                                                                                                                                       7.1s
+ ⠿ app Warning                                                                                                                                                                        4.1s
+[+] Building 4.1s (14/14) FINISHED                                                                                                                                                         
+ => [internal] load build definition from Dockerfile                                                                                                                                  0.0s
+ => => transferring dockerfile: 32B                                                                                                                                                   0.0s
+ => [internal] load .dockerignore                                                                                                                                                     0.0s
+ => => transferring context: 2B                                                                                                                                                       0.0s
+ => [internal] load metadata for docker.io/library/openjdk:18-jdk                                                                                                                     3.9s
+ => [internal] load metadata for docker.io/library/maven:3.8.7-openjdk-18-slim                                                                                                        2.9s
+ => [auth] library/openjdk:pull token for registry-1.docker.io                                                                                                                        0.0s
+ => [auth] library/maven:pull token for registry-1.docker.io                                                                                                                          0.0s
+ => [internal] load build context                                                                                                                                                     0.0s
+ => => transferring context: 3.71kB                                                                                                                                                   0.0s
+ => [build 1/4] FROM docker.io/library/maven:3.8.7-openjdk-18-slim@sha256:0ccb24680338459567324858307f64ccff55e4e5904487b9b376dcf672f6dafa                                            0.0s
+ => [stage-1 1/2] FROM docker.io/library/openjdk:18-jdk@sha256:9b448de897d211c9e0ec635a485650aed6e28d4eca1efbc34940560a480b3f1f                                                       0.0s
+ => CACHED [build 2/4] COPY src /home/app/src                                                                                                                                         0.0s
+ => CACHED [build 3/4] COPY pom.xml /home/app                                                                                                                                         0.0s
+ => CACHED [build 4/4] RUN mvn -f /home/app/pom.xml clean package -DskipTests                                                                                                         0.0s
+ => CACHED [stage-1 2/2] COPY --from=build /home/app/target/auth-0.0.1-SNAPSHOT.jar /home/app/build/auth.jar                                                                          0.0s
+ => exporting to image                                                                                                                                                                0.0s
+ => => exporting layers                                                                                                                                                               0.0s
+ => => writing image sha256:19782626f748b415a9e51dd30af8c2fcb720f814d4192df893cae17a8258dd89                                                                                          0.0s
+ => => naming to docker.io/library/api_backend:latest                                                                                                                                 0.0s
+[+] Running 3/2
+ ⠿ Network auth-spring-jwt-docker_default  Created                                                                                                                                    0.0s
+ ⠿ Container db                            Created                                                                                                                                    0.3s
+ ⠿ Container app                           Created                                                                                                                                    0.1s
+Attaching to app, db
+db   | The files belonging to this database system will be owned by user "postgres".
+db   | This user must also own the server process.
+db   | 
+db   | The database cluster will be initialized with locale "en_US.utf8".
+db   | The default database encoding has accordingly been set to "UTF8".
+db   | The default text search configuration will be set to "english".
+db   | 
+db   | Data page checksums are disabled.
+db   | 
+db   | fixing permissions on existing directory /var/lib/postgresql/data ... ok
+db   | creating subdirectories ... ok
+db   | selecting default max_connections ... 100
+db   | selecting default shared_buffers ... 128MB
+db   | selecting dynamic shared memory implementation ... posix
+db   | creating configuration files ... ok
+db   | running bootstrap script ... ok
+db   | performing post-bootstrap initialization ... ok
+app  | 
+app  |   .   ____          _            __ _ _
+app  |  /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+app  | ( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+app  |  \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+app  |   '  |____| .__|_| |_|_| |_\__, | / / / /
+app  |  =========|_|==============|___/=/_/_/_/
+app  |  :: Spring Boot ::                (v3.0.3)
+app  | 
+app  | 2023-03-12T07:45:54.457Z  INFO 1 --- [           main] com.demo.auth.AuthApplication            : Starting AuthApplication v0.0.1-SNAPSHOT using Java 18.0.2.1 with PID 1 (/home/app/build/auth.jar started by root in /)
+app  | 2023-03-12T07:45:54.459Z  INFO 1 --- [           main] com.demo.auth.AuthApplication            : No active profile set, falling back to 1 default profile: "default"
+db   | syncing data to disk ... ok
+db   | 
+db   | WARNING: enabling "trust" authentication for local connections
+db   | You can change this by editing pg_hba.conf or using the option -A, or
+db   | --auth-local and --auth-host, the next time you run initdb.
+db   | 
+db   | Success. You can now start the database server using:
+db   | 
+db   |     pg_ctl -D /var/lib/postgresql/data -l logfile start
+db   | 
+db   | waiting for server to start....2023-03-12 07:45:54.495 UTC [41] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+db   | 2023-03-12 07:45:54.507 UTC [42] LOG:  database system was shut down at 2023-03-12 07:45:54 UTC
+db   | 2023-03-12 07:45:54.514 UTC [41] LOG:  database system is ready to accept connections
+db   |  done
+db   | server started
+db   | ALTER ROLE
+db   | 
+db   | 
+db   | /usr/local/bin/docker-entrypoint.sh: ignoring /docker-entrypoint-initdb.d/*
+db   | 
+db   | 2023-03-12 07:45:54.648 UTC [41] LOG:  received fast shutdown request
+db   | waiting for server to shut down....2023-03-12 07:45:54.651 UTC [41] LOG:  aborting any active transactions
+db   | 2023-03-12 07:45:54.662 UTC [41] LOG:  worker process: logical replication launcher (PID 48) exited with exit code 1
+db   | 2023-03-12 07:45:54.662 UTC [43] LOG:  shutting down
+db   | 2023-03-12 07:45:54.682 UTC [41] LOG:  database system is shut down
+db   |  done
+db   | server stopped
+db   | 
+db   | PostgreSQL init process complete; ready for start up.
+db   | 
+db   | 2023-03-12 07:45:54.758 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+db   | 2023-03-12 07:45:54.759 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+db   | 2023-03-12 07:45:54.761 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+db   | 2023-03-12 07:45:54.774 UTC [59] LOG:  database system was shut down at 2023-03-12 07:45:54 UTC
+db   | 2023-03-12 07:45:54.779 UTC [1] LOG:  database system is ready to accept connections
+app  | 2023-03-12T07:45:55.001Z  INFO 1 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+app  | 2023-03-12T07:45:55.041Z  INFO 1 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 34 ms. Found 3 JPA repository interfaces.
+app  | 2023-03-12T07:45:55.384Z  INFO 1 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 8080 (http)
+app  | 2023-03-12T07:45:55.394Z  INFO 1 --- [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+app  | 2023-03-12T07:45:55.394Z  INFO 1 --- [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.5]
+app  | 2023-03-12T07:45:55.454Z  INFO 1 --- [           main] o.a.c.c.C.[Tomcat].[localhost].[/api]    : Initializing Spring embedded WebApplicationContext
+app  | 2023-03-12T07:45:55.455Z  INFO 1 --- [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 962 ms
+app  | 2023-03-12T07:45:55.539Z  INFO 1 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+app  | 2023-03-12T07:45:55.644Z  INFO 1 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@71c5b236
+app  | 2023-03-12T07:45:55.645Z  INFO 1 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+db   | 2023-03-12 07:45:55.648 UTC [66] ERROR:  relation "member_type" does not exist at character 13
+db   | 2023-03-12 07:45:55.648 UTC [66] STATEMENT:  INSERT INTO member_type(id, created_by, created_date, updated_by, updated_date, "version","name") VALUES(1, 'SYSTEM', current_timestamp, null, null, 0,'PLATINUM')
+db   | 2023-03-12 07:45:55.654 UTC [66] ERROR:  relation "member_type" does not exist at character 13
+db   | 2023-03-12 07:45:55.654 UTC [66] STATEMENT:  INSERT INTO member_type(id, created_by, created_date, updated_by, updated_date, "version","name") VALUES(2, 'SYSTEM', current_timestamp, null, null, 0,'GOLD')
+db   | 2023-03-12 07:45:55.654 UTC [66] ERROR:  relation "member_type" does not exist at character 13
+db   | 2023-03-12 07:45:55.654 UTC [66] STATEMENT:  INSERT INTO member_type(id, created_by, created_date, updated_by, updated_date, "version","name") VALUES(3, 'SYSTEM', current_timestamp, null, null, 0,'SILVER')
+db   | 2023-03-12 07:45:55.655 UTC [66] ERROR:  relation "roles" does not exist at character 13
+db   | 2023-03-12 07:45:55.655 UTC [66] STATEMENT:  INSERT INTO roles(id, created_by, created_date, updated_by, updated_date, "version","name") VALUES(1, 'SYSTEM', current_timestamp, null, null, 0,'ROLE_USER')
+db   | 2023-03-12 07:45:55.656 UTC [66] ERROR:  relation "roles" does not exist at character 13
+db   | 2023-03-12 07:45:55.656 UTC [66] STATEMENT:  INSERT INTO roles(id, created_by, created_date, updated_by, updated_date, "version","name") VALUES(2, 'SYSTEM', current_timestamp, null, null, 0,'ROLE_MODERATOR')
+db   | 2023-03-12 07:45:55.656 UTC [66] ERROR:  relation "roles" does not exist at character 13
+db   | 2023-03-12 07:45:55.656 UTC [66] STATEMENT:  INSERT INTO roles(id, created_by, created_date, updated_by, updated_date, "version","name") VALUES(3, 'SYSTEM', current_timestamp, null, null, 0,'ROLE_ADMIN')
+app  | 2023-03-12T07:45:55.704Z  INFO 1 --- [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+app  | 2023-03-12T07:45:55.736Z  INFO 1 --- [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.1.7.Final
+app  | 2023-03-12T07:45:55.916Z  INFO 1 --- [           main] SQL dialect                              : HHH000400: Using dialect: org.hibernate.dialect.PostgreSQLDialect
+app  | 2023-03-12T07:45:56.373Z  WARN 1 --- [           main] o.h.engine.jdbc.spi.SqlExceptionHelper   : SQL Warning Code: 0, SQLState: 00000
+app  | 2023-03-12T07:45:56.373Z  WARN 1 --- [           main] o.h.engine.jdbc.spi.SqlExceptionHelper   : constraint "uk_9q63snka3mdh91as4io72espi" of relation "users" does not exist, skipping
+app  | 2023-03-12T07:45:56.376Z  WARN 1 --- [           main] o.h.engine.jdbc.spi.SqlExceptionHelper   : SQL Warning Code: 0, SQLState: 00000
+app  | 2023-03-12T07:45:56.376Z  WARN 1 --- [           main] o.h.engine.jdbc.spi.SqlExceptionHelper   : constraint "uk_ifjsuxbpqa2ug9srnnhskrd9j" of relation "users" does not exist, skipping
+app  | 2023-03-12T07:45:56.379Z  WARN 1 --- [           main] o.h.engine.jdbc.spi.SqlExceptionHelper   : SQL Warning Code: 0, SQLState: 00000
+app  | 2023-03-12T07:45:56.379Z  WARN 1 --- [           main] o.h.engine.jdbc.spi.SqlExceptionHelper   : constraint "uk_r43af9ap4edm43mmtq01oddj6" of relation "users" does not exist, skipping
+app  | 2023-03-12T07:45:56.383Z  INFO 1 --- [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000490: Using JtaPlatform implementation: [org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform]
+app  | 2023-03-12T07:45:56.389Z  INFO 1 --- [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+app  | 2023-03-12T07:45:56.743Z  WARN 1 --- [           main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+app  | 2023-03-12T07:45:57.371Z  INFO 1 --- [           main] o.s.s.web.DefaultSecurityFilterChain     : Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@659feb22, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@3468ee6e, org.springframework.security.web.context.SecurityContextHolderFilter@4833eff3, org.springframework.security.web.header.HeaderWriterFilter@70c69586, org.springframework.web.filter.CorsFilter@2f4b98f6, org.springframework.security.web.csrf.CsrfFilter@717d7587, org.springframework.security.web.authentication.logout.LogoutFilter@e38f0b7, com.demo.auth.security.jwt.AuthTokenFilter@51d387d3, com.demo.auth.security.csrf.CsrfCookieFilter@590c73d3, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@56928e17, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@dd2856e, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@421def93, org.springframework.security.web.session.SessionManagementFilter@3976ebfa, org.springframework.security.web.access.ExceptionTranslationFilter@6a0f2853, org.springframework.security.web.access.intercept.AuthorizationFilter@345cbf40]
+app  | 2023-03-12T07:45:57.556Z  INFO 1 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 8080 (http) with context path '/api'
+app  | 2023-03-12T07:45:57.563Z  INFO 1 --- [           main] com.demo.auth.AuthApplication            : Started AuthApplication in 3.386 seconds (process running for 3.765)
+
+```
+> อันนี้คือ Run สำเร็จทั้ง `app` และ `db`
+
+ถ้าเรา Run ครั้งแรกอาจจะช้าหน่อย เพราะ Docker ต้องไป Pull ของต่างๆลงมาเพื่อสร้าง Images, Containers
+
+<br/>
+
+ดูผ่าน Docker Application
+
+![Docker Images](/static/images/blog/springboot-docker/images.png)
+
+<br/>
+
+![Docker Containers](/static/images/blog/springboot-docker/containers.png)
+
+<br/>
+
+- ลองเข้า `localhost:8008` ถ้าเป็น Project นี้ต้องเข้า http://localhost:8008/api/swagger-ui/index.html
+- ลองต่อ Database ผ่าน Database client ดู Config ต่างๆ ก็ตามที่กำหนดไว้ใน `docker-compose.yml`
 
 --- 
 
-จะเห็นว่าขั้นตอนการ Config น้อยมากๆ แถมไม่ต้องมาเสียเวลา Setup environment อีกต่างหาก
-ถ้าเราไม่ใช้ Docker ในเครื่องเราจะต้องมี Maven , Java , PostgresSQL และเป็น Version ตามที่ Project กำหนดด้วย
-เพื่อที่จะ Run Spring Boot
+จะเห็นว่าขั้นตอนการ Config น้อยมากๆ เพียงแค่ Setup 2 file กับอีก 1 คำสั่ง ก็สามารถ Run Spring Boot ได้แล้ว 
+ไม่ว่า Computer หรือ Server ของคุณจะเป็น OS อะไรก็ตาม ขอเพียงแค่มี Docker, Docker Compose ไม่ต้องมาเสียเวลา Setup environment อีกต่างหาก
+ถ้าเราไม่ใช้ Docker ในเครื่องเราจะต้องมี Maven , Java , PostgresSQL และเป็น Version ตามที่ Project กำหนดด้วยเพื่อที่จะ Run Spring Boot
