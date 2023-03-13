@@ -1,9 +1,168 @@
 ---
-title: Config CSRF กับ Spring Security
+title: เพิ่มการป้องกัน CSRF ด้วย Spring Security
 date: '2023-03-14'
-tags: ['security','csrf']
+tags: ['springsecurity','csrf']
 draft: true
 summary: ''
 layout: PostSimple
+featureImage: "/static/images/blog/csrf-spring-security/cover.webp"
 ---
 
+<center>
+    ![Auth API Spring Boot](/static/images/blog/csrf-spring-security/cover.webp)
+</center>
+<center className="text-xs">
+  ขอบคุณรูปภาพจาก
+  [https://qph.cf2.quoracdn.net](https://qph.cf2.quoracdn.net/main-qimg-06dfec2d94073c766672abeff3a0f7bd)
+</center>
+
+Spring Boot ผมจะไม่สร้างใหม่ แต่ผมจะใช้อันเดียวกับบทความนี้ [Authentication ด้วย Spring Security & JWT](https://janescience.com/blog/auth-springsecurity-jwt)
+เอามา Implement ต่อ [Source Code](https://github.com/Janescience/auth-spring-jwt-docker) และผมจะ Config ให้ดูแค่ฝั่งของ Back-end แล้วทดสอบด้วย Postman
+
+## CSRF คืออะไร ?
+
+ชื่อเต็มคือ Cross-Site Request Forgery เป็นการโจมตี Website รูปแบบหนึ่งที่ Hacker นิยมใช้ โดยการหลอกเหยื่อให้กดลิงก์หรือเข้าใช้เว็บไซต์ที่ทาง Hacker 
+ได้เตรียมไว้แล้ว และเปลี่ยนข้อมูลบางอย่างตามที่ Hacker ต้องการ โดยจะใช้สิทธิการเข้าถึงข้อมูลของเหยื่อ กระทำการใดๆโดยที่เหยื่ออาจจะไม่รู้ตัว หรือทาง Website ไม่รู้เลยว่ากำลังโดน Hack
+เพราะการร้องขอต่างๆบ่งบอกว่าเป็นการทำรายการจาก User ด้วยตัวเอง ซึ่งได้ผลมากในยุคแรกๆ เพราะยังไม่มีการป้องกัน CSRF หรือระบบการ Authentication ยังไม่ปลอดภัยมากพอ
+
+ถ้า Website ของเราใช้วิธีการ Authentication เป็นแบบ Session หรือ Cookies รับรองได้เลยว่าวันใดที่โดนโจมตีด้วยวิธีนี้ขึ้นมาไม่รอดแน่นอน
+
+แต่ปัจจุบันการ Authentiction มีวิธีการมากมาย และปลอดภัยมากขึ้น อย่างน้อยเลยก็จะเป็นการใช้ token-base แทบไม่มีระบบไหนที่ Authen เพียงแค่ Username และ Password อย่างเดียวแล้ว
+แต่นั่นไม่ได้รับรองว่าจะปลอดภัย 100 % แต่เป็นการเพิ่มความยุ่งยาก เพิ่มความซับซ้อนให้กับ Hacker ได้มากพอตัวเลย
+
+---
+
+## จุดเริ่มต้น
+
+โปรเจคของผมใช้การ Authentication แบบ JWT อยู่แล้ว ซึ่งตัวผมเองก็ว่าเพียงพอแล้ว แต่เมื่อทำการ Scan code
+มันมี Issue แจ้งมาเรื่อง Security อยู่ในระดับร้ายแรง โดยบอกว่าพบ `.csrf().disable()` ใน `WebSecurityConfig.java` ซึ่งทางด้าน Security
+มองว่าเราปิดหรือไม่มีการป้องกัน CSRF 
+
+ซึ่งก่อนหน้านี้ผมไม่ได้สนใจมันเลยด้วยซ้ำ เลยเริ่มศึกษา และตัดสินใจเพิ่มการป้องกัน CSRF เข้าไปในโปรเจคด้วย เท่ากับว่าเป็นการอัพระดับความปลอดภัยขึ้นไปอีก
+
+---
+
+## Config `WebSecurityConfig.java`
+
+จากที่ผมได้ลองทำการ Config มันจะมีความแตกต่างระหว่างก่อนและหลัง Spring Security 6 
+
+### ก่อน Spring Security 6
+
+```java:WebSecurityConfig.java
+//...
+
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+
+@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true)
+public class WebSecurityConfig {
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+            //...
+            .csrf()
+            .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse());
+        return http.build();
+    }
+}
+```
+
+Config แค่นี้เลยและการทำงานจะเป็นแบบนี้
+
+- **Response** ทุก Response จะมี Cookie reponse เป็น `XSRF-TOKEN` และ Value เป็นแบบ Random
+- **Request** ทุก Request ที่ Http Method ไม่ใช่ `GET` ต้องมี Request Headers `X-XSRF-TOKEN` และ Value เป็น `XSRF-TOKEN` จากการ Response ก่อนหน้า
+
+<br/>
+
+<center>. . .</center>
+
+<br/>
+
+### Spring Security 6 ขึ้นไป
+
+Spring Security เวอร์ชั่นนี้ไม่ Auto response `XSRF-TOKEN` อีกต่อไปแล้ว ต้องสร้าง `CsrfCookieFilter` เพิ่มมา
+เพื่อ Response `XSRF-TOKEN` ทุกๆ Response
+
+```java:WebSecurityConfig.java
+//...
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
+
+import com.demo.auth.security.csrf.CsrfCookieFilter;
+
+@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true)
+public class WebSecurityConfig {
+    @Autowired
+    private CsrfCookieFilter csrfCookieFilter;
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        CookieCsrfTokenRepository tokenRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
+	    CsrfTokenRequestAttributeHandler requestHandler = new CsrfTokenRequestAttributeHandler();
+        // set the name of the attribute the CsrfToken will be populated on
+	    requestHandler.setCsrfRequestAttributeName("_csrf");
+
+        http
+            //...
+            .csrf((csrf) -> csrf
+			    .csrfTokenRepository(tokenRepository)
+			    .csrfTokenRequestHandler(requestHandler)
+		    )
+            .addFilterAfter(csrfCookieFilter, BasicAuthenticationFilter.class)
+        return http.build();
+    }
+}
+```
+
+```java:CsrfCookieFilter.java
+package com.demo.auth.security.csrf;
+
+import java.io.IOException;
+
+import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+@Component
+public class CsrfCookieFilter extends OncePerRequestFilter {
+
+	@Override
+	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+			throws ServletException, IOException {
+		CsrfToken csrfToken = (CsrfToken) request.getAttribute(CsrfToken.class.getName());
+		// Render the token value to a cookie by causing the deferred token to be loaded
+		if(csrfToken != null){
+			csrfToken.getToken();
+		}
+
+		filterChain.doFilter(request, response);
+	}
+}
+```
+
+---
+
+## ทดสอบด้วย Postman
+
+1. เพิ่ม Environment และเพิ่มตัวแปร `xsrf-token`
+
+![Postman variable](/static/images/blog/csrf-spring-security/postman-variable.png)
+
+2. Tab Test เขียน Script set ค่าให้กับตัวแปร `xsrf-token` โดยดึงค่าจาก Cookie response
+
+```js
+pm.environment.set("xsrf-token", pm.cookies.get('XSRF-TOKEN'));
+```
+
+3. เพิ่ม `X-XSRF-TOKEN` ใน Request Headers โดยกำหนดค่าเป็นตัวแปร `xsrf-token`
+
+![Postman variable](/static/images/blog/csrf-spring-security/postman-header.png)

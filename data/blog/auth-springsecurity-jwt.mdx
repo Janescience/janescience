@@ -1891,8 +1891,29 @@ public class SwaggerConfiguration {
 
 --- 
 
+## Fix issue
+
+ถ้าลองเรียก API แล้วเจอ Error แบบนี้
+
+```bash
+java.lang.NoClassDefFoundError: javax/xml/bind/DatatypeConverter
+```
+
+ให้เพิ่ม Dependency นี้ที่ `pom.xml`
+
+```xml:pom.xml
+		<dependency>
+			<groupId>javax.xml.bind</groupId>
+			<artifactId>jaxb-api</artifactId>
+			<version>2.3.1</version>
+		</dependency>
+```
+
+--- 
+
 บทความนี้ใช้เวลาเขียนค่อนข้างนานเลย เพราะผม Dev ไปด้วยเขียนไปด้วย พร้อมๆกัน และใช้ Spring Boot 3 
 ซึ่งหลายๆคนที่เขียน Spring Boot มาคงทราบดีว่ามีการเปลี่ยนแปลงมากแค่ไหน จาก 2 ไป 3 ซึ่งถ้าให้ผม Migrate จาก 2 ไป 3 
 บอกเลยว่าเขียนใหม่คงง่ายกว่า555 
 
 [Source Code](https://github.com/Janescience/auth-spring-jwt-docker)
+
