@@ -1,9 +1,10 @@
 ---
-title: เพิ่มการป้องกัน CSRF ด้วย Spring Security
+title: เพิ่มการป้องกัน CSRF ให้กับ Spring Security
 date: '2023-03-14'
 tags: ['springsecurity','csrf']
-draft: true
-summary: ''
+draft: false
+summary: 'Cross-Site Request Forgery เป็นการโจมตี Website รูปแบบหนึ่งที่ Hacker นิยมใช้ โดยการหลอกเหยื่อให้กดลิงก์หรือเข้าใช้เว็บไซต์ที่ทาง Hacker 
+ได้เตรียมไว้แล้ว และเปลี่ยนข้อมูลบางอย่างตามที่ Hacker ต้องการ โดยจะใช้สิทธิการเข้าถึงข้อมูลของเหยื่อ กระทำการใดๆโดยที่เหยื่ออาจจะไม่รู้ตัว'
 layout: PostSimple
 featureImage: "/static/images/blog/csrf-spring-security/cover.webp"
 ---
@@ -40,6 +41,8 @@ Spring Boot ผมจะไม่สร้างใหม่ แต่ผมจ�
 
 ซึ่งก่อนหน้านี้ผมไม่ได้สนใจมันเลยด้วยซ้ำ เลยเริ่มศึกษา และตัดสินใจเพิ่มการป้องกัน CSRF เข้าไปในโปรเจคด้วย เท่ากับว่าเป็นการอัพระดับความปลอดภัยขึ้นไปอีก
 
+> โดยปกดิแล้ว Spring Security จะ Default การ Config มาให้เป็น `.csrf().disable()` เสมอ
+
 ---
 
 ## Config `WebSecurityConfig.java`
@@ -67,11 +70,7 @@ public class WebSecurityConfig {
     }
 }
 ```
-
-Config แค่นี้เลยและการทำงานจะเป็นแบบนี้
-
-- **Response** ทุก Response จะมี Cookie reponse เป็น `XSRF-TOKEN` และ Value เป็นแบบ Random
-- **Request** ทุก Request ที่ Http Method ไม่ใช่ `GET` ต้องมี Request Headers `X-XSRF-TOKEN` และ Value เป็น `XSRF-TOKEN` จากการ Response ก่อนหน้า
+> Config แค่นี้เลย
 
 <br/>
 
@@ -81,23 +80,16 @@ Config แค่นี้เลยและการทำงานจะเป�
 
 ### Spring Security 6 ขึ้นไป
 
-Spring Security เวอร์ชั่นนี้ไม่ Auto response `XSRF-TOKEN` อีกต่อไปแล้ว ต้องสร้าง `CsrfCookieFilter` เพิ่มมา
-เพื่อ Response `XSRF-TOKEN` ทุกๆ Response
-
 ```java:WebSecurityConfig.java
 //...
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 
-import com.demo.auth.security.csrf.CsrfCookieFilter;
-
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)
 public class WebSecurityConfig {
-    @Autowired
-    private CsrfCookieFilter csrfCookieFilter;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -112,42 +104,60 @@ public class WebSecurityConfig {
 			    .csrfTokenRepository(tokenRepository)
 			    .csrfTokenRequestHandler(requestHandler)
 		    )
-            .addFilterAfter(csrfCookieFilter, BasicAuthenticationFilter.class)
         return http.build();
     }
-}
 ```
+> จะมีการ Config เพิ่มมาเล็กน้อย
 
-```java:CsrfCookieFilter.java
-package com.demo.auth.security.csrf;
+---
 
-import java.io.IOException;
+## หลักการทำงาน
+
+CSRF ใช้ไม่ได้กับ Http Mehtod ที่เป็น `GET` เพราะด้วยหลักการแล้วเป็นเพียงแค่การดึงข้อมูล ถ้าใน Logic ของคุณมีการ Create,Update หรือ Delete ควรเปลี่ยนมาใข้
+`PUT, POST, DELETE` หรือ `PATCH`
+
+- **Response** ทุก Response จะมี Cookie response เป็น `XSRF-TOKEN` และ Value เป็นแบบ Token Random
+
+    ![XSRF Token](/static/images/blog/csrf-spring-security/xsrf-token.png)
+
+- **Request** ทุก Request ต้องมี Request Headers `X-XSRF-TOKEN` 
+    - URLs ที่ไม่ต้อง Authen (`.requestMatchers(...).permitAll()`) อย่างเช่น `/signup`, `signin` 
+    สามารถใช้ Token เดิมได้ตลอด ไม่ต้อง Random ใหม่ แต่ต้องมี `X-XSRF-TOKEN` ในทุก Request 
+        > แล้วการ Reuqest ครั้งแรก จะเอา Token มาจากไหน ? นั่นแหล่ะ แสดงว่าเมื่อเข้า Website ในครั้งแรกจะต้องมีการร้องขอสร้าง CSRF Token ไว้รอ
+    - URLs ที่ต้องผ่านการ Authen (`.requestMatchers(...).authenticated()`) ไม่สามารถใช้ Token เดิมได้ต้องเปลี่ยน Token ทุก Request การทำงานจะเป็นแบบนี้
+        1. เราส่ง `X-XSRF-TOKEN` ให้ Server 
+        2. ทางฝั่ง Server ทำการ Verify กับ Token ก่อนหน้า และ Token อันนี้ไม่สามารถใช้ได้อีกแล้ว
+        3. สร้าง Token ใหม่แบบ Random (ฝั่ง Server จำแล้วว่า Request ถัดไปต้องใช้ Token อันนี้เท่านั้น)
+        4. ส่งกลับมาทาง Cookie response `XSRF-TOKEN` เพื่อนำไปใช้ใน Request ถัดไป วนแบบนี้ไปเรื่อยๆ
+
+---
+
+## CSRF Token Controller
+
+สำหรับสร้าง CSRF Token ไว้ใช้ในการ Request ครั้งแรก
+
+```java:CsrfController.java
+package com.demo.auth.controllers;
 
 import org.springframework.security.web.csrf.CsrfToken;
-import org.springframework.stereotype.Component;
-import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+@CrossOrigin(origins = "*", maxAge = 3600)
+@RestController
+@RequestMapping("/csrf")
+public class CsrfController {
 
-@Component
-public class CsrfCookieFilter extends OncePerRequestFilter {
-
-	@Override
-	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-			throws ServletException, IOException {
-		CsrfToken csrfToken = (CsrfToken) request.getAttribute(CsrfToken.class.getName());
-		// Render the token value to a cookie by causing the deferred token to be loaded
-		if(csrfToken != null){
-			csrfToken.getToken();
-		}
-
-		filterChain.doFilter(request, response);
+    @GetMapping("/firsttime")
+	public CsrfToken allAccess(CsrfToken token) {
+        return token;
 	}
 }
 ```
+
+อย่าลืมเพิ่ม `.requestMatchers("/csrf/**")).permitAll()`
 
 ---
 
@@ -166,3 +176,20 @@ pm.environment.set("xsrf-token", pm.cookies.get('XSRF-TOKEN'));
 3. เพิ่ม `X-XSRF-TOKEN` ใน Request Headers โดยกำหนดค่าเป็นตัวแปร `xsrf-token`
 
 ![Postman variable](/static/images/blog/csrf-spring-security/postman-header.png)
+
+4. ยิง Postman สร้าง CSRF Token (สำหรับครั้งแรกเท่านั้น)
+
+![Postman variable](/static/images/blog/csrf-spring-security/create-csrf-token.png)
+
+5. ยิง Postman `/signin`
+    - แบบมี `X-XSRF-TOKEN`
+
+        ![Postman variable](/static/images/blog/csrf-spring-security/signin-success.png)
+
+    - แบบไม่มี `X-XSRF-TOKEN`
+
+        ![Postman variable](/static/images/blog/csrf-spring-security/signin-401.png)
+
+6. ตรวจสอบ Value ของตัวแปร
+
+![Postman variable](/static/images/blog/csrf-spring-security/see-value.png)
