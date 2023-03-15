@@ -16,7 +16,7 @@ featureImage: "/static/images/blog/csrf-spring-security/cover.webp"
 </center>
 
 Spring Boot ผมจะไม่สร้างใหม่ แต่ผมจะใช้อันเดียวกับบทความนี้ [Authentication ด้วย Spring Security & JWT](https://janescience.com/blog/auth-springsecurity-jwt)
-เอามา Implement ต่อ [Source Code](https://github.com/Janescience/auth-springsecurity-jwt) และผมจะ Config ให้ดูแค่ฝั่งของ Back-end แล้วทดสอบด้วย Postman
+เอามา Implement ต่อ [Source Code](https://github.com/Janescience/auth-springsecurity-jwt)
 
 ## CSRF คืออะไร ?
 
@@ -153,6 +153,40 @@ public class CsrfController {
 ```
 
 อย่าลืมเพิ่ม `.requestMatchers("/csrf/**")).permitAll()`
+
+---
+
+## ตัวอย่าง Front-End สำหรับการใช้งาน CSRF
+
+```js:services.js
+import axios from 'axios'
+
+// Add a response interceptor to get the CSRF token from the cookie
+axios.interceptors.response.use(
+  response => {
+    const xsrfToken = response.headers['set-cookie']
+      .find(cookie => cookie.startsWith('XSRF-TOKEN='))
+      .split(';')[0]
+      .split('=')[1]
+
+    if (xsrfToken) {
+      axios.defaults.headers.common['X-XSRF-TOKEN'] = xsrfToken
+    }
+
+    return response
+  },
+  error => {
+    return Promise.reject(error)
+  }
+)
+
+// Make a POST request with CSRF token included
+axios.post('/api/post-data', {
+  data: 'example data'
+})
+```
+
+ต้องทำ Interceptor สำหรับ Response
 
 ---
 
