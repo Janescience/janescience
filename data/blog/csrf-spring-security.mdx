@@ -117,7 +117,8 @@ CSRF ใช้ไม่ได้กับ Http Mehtod ที่เป็น `GET
 
 - **Request** ทุก Request ต้องมี Request Headers `X-XSRF-TOKEN`
   - URLs ที่ไม่ต้อง Authen (`.requestMatchers(...).permitAll()`) อย่างเช่น `/signup`, `signin`
-    สามารถใช้ Token เดิมได้ตลอด ไม่ต้อง Random ใหม่ แต่ต้องมี `X-XSRF-TOKEN` ในทุก Request > แล้วการ Reuqest ครั้งแรก จะเอา Token มาจากไหน ? นั่นแหล่ะ แสดงว่าเมื่อเข้า Website ในครั้งแรกจะต้องมีการร้องขอสร้าง CSRF Token ไว้รอ
+    สามารถใช้ Token เดิมได้ตลอด ไม่ต้อง Random ใหม่ แต่ต้องมี `X-XSRF-TOKEN` ในทุก Request
+    > แล้วการ Reuqest ครั้งแรก จะเอา Token มาจากไหน ? สามารถทำได้ด้วยการ Call API อะไรก็ได้ด้วย Http Method 'GET' ก็จะได้ `XSRF-TOKEN` กลับมาแล้ว
   - URLs ที่ต้องผ่านการ Authen (`.requestMatchers(...).authenticated()`) ไม่สามารถใช้ Token เดิมได้ต้องเปลี่ยน Token ทุก Request การทำงานจะเป็นแบบนี้
     1. เราส่ง `X-XSRF-TOKEN` ให้ Server
     2. ทางฝั่ง Server ทำการ Verify กับ Token ก่อนหน้า และ Token อันนี้ไม่สามารถใช้ได้อีกแล้ว
