@@ -1,0 +1,66 @@
+---
+title: ทำ JWT Refresh Token ด้วย Spring Boot
+date: '2023-03-18'
+tags: ['jwt','springboot']
+draft: true
+summary: ''
+layout: PostSimple
+featureImage: "/static/images/blog/springboot-jwt-refreshtoken/cover.jpeg"
+---
+
+<center>
+    ![Auth API Spring Boot](/static/images/blog/springboot-jwt-refreshtoken/cover.jpeg)
+</center>
+<center className="text-xs">
+  ขอบคุณรูปภาพจาก
+  [https://i.ytimg.com](https://i.ytimg.com/vi/ahDQI7msr0A/maxresdefault.jpg)
+</center>
+
+> แนะนำว่าควรเข้าใจเรื่อง Json Web Token (JWT) มาก่อน เพื่อความเข้าใจของผู้อ่านเอง
+
+Spring Boot ผมจะไม่สร้างใหม่ แต่ผมจะใช้อันเดียวกับบทความนี้ [Authentication ด้วย Spring Security & JWT](https://janescience.com/blog/auth-springsecurity-jwt)
+เอามา Implement ต่อ [Source Code](https://github.com/Janescience/auth-springsecurity-jwt) และผมจะ Config ให้ดูแค่ฝั่งของ Back-end แล้วทดสอบด้วย Postman
+
+## ทำไมต้องทำ Refresh Token
+
+### แค่มี Access Token ปกติก็พอแล้วนี่ ? เรามาดูข้อเสียของมันก่อนดีกว่า
+1. การทำ JWT เป็นการทำ Authorize แบบสั้นๆ Access Token มีเวลาหมดอายุ พอหมดอายุแล้ว User ต้อง Login ใหม่เพื่อสร้าง Access Token ใหม่
+ซึ่งการที่ User ต้อง Login ใหม่บ่อยๆ ก็คงจะน่ารำคาญไม่ใช่น้อย ทำให้ประสบการณ์การใช้งานอาจจะไม่ดีเท่าไหร่
+2. ไม่สามารถระงับหรือบังคับให้ Access Token หมดอายุได้ ถ้าเราถูกขโมย Access Token ไปไม่สามารถทำอะไรได้เลย User ต้อง Logout และ Login อีกครั้ง เพื่อเคลียร์​ Access Token อันเดิมออกไป 
+หรือจนกว่า Access Token จะหมดอายุไปเอง
+3. ย้อนไปข้อ 1. ถ้าบอกว่างั้นก็ทำให้ Access Token ใช้งานได้นานๆสิ นั่นแหล่ะครับ ยิ่งไม่มีความปลอดภัยเลย ถ้ามีคนมาขโมย Access Token ของเราไปได้ แบบที่เราไม่รู้ตัว 
+คนๆนั้นก็จะยิ่งมีเวลาใช้งาน User ของเรานานมากขึ้นตามที่เรากำหนดไว้ การกำหนดเวลาหมดอายุอย่างมากเลย ไม่ควรมากกว่า 15 นาที
+
+### แล้วการทำ Refresh Token มันช่วยอะไรล่ะ ?
+
+หลักการทำงานของ Refresh Token จะประมาณนี้
+
+เราจะกำหนดเวลาหมดอายุของ Refresh Token ไว้ที่ 1 วัน และกำหนดเวลาหมดอายุของ Access Token อยู่ที่ 5 นาที
+และเมื่อครบ 5 นาที ระบบของเราจะรู้ว่า Access Token หมดอายุแล้ว และจะ Auto Request ไปสร้าง Access Token ใหม่
+โดยส่ง Refresh Token ไปด้วยเสมอเพื่อเช็คว่า Refresh Token หมดอายุหรือยัง ถ้ายังก็จะสร้าง Access Token ใหม่ 
+โดยที่ User ไม่รู้ตัวและไม่จำเป็นต้อง Login ใหม่ User จะ Login ใหม่ก็ต่อเมื่อ Refresh Token หมดอายุแล้วเท่านั้น
+
+1. มีความปลอดภัยมากขึ้น (เพราะปรับให้ Access Token หมดอายุเร็วกกว่าปกติได้) โดยที่ User ไม่ต้อง Login ใหม่บ่อยๆ ประสบการณ์การใข้งานจะดีขึ้น
+2. สามารถเลิกใช้งาน Access Token ได้ เพราะเราเก็บ Refresh Token ล่าสุดของ User แต่ล่ะคนไว้ใน DB แค่ปรับให้หมดอายุ 
+เมื่อ User เข้ามาทำอะไรกับ Website สักอย่างก็จะเด้งออกไปให้ Login ใหม่ทันที
+
+---
+
+## Implements
+
+เพิ่มเวลาหมดอายุของ Refresh Token
+
+```properties:application.properties
+# JWT Config
+jwtSecret=auth-spring-jwt-docker-secret-key
+# 5 minutes.
+jwtExpirationMs=300000
+# 24 hours.
+jwtRefreshExpirationMs=86400000
+
+## For test
+# 1 minute.
+#jwtExpirationMs=60000
+# 2 minutes.
+#jwtRefreshExpirationMs= 120000
+```
