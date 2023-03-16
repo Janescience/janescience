@@ -147,7 +147,7 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken,Long>
 
 ### Exception
 
-เราจะแยก Exception ออกมาต่างหาก เพื่อ Custom ได้ว่าจะมีค่าอะไรบ้าง
+เราจะแยก Exception ออกมาต่างหาก เพื่อ Custom ได้ว่าจะมีค่าอะไรบ้าง เอาไว้ใช้กับ `@RestControllerAdvice`
 
 ```java:/exception/TokenRefreshException.java
 package com.demo.auth.exception;
@@ -185,11 +185,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.demo.auth.entity.app.RefreshToken;
+import com.demo.auth.entity.app.User;
 import com.demo.auth.repository.RefreshTokenRepository;
 import com.demo.auth.repository.UserRepository;
 import com.demo.auth.exception.TokenRefreshException;
-
-import jakarta.transaction.Transactional;
 
 @Service
 public class RefreshTokenService {
@@ -208,9 +207,16 @@ public class RefreshTokenService {
     }
 
     public RefreshToken createRefreshToken(Long userId) {
+        User user = userRepository.findById(userId).get();
+
+        Optional<RefreshToken> oldRefreshToken = refreshTokenRepository.findByUser(user);
+        if(oldRefreshToken.isPresent()){
+            refreshTokenRepository.deleteByUser(user);
+        }
+
         RefreshToken refreshToken = new RefreshToken();
 
-        refreshToken.setUser(userRepository.findById(userId).get());
+        refreshToken.setUser(user);
         refreshToken.setExpiryDate(Instant.now().plusMillis(refreshTokenDurationMs));
         refreshToken.setToken(UUID.randomUUID().toString());
 
@@ -226,20 +232,15 @@ public class RefreshTokenService {
 
         return token;
     }
-
-    @Transactional
-    public int deleteByUserId(Long userId) {
-        return refreshTokenRepository.deleteByUser(userRepository.findById(userId).get());
-    }
 }
+
 ```
 
 มีด้วยกัน 4 Functions
 - ค้นหา Refresh Token ด้วย Token
-- สร้าง Refresh Token
+- สร้าง Refresh Token ก่อนจะสร้าง มีการเช็คเงื่อนไขเพื่อลบ Refresh Token เก่า
 - เช็คว่า Refresh Token หมดอายุหรือยัง
-- ลบ Refresh Token ด้วย User Id 
-> `@Transactional` สำหรับ Rollback ในกรณีที่ `findById` error 
+
 
 <br/>
 
@@ -316,6 +317,9 @@ public class JwtResponse {
 
 ### Advice
 
+การทำ `@RestControllerAdvide` เป็นการทำ Handler สำหรับ Custom Error 
+ว่าเวลาเกิด Error อยากให้มันส่งค่าอะไรกลับไปบอกบ้าง
+
 ```java:/advice/TokenControllerAdvice.java
 package com.demo.auth.advice;
 
@@ -344,8 +348,11 @@ public class TokenControllerAdvice {
 
 }
 ```
+> เรา Trigger ไว้กับ `TokenRefreshException.java` เมื่อเรียกใช้ TokenRefreshException ก็จะมาที่นี่ก่อนที่จะ Return error ออกไป
 
 <br/>
+
+สร้าง Error model  
 
 ```java:/advice/ErrorMessage.java
 package com.demo.auth.advice;
@@ -367,5 +374,88 @@ public class ErrorMessage {
       this.message = message;
       this.description = description;
     }
+}
+```
+
+<br/>
+
+<center>. . .</center>
+
+<br/>
+
+### Controller
+
+ปรับ Logic ใน `/auth/signin` นิดหน่อย
+
+```java:/controllers/AuthController.java
+
+import com.demo.auth.entity.app.RefreshToken;
+
+@CrossOrigin(origins = "*", maxAge = 3600)
+@RestController
+@RequestMapping("/auth")
+public class AuthController {
+    //...
+
+    @Autowired
+  	RefreshTokenService refreshTokenService;
+
+    @PostMapping("/signin")
+	public ResponseEntity<?> authenticateUser(@Valid @RequestBody SigninRequest req) {
+
+        //...
+
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();	
+
+		String jwt = jwtUtil.generateJwtToken(userDetails);
+
+        //...
+
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(userDetails.getId());
+
+        return ResponseEntity.ok(new JwtResponse(
+
+                                                //...
+
+												refreshToken.getToken()
+                                    
+                                                 ));
+    }
+
+}
+```
+
+<br/>
+
+เพิ่ม `/refreshtoken`
+
+```java:/controllers/AuthController.java
+
+import com.demo.auth.entity.app.RefreshToken;
+
+import com.demo.auth.payload.request.TokenRefreshRequest;
+import com.demo.auth.payload.response.TokenRefreshResponse;
+import com.demo.auth.exception.TokenRefreshException;
+
+@CrossOrigin(origins = "*", maxAge = 3600)
+@RestController
+@RequestMapping("/auth")
+public class AuthController {
+    //...
+
+    @PostMapping("/refreshtoken")
+	public ResponseEntity<?> refreshtoken(@Valid @RequestBody TokenRefreshRequest request) {
+		String requestRefreshToken = request.getRefreshToken();
+
+		return refreshTokenService.findByToken(requestRefreshToken)
+			.map(refreshTokenService::verifyExpiration)
+			.map(RefreshToken::getUser)
+			.map(user -> {
+					String token = jwtUtil.generateTokenFromUsername(user.getUsername());
+					return ResponseEntity.ok(new TokenRefreshResponse(token, requestRefreshToken));
+				}
+			)
+			.orElseThrow(() -> new TokenRefreshException(requestRefreshToken,"Refresh token is not in database!"));
+	}
 }
 ```
