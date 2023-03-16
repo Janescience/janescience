@@ -48,6 +48,9 @@ Spring Boot ผมจะไม่สร้างใหม่ แต่ผมจ�
 
 ## Implements
 
+
+### application.propperties
+
 เพิ่มเวลาหมดอายุของ Refresh Token
 
 ```properties:application.properties
@@ -63,4 +66,306 @@ jwtRefreshExpirationMs=86400000
 #jwtExpirationMs=60000
 # 2 minutes.
 #jwtRefreshExpirationMs= 120000
+```
+
+<br/>
+
+<center>. . .</center>
+
+<br/>
+
+### Entity
+
+เพิ่มตารางสำหรับเก็บ Refresh Token ของแต่ล่ะ User
+
+```java:/entity/app/RefreshToken.java
+package com.demo.auth.entity.app;
+
+import java.time.Instant;
+
+import com.demo.auth.entity.base.BaseEntity;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+import lombok.Data;
+
+@Data
+@Entity
+public class RefreshToken extends BaseEntity{
+    @OneToOne
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
+    private User user;
+
+    @Column(nullable = false, unique = true)
+    private String token;
+
+    @Column(nullable = false)
+    private Instant expiryDate;
+}
+
+```
+
+<br/>
+
+<center>. . .</center>
+
+<br/>
+
+### Repository
+
+มี Entity แล้วก็ต้องมี Repository สำหรับทำ CRUD 
+
+```java:/repository/RefreshTokenRepository.java
+package com.demo.auth.repository;
+
+import java.util.Optional;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.stereotype.Repository;
+
+import com.demo.auth.entity.app.RefreshToken;
+import com.demo.auth.entity.app.User;
+
+@Repository
+public interface RefreshTokenRepository extends JpaRepository<RefreshToken,Long>{
+    Optional<RefreshToken> findByToken(String token);
+
+    @Modifying
+    int deleteByUser(User user);
+}
+```
+> สำหรับ 1 User จะมีแค่ 1 Refresh Token เท่านั้นเมื่อได้ Refresh Token ใหม่จะต้องลบอันเก่าทิ้ง และถ้าไม่ได้ `SELECT` จะต้องมี `@Modifying`
+
+<br/>
+
+<center>. . .</center>
+
+<br/>
+
+### Exception
+
+เราจะแยก Exception ออกมาต่างหาก เพื่อ Custom ได้ว่าจะมีค่าอะไรบ้าง
+
+```java:/exception/TokenRefreshException.java
+package com.demo.auth.exception;
+
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.http.HttpStatus;
+
+@ResponseStatus(HttpStatus.FORBIDDEN)
+public class TokenRefreshException extends RuntimeException {
+    private static final long serialVersionUID = 1L;
+
+    public TokenRefreshException(String token, String message) {
+      super(String.format("Failed for [%s]: %s", token, message));
+    }
+}
+```
+
+<br/>
+
+<center>. . .</center>
+
+<br/>
+
+### Service
+
+```java:/security/services/RefreshTokenService.java
+package com.demo.auth.security.services;
+
+import java.time.Instant;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import com.demo.auth.entity.app.RefreshToken;
+import com.demo.auth.repository.RefreshTokenRepository;
+import com.demo.auth.repository.UserRepository;
+import com.demo.auth.exception.TokenRefreshException;
+
+import jakarta.transaction.Transactional;
+
+@Service
+public class RefreshTokenService {
+
+    @Value("${jwtRefreshExpirationMs}")
+    private Long refreshTokenDurationMs;
+
+    @Autowired
+    private RefreshTokenRepository refreshTokenRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    public Optional<RefreshToken> findByToken(String token) {
+        return refreshTokenRepository.findByToken(token);
+    }
+
+    public RefreshToken createRefreshToken(Long userId) {
+        RefreshToken refreshToken = new RefreshToken();
+
+        refreshToken.setUser(userRepository.findById(userId).get());
+        refreshToken.setExpiryDate(Instant.now().plusMillis(refreshTokenDurationMs));
+        refreshToken.setToken(UUID.randomUUID().toString());
+
+        refreshToken = refreshTokenRepository.save(refreshToken);
+        return refreshToken;
+    }
+
+    public RefreshToken verifyExpiration(RefreshToken token) {
+        if (token.getExpiryDate().compareTo(Instant.now()) < 0) {
+            refreshTokenRepository.delete(token);
+            throw new TokenRefreshException(token.getToken(), "Refresh token was expired. Please make a new signin request");
+        }
+
+        return token;
+    }
+
+    @Transactional
+    public int deleteByUserId(Long userId) {
+        return refreshTokenRepository.deleteByUser(userRepository.findById(userId).get());
+    }
+}
+```
+
+มีด้วยกัน 4 Functions
+- ค้นหา Refresh Token ด้วย Token
+- สร้าง Refresh Token
+- เช็คว่า Refresh Token หมดอายุหรือยัง
+- ลบ Refresh Token ด้วย User Id 
+> `@Transactional` สำหรับ Rollback ในกรณีที่ `findById` error 
+
+<br/>
+
+<center>. . .</center>
+
+<br/>
+
+### Payload
+
+```java:/payload/request/TokenRefreshRequest.java
+package com.demo.auth.payload.request;
+
+import jakarta.validation.constraints.NotBlank;
+import lombok.Data;
+
+@Data
+public class TokenRefreshRequest {
+    @NotBlank
+    private String refreshToken;
+}
+```
+
+<br/>
+
+```java:/payload/response/TokenRefreshResponse.java
+package com.demo.auth.payload.response;
+
+import lombok.Data;
+
+@Data
+public class TokenRefreshResponse {
+    private String accessToken;
+    private String refreshToken;
+    private String tokenType = "Bearer";
+
+    public TokenRefreshResponse(String accessToken, String refreshToken) {
+        this.accessToken = accessToken;
+        this.refreshToken = refreshToken;
+    }
+}
+```
+
+<br/>
+
+แก้ไขเพิ่ม `refreshToken`
+```java:/payload/response/JwtResponse.java
+
+//...
+public class JwtResponse {
+
+    //...
+    private String refreshToken;
+
+    //...
+
+    public JwtResponse(
+        //...
+        String refreshToken, 
+        //...
+        ) 
+    {
+        //...
+        this.refreshToken = refreshToken;
+        //...
+    }
+}
+```
+
+<br/>
+
+<center>. . .</center>
+
+<br/>
+
+### Advice
+
+```java:/advice/TokenControllerAdvice.java
+package com.demo.auth.advice;
+
+import java.util.Date;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.WebRequest;
+
+import com.demo.auth.exception.TokenRefreshException;
+
+@RestControllerAdvice
+public class TokenControllerAdvice {
+
+    @ExceptionHandler(value = TokenRefreshException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ErrorMessage handleTokenRefreshException(TokenRefreshException ex, WebRequest request) {
+        return new ErrorMessage(
+            HttpStatus.FORBIDDEN.value(),
+            new Date(),
+            ex.getMessage(),
+            request.getDescription(false));
+    }
+
+}
+```
+
+<br/>
+
+```java:/advice/ErrorMessage.java
+package com.demo.auth.advice;
+
+import java.util.Date;
+
+import lombok.Data;
+
+@Data
+public class ErrorMessage {
+    private int statusCode;
+    private Date timestamp;
+    private String message;
+    private String description;
+  
+    public ErrorMessage(int statusCode, Date timestamp, String message, String description) {
+      this.statusCode = statusCode;
+      this.timestamp = timestamp;
+      this.message = message;
+      this.description = description;
+    }
+}
 ```
