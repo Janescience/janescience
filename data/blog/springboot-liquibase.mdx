@@ -42,25 +42,28 @@ _<center className="text-xs">ขอบคุณรูปภาพจาก [java
 
 ### Liquibase คืออะไร ?
 
-เป็นเครื่องมือที่ช่วยจัดการในส่วนของ Database ไม่ว่าจะเป็น Insert , Update , Delete ข้อมูล หรือ Create , Drop , Alter  ตาราง หรือ Add , Drop , Alter คอลัมน์ และอื่นๆ
-อยู่ในรูปแบบของ XML, SQL, YAML, JSON โดย Syntax ของ Script ไม่ได้ยึดตาม Database นอกจากจะเขียนเป็น SQL
+เป็นเครื่องมือ Open Source ที่ช่วยจัดการ Database Schema โดยจะยึดตามการเปลี่ยนแปลงของโครงสร้างต่างๆของตาราง (Table,Column,View,Sequence) หรือแม้แต่การย้ายฐานข้อมูล
+เปรียบเสมือน Tool ที่คอยตรวจสอบและดูแลทุกอย่างใน Database ให้เป็นปัจจุบันเสมอในทุก Environment  อยู่ในรูปแบบของ XML, YAML หรือ JSON 
+โดย Syntax ไม่ได้ยึดตาม Database Platform ที่ใช้ สามารถ Custom เพิ่มเติมได้ด้วยการเขียน SQL Script รองรับทั้ง MySQL, PostgreSQL, Oracle, SQL Server และอื่นๆ
 
 <center>. . .</center>
 
 ### ทำไมต้องใช้ Liquibase ?
 
-โครงสร้างข้อมูลและตารางจะเหมือนกันทุก Environment ไม่ว่าจะ Run Project ที่ไหน โดยไม่ต้องมาคอยจัดการ Script Database ทุกครั้งที่มีการ Deploy SIT , UAT หรือ Production
-รวมถึงการย้าย Server , Environment และเปลี่ยน Database
+Database Schemas จะเป็นปัจจุบันและเหมือนกันทุก Environment โดยไม่ต้องมาคอยดูแลและจัดการ Script ทุกครั้งด้วยตัวเอง (ลด Human Error)
+รวมถึงการย้าย Server , Environment หรือเปลี่ยน Database ก็สามารถทำได้ง่ายขึ้น
 
 <center>. . .</center>
 
 ### ถ้าไม่ใช้ Liquibase ต้องทำไรบ้าง ?
 
 1. หลังจาก Run script SQL บน Dev แล้วต้องมีการจัดเก็บ Script ส่วนนี้ไว้ทุกครั้ง โดยต้องมีที่จัดเก็บให้เป็นระเบียบ และมีโอกาสที่ Developer จะลืมหรือตกหล่นไปบาง Script ด้วย
-2. จากข้อ 1. ที่พูดถึงการจัดเก็บ Script บางครั้ง ถ้า Script นั้น Developer ไม่ได้เป็นคนเขียน แต่เป็น BA , SA หรือตำแหน่งอื่นๆ Script นั้นอาจจะไม่ได้ถูกจัดเก็บไว้ใน Project ซึ่งที่ถูกต้องควรจะอยู่ใน Project นั้นๆ
-3. หลังจาก ​Deploy แล้วต้องนำ Script ที่เตรียมไว้มา Run อีกรอบบน Environment นั้นๆ ขั้นตอนนี้มีโอกาสที่จะนำ Script มา Run ไม่ครบ หรือ Run ผิด Sequence อาจจะทำให้เกิดปัญหา Deploy ไม่ผ่าน
+2. จากข้อ 1. ที่พูดถึงการจัดเก็บ Script บางครั้ง ถ้า Script นั้น Developer ไม่ได้เป็นคนเขียน แต่เป็น BA , SA หรือตำแหน่งอื่นๆ Script นั้นอาจจะไม่ได้ถูกจัดเก็บไว้ใน Project 
+ซึ่งที่ถูกต้องควรจะอยู่ใน Project นั้นๆ
+3. หลังจาก Deploy แล้วต้องนำ Script ที่เตรียมไว้มา Run อีกรอบบน Environment นั้นๆ ขั้นตอนนี้มีโอกาสที่จะนำ Script มา Run ไม่ครบ หรือ Run ผิด Sequence อาจจะทำให้เกิดปัญหา Deploy ไม่ผ่าน
 
-ลองคิดเล่นๆดูนะครับ ถ้าการ Deploy ในรอบนั้น มีอยู่ประมาณ 10 Script และคนที่ Deploy ไม่ใช่ Developer เจ้าของ Script มีหน้าที่แค่เอาทุกอย่างที่เตรียมไว้ไป Deploy ตาม Check list เมื่อเกิดปัญหาขึ้นมา คงจะเสียเวลาและวุ่นวายน่าดู โดยเฉพาะการ Deploy ที่ Production บางทีอาจจะมีเวลาที่จำกัด
+ลองคิดเล่นๆดูนะครับ ถ้าการ Deploy ในรอบนั้น มีอยู่ประมาณ 10 Script และคนที่ Deploy ไม่ใช่ Developer เจ้าของ Script 
+มีหน้าที่แค่เอาทุกอย่างที่เตรียมไว้ไป Deploy ตาม Check List เมื่อเกิดปัญหาขึ้นมา คงจะเสียเวลาและวุ่นวายน่าดู โดยเฉพาะการ Deploy ที่ Production บางทีอาจจะมีเวลาที่จำกัด
 
 > ถ้าเราใช้ Liquibase ปัญหาหรือความเสี่ยงต่างๆที่กล่าวมานี้ จะไม่เกิดขึ้น เพราะถ้าเกิดปัญหา จะรู้และไม่ผ่านตั้งแต่ตอน Dev แล้ว ลดปัญหาที่อาจเกิดจาก Human error นั่นเอง
 
