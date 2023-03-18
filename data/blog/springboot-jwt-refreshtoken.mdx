@@ -2,7 +2,7 @@
 title: ทำ JWT Refresh Token ด้วย Spring Boot
 date: '2023-03-18'
 tags: ['jwt','springboot']
-draft: true
+draft: false
 summary: ''
 layout: PostSimple
 featureImage: "/static/images/blog/springboot-jwt-refreshtoken/cover.jpeg"
@@ -20,6 +20,21 @@ featureImage: "/static/images/blog/springboot-jwt-refreshtoken/cover.jpeg"
 
 Spring Boot ผมจะไม่สร้างใหม่ แต่ผมจะใช้อันเดียวกับบทความนี้ [Authentication ด้วย Spring Security & JWT](https://janescience.com/blog/auth-springsecurity-jwt)
 เอามา Implement ต่อ [Source Code](https://github.com/Janescience/auth-springsecurity-jwt) และผมจะ Config ให้ดูแค่ฝั่งของ Back-end แล้วทดสอบด้วย Postman
+
+- [ทำไมต้องทำ Refresh Token](#ทำไมต้องทำ-refresh-token)
+  - [แค่มี Access Token ปกติก็พอแล้วนี่ ? เรามาดูข้อเสียของมันก่อนดีกว่า](แค่มี-access-token-ปกติก็พอแล้วนี่-?-เรามาดูข้อเสียของมันก่อนดีกว่า)
+  - [แล้วการทำ Refresh Token มันช่วยอะไรล่ะ ?](แล้วการทำ-refresh-token-มันช่วยอะไรล่ะ-?)
+- [Implements](#implements)
+  - [application.propperties](#application.propperties)
+  - [Entity](#entity)
+  - [Repository](#repository)
+  - [Exception](#exception)
+  - [Service](#service)
+  - [POJO Class](#pojo-class)
+  - [Filter](#filter)
+  - [Advice](#advice)
+  - [Controller](#controller)
+- [ทดสอบด้วย Postman](#ทดสอบด้วย-postman)
 
 ## ทำไมต้องทำ Refresh Token
 
@@ -132,6 +147,7 @@ import com.demo.auth.entity.app.User;
 @Repository
 public interface RefreshTokenRepository extends JpaRepository<RefreshToken,Long>{
     Optional<RefreshToken> findByToken(String token);
+    Optional<RefreshToken> findByUser(User user);
 
     @Modifying
     int deleteByUser(User user);
@@ -239,7 +255,7 @@ public class RefreshTokenService {
 มีด้วยกัน 4 Functions
 - ค้นหา Refresh Token ด้วย Token
 - สร้าง Refresh Token ก่อนจะสร้าง มีการเช็คเงื่อนไขเพื่อลบ Refresh Token เก่า
-- เช็คว่า Refresh Token หมดอายุหรือยัง
+- เช็คว่า Refresh Token หมดอายุหรือยัง ถ้าหมดอายุแล้วจะลบทิ้ง
 
 
 <br/>
@@ -248,7 +264,7 @@ public class RefreshTokenService {
 
 <br/>
 
-### Payload
+### POJO Class
 
 ```java:/payload/request/TokenRefreshRequest.java
 package com.demo.auth.payload.request;
@@ -285,7 +301,33 @@ public class TokenRefreshResponse {
 
 <br/>
 
-แก้ไขเพิ่ม `refreshToken`
+สำหรับใช้กับ `@RestControllerAdvice`
+```java:/advice/ErrorMessage.java
+package com.demo.auth.advice;
+
+import java.util.Date;
+
+import lombok.Data;
+
+@Data
+public class ErrorMessage {
+    private int statusCode;
+    private Date timestamp;
+    private String message;
+    private String description;
+  
+    public ErrorMessage(int statusCode, Date timestamp, String message, String description) {
+      this.statusCode = statusCode;
+      this.timestamp = timestamp;
+      this.message = message;
+      this.description = description;
+    }
+}
+```
+
+<br/>
+
+เพิ่ม `refreshToken` 
 ```java:/payload/response/JwtResponse.java
 
 //...
@@ -308,6 +350,86 @@ public class JwtResponse {
     }
 }
 ```
+
+<br/>
+
+<center>. . .</center>
+
+<br/>
+
+### Filter
+
+ปรับ `AuthTokenFilter.java` เช็ค `RefreshToken` ใน Headers เพิ่ม
+
+```java:/security/jwt/AuthTokenFilter.java
+package com.demo.auth.security.jwt;
+
+import java.io.IOException;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import com.demo.auth.entity.app.RefreshToken;
+import com.demo.auth.security.services.RefreshTokenService;
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.log4j.Log4j2;
+
+import java.util.Optional;
+
+@Log4j2
+@Component
+public class AuthTokenFilter extends OncePerRequestFilter{
+
+    //...
+
+	@Autowired
+	private RefreshTokenService refreshTokenService;
+
+    @Override
+	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+			throws ServletException, IOException {
+		try {
+			//...
+
+			String rft = parseRft(request);
+			Optional<RefreshToken> refreshTokenOpt = refreshTokenService.findByToken(rft);
+			
+			RefreshToken refreshToken = null;
+			if(refreshTokenOpt.isPresent()){
+				refreshToken = refreshTokenService.verifyExpiration(refreshTokenOpt.get());
+			}
+
+			//...
+		} catch (Exception e) {
+			log.error("Cannot set user authentication: {}", e);
+		}
+
+		filterChain.doFilter(request, response);
+	}
+
+    //...
+
+	private String parseRft(HttpServletRequest request) {
+		String headerRft = request.getHeader("RefreshToken");
+		if (StringUtils.hasText(headerRft)) {
+			return headerRft;
+		}
+
+		return null;
+	}
+    
+}
+```
+
+ที่ต้องเพิ่มการส่ง `RefreshToken` ใน Header มาด้วยทุกครั้ง เพราะว่าถ้าเราปรับ `RefreshToken` ให้หมดอายุ `AccessToken` ก็จะไม่สามารถใช้งานได้ไปด้วย 
+> ถ้าไม่มีส่ง `RefreshToken` มาด้วย เมื่อเราปรับ `RefreshToken` ให้หมดอายุ แต่ถ้า `AcessToken` ยังไม่หมดอายุ ก็จะยังสามารถใช้งานได้เหมือนเดิม 
+
 
 <br/>
 
@@ -348,34 +470,7 @@ public class TokenControllerAdvice {
 
 }
 ```
-> เรา Trigger ไว้กับ `TokenRefreshException.java` เมื่อเรียกใช้ TokenRefreshException ก็จะมาที่นี่ก่อนที่จะ Return error ออกไป
-
-<br/>
-
-สร้าง Error model  
-
-```java:/advice/ErrorMessage.java
-package com.demo.auth.advice;
-
-import java.util.Date;
-
-import lombok.Data;
-
-@Data
-public class ErrorMessage {
-    private int statusCode;
-    private Date timestamp;
-    private String message;
-    private String description;
-  
-    public ErrorMessage(int statusCode, Date timestamp, String message, String description) {
-      this.statusCode = statusCode;
-      this.timestamp = timestamp;
-      this.message = message;
-      this.description = description;
-    }
-}
-```
+> เรา Trigger ไว้กับ `TokenRefreshException.java` เมื่อเรียกใช้ก็จะเข้ามาที่นี่ก่อน Return error ออกไป
 
 <br/>
 
@@ -402,26 +497,18 @@ public class AuthController {
 
     @PostMapping("/signin")
 	public ResponseEntity<?> authenticateUser(@Valid @RequestBody SigninRequest req) {
-
         //...
-
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();	
-
 		String jwt = jwtUtil.generateJwtToken(userDetails);
-
         //...
-
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(userDetails.getId());
 
         return ResponseEntity.ok(new JwtResponse(
-
                                                 //...
-
 												refreshToken.getToken()
-                                    
+                                                //...
                                                  ));
     }
-
 }
 ```
 
@@ -458,4 +545,110 @@ public class AuthController {
 			.orElseThrow(() -> new TokenRefreshException(requestRefreshToken,"Refresh token is not in database!"));
 	}
 }
+```
+
+---
+
+## ทดสอบด้วย Postman
+
+1. เพิ่มตัวแปร `RefreshToken`
+
+<br/>
+
+2. เขียน Script ใน Tests ของ `/auth/signin` เพื่อ Set ค่าตัวแปรให้กับ `RefreshToken`
+
+```js
+if(pm.response.code === 200){
+    pm.environment.set("AccessToken",pm.response.json().token);
+    pm.environment.set("RefreshToken",pm.response.json().refreshToken);
+}
+```
+
+<br/>
+
+3. `/auth/signin`
+
+![PM Signin](/static/images/blog/springboot-jwt-refreshtoken/pm-signin.png)
+> จะเห็นว่าได้ `refreshToken` กลับมาด้วย
+
+<br/>
+
+ตาราง refresh_token
+
+![DB](/static/images/blog/springboot-jwt-refreshtoken/db-rftk.png)
+
+<br/>
+
+4. `/user` เพิ่มการส่ง `RefreshToken` ใน Header โดยเอาค่ามาจากตัวแปร `{{RefreshToken}}`
+
+![PM User](/static/images/blog/springboot-jwt-refreshtoken/pm-user.png)
+
+![PM User Authen](/static/images/blog/springboot-jwt-refreshtoken/pm-user-authen.png)
+
+<br/>
+
+5. สร้าง Request `/auth/refreshtoken`
+
+![PM Refresh Token](/static/images/blog/springboot-jwt-refreshtoken/pm-refresh.png)
+> ใน Script Tests ทำเหมือนข้อ 2
+
+<br/>
+
+6. เมื่อ `AccessToken` หมดอายุ เราจะได้ Response Code = 401 และฝั่ง Front-End ต้องทำ Interceptor ของ Response ไว้
+เมื่อได้รับ Response Code = 401 ให้ Request ไปที่ `/auth/refreshtoken` เพื่อสร้าง `AcessToken` อันใหม่ และนำกลับมาอัพเดตฝั่ง Front-End
+และถ้า `RefreshToken` หมดอายุก็จะ `Logout` ให้อัตโนมัติ
+
+ตัวอย่างประมาณนี้
+
+```js:setupinterceptors.js
+import http from '@/constants/api';
+import TokenService from '@/services/token'
+import EventBus from '@/utils/event-bus'
+
+const setup = (store) => {
+    http.interceptors.response.use(
+        (res) => {
+          return res;
+        },
+        async (err) => {
+          const originalConfig = err.config;
+    
+          if (originalConfig.url !== "/auth/signin" && err.response) {
+            // Access Token was expired
+            if (err.response.status === 401 && !originalConfig._retry) {
+              originalConfig._retry = true;
+    
+              try {
+                const rs = await http.post("/auth/refreshtoken", {
+                  refreshToken: TokenService.getLocalRefreshToken(),
+                });
+    
+                const { accessToken } = rs.data;
+    
+                store.dispatch('auth/refreshtoken', accessToken);
+                TokenService.updateLocalAccessToken(accessToken);
+    
+                return http(originalConfig);
+              } catch (_error) {
+                EventBus.dispatch("logout");
+                return Promise.reject(_error);
+              }
+            }
+          }
+    
+          return Promise.reject(err);
+        }
+      );
+};
+
+export default setup;
+```
+
+<br/>
+
+Log ใน Spring Boot ถ้า `AccessToken` หมดอายุ
+
+```bash
+JWT token is expired: JWT expired at 2023-03-18T13:51:18Z. Current time: 2023-03-18T14:06:59Z, 
+a difference of 941979 milliseconds.  Allowed clock skew: 0 milliseconds.
 ```
