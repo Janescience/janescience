@@ -1,7 +1,7 @@
 ---
 name: Janewit Sirijan
 avatar: /static/images/avatar.jpeg
-occupation: Fullstack web developer
+occupation: Web developer
 company: Outsource at Bay Bank
 pencil: https://drive.google.com/file/d/1p5Laavj2KbDfkDVXr7UfFkCdWpHXdYSw/view?usp=sharing
 ---
