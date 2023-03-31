@@ -1912,6 +1912,65 @@ java.lang.NoClassDefFoundError: javax/xml/bind/DatatypeConverter
 
 --- 
 
+## ทดสอบด้วย Postman
+
+1. `/auth/signup`
+
+
+<div className="w-3/4">
+![Signup](/static/images/blog/auth-springsecurity-jwt/signup.png)
+</div>
+
+
+Request/Response หน้าตาจะประมาณนี้
+
+<br/>
+
+2.`/auth/signin`
+
+2.1 เพิ่ม Environment และเพิ่มตัวแปร `{{AccessToken}}` ในรูปของผมคือมี Token แล้ว แต่ตอนแรกจะเป็นแค่ค่าว่าง
+<div className="w-3/4">
+![Signup](/static/images/blog/auth-springsecurity-jwt/env-variable.png)
+</div>
+
+2.2 เขียน Script รับค่า Token แล้วนำไป Set ให้กับตัวแปร `{{AccessToken}}` ทุกครั้งที่ Signin สำเร็จ
+<div className="w-3/4">
+![Signup](/static/images/blog/auth-springsecurity-jwt/test-script.png)
+</div>
+> ถ้า Signin สำเร็จ ได้ Token มาและ Set ค่าให้กับตัวแปร `{{AccessToken}}` ได้จะต้องเป็นเหมือนรูปข้อ 2.1
+
+2.3 ลอง Signin ด้วย Username,Password ที่เราเพิ่ง Signup ไป
+<div className="w-3/4">
+![Signup](/static/images/blog/auth-springsecurity-jwt/signin.png)
+</div>
+> ถ้าเราไม่เขียน Script เพื่อ Set Token ให้กับตัวแปร เราจะต้องมา Copy token จาก Response เพื่อนำไปใช้
+
+<br/>
+
+3. `/user`
+
+API เส้นนี้เราจะดึงข้อมูลของ User ที่เราเพิ่ง Signin ไป ไม่ต้องส่งอะไรไปเลยนอกจาก Token ใน Header 
+
+เราต้องมาเลือกว่าจะใช้ Authorization แบบไหน ในที่นี้ต้องเลือก `Bearer Token` แล้วใส่ตัวแปร `{{AccessToken}}` แล้วลองยิงดูต้องได้ Response แบบนี้
+<div className="w-3/4">
+![Get User](/static/images/blog/auth-springsecurity-jwt/get-user.png)
+</div>
+
+Postman จะ Auto เพิ่ม Header ให้เลย ถ้าเราใส่ข้อมูลใน Authorization
+<div className="w-3/4">
+![Get User](/static/images/blog/auth-springsecurity-jwt/header.png)
+</div>
+
+ถ้า Token เราหมดอายุ หรือ ไม่ได้ส่ง Token ไปด้วย หรือ Token ผิด ก็จะได้ Error 401 - Unauthorized
+<div className="w-3/4">
+![401](/static/images/blog/auth-springsecurity-jwt/401.png)
+</div>
+> ในรูปคือ Token หมดอายุ
+
+ใน Security Config เรา Allow แค่ `/auth/**` ถ้า Url นอกเหนือจากนี้ต้องมี Token แปะมาใน Header เสมอ
+
+--- 
+
 บทความนี้ใช้เวลาเขียนค่อนข้างนานเลย เพราะผม Dev ไปด้วยเขียนไปด้วย พร้อมๆกัน และใช้ Spring Boot 3 
 ซึ่งหลายๆคนที่เขียน Spring Boot มาคงทราบดีว่ามีการเปลี่ยนแปลงมากแค่ไหน จาก 2 ไป 3 ซึ่งถ้าให้ผม Migrate จาก 2 ไป 3 
 บอกเลยว่าเขียนใหม่คงง่ายกว่า555 
