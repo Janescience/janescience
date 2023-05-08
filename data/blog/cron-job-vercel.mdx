@@ -1,0 +1,50 @@
+---
+title: ใช้ Cron Jobs บน Vercel ด้วย Node
+date: '2023-05-08'
+tags: ['cron','vercel','node']
+draft: false
+summary: 'ผมต้องการให้มีการแจ้งเตือนในเวลาตี 3 ของทุกวัน ซึ่งตอนแรกผมใช้ Cron Job ของ Node แต่พอ Deploy ขึ้น Vercel มันไม่ทำงาน ก็เลยไปเจอมาว่าต้องการมี Config เฉพาะของ Vercel'
+layout: PostSimple
+featureImage: "/static/images/blog/cron-job-vercel/cover.png"
+---
+
+<center>![Cover](/static/images/blog/cron-job-vercel/cover.png)</center>
+<center className="text-xs">
+  ขอบคุณรูปภาพจาก
+  [https://vercel-og-service.vercel.sh/](https://vercel-og-service.vercel.sh/?title=Cron%20Jobs)
+</center>
+
+
+ผมต้องการให้มีการแจ้งเตือนในเวลาตี 3 ของทุกวัน ซึ่งตอนแรกผมใช้ Cron Job ของ Node 
+แต่พอ Deploy ขึ้น Vercel มันไม่ทำงาน ก็เลยไปเจอมาว่าต้องการมี Config เฉพาะของ Vercel 
+
+## Config
+
+### `vercel.json` file
+
+```json
+"crons": [
+    {
+        "path": "/notification/job",
+        "schedule": "00 20 * * *"
+    }
+]
+```
+
+- **path** - Function ของเราอยู่ที่ path ไหน จะเป็นเหมือนการเรียก API ปกติเลย ผมกำหนด route เป็น `/notification/job` โดยจะชี้ไปที่ `controller.notify`
+- **schedule** - เป็นการกำหนดเวลา เราอยากให้ทำทุกๆวันไหน เวลาไหน จะเขียนเป็น [Cron Expression](https://crontab.guru/) และ Timezone จะเป็น UTC (ต่างจากเวลาของไทยอยู่ +7)
+เพราะฉะนั้น ของผมกำหนดไว้ที่ เวลาสองทุ่มของทุกวัน ซึ่งถ้า +7 จะเป็นเวลาตีสามของไทย  
+
+### Cron Job Setting on Vercel
+
+เมื่อเราเพิ่ม `crons` เข้ามาในไฟล์ `vercel.json` และ Deploy บน Vercel จะมีเมนู `Cron Jobs` เพิ่มเข้ามาให้เรา Setting
+
+![Cron Job Vercel](/static/images/blog/cron-job-vercel/cron-job-vercel.png)
+
+สามารถกด Run แบบ Manual ได้ เผื่อถึงเวลาแล้วไม่ทำงานหรือลองทดสอบดูก่อนได้ และดู Logs ได้ด้วย
+
+## Security
+
+แน่นอนว่าการใช้เพียง `/notification/job` ยังคงเสี่ยง ถ้ามีใครรู้ Path นี้ก็สามารถสั่งให้ Job ทำงานได้เลย เพราะ Path นี้เราต้องเปิดให้ Permit All เพื่อให้เรียกได้โดยไม่ต้องผ่านการ Authorized
+แต่ไม่ใช่ปัญหา เราก็อาจจะส่ง Parameters เข้าไปเพิ่มเป็น Key อะไรสักอย่างแล้วไปเช็คกับในโปรเจ็คของเราอีกที ถ้าตรงกันถึงจะให้ทำงานได้ เช่น `/notification/job?key=janescience-secret` 
+หรือจะกำหนด Username , Password ไว้เลยก็ได้ 
