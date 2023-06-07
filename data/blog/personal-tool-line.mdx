@@ -15,18 +15,16 @@ featureImage: "/static/images/blog/personal-tool-line/cover.png"
 </center>
 
 จุดเริ่มต้นทั้งหมดเริ่มจากผมได้ไปดู Video ของคุณ [dtinth](https://dt.in.th/) ชื่อ Video ว่า [Let’s build a personal assistant bot and level up your coding skills!](https://youtu.be/IdFX7nwD744)
-เมื่อผมดูจนจบ ผมสนใจมากๆ(ผมจะตื่นเต้นกับอะไรที่ผมไม่เคยทำ) และผมได้เริ่มทำมันทันที !!
-
-ซึ่งบทความนี้จะเป็นการพูดภาพรวมทั้งหมดหลังจากที่ผมหมกมุ่นกับมันอยู่สักพัก เล่าว่าทำอะไรไปบ้าง และแต่ล่ะอย่างทำงานอย่างไร โดยจะแยกลงลึกในแต่ล่ะเรื่องเป็นแต่ล่ะบทความไปเลย
-เพื่อไม่ให้บทความนี้ยาวจนเกินไป
+เมื่อผมดูจนจบ ผมสนใจมากๆ(ค่อนข้างจะตื่นเต้นกับอะไรที่ไม่เคยทำ) และผมได้เริ่มทำมันทันที !!
 
 ## ทำอะไรไปบ้าง ?
 
 <center>![Cover](/static/images/blog/personal-tool-line/maping.png)</center>
 
-### Jasistant (Custom Service)
+หลักๆแล้วแบ่งออกเป็น 2 Process
 
-ผมเขียน Service ขึ้นมาเองด้วย Node.js และใช้ Host เป็น [Vercel](https://vercel.com/) เป็นตัวกลางที่รวม Logic ทุกอย่าง
+1. **LINE** - เป็นส่วนที่ให้ User ใช้งาน พูดคุยกับ Bot ชื่อว่า [Janalyze](#janalyze)
+2. **Service** - เป็นส่วนของการทำงานฝั่งหลังบ้านที่จะรับข้อมูลจาก LINE แล้วเอามาประมวลผลตาม Logic ผมตั้งชื่อว่า [Jasistant](#jasistant)
 
 <br />
 
@@ -34,30 +32,110 @@ featureImage: "/static/images/blog/personal-tool-line/cover.png"
 
 <br />
 
-### Janalyze (Line Bot)
-เปรียบเสมือนผู้ช่วยส่วนตัวที่คอยรับคำสั่งง่ายๆ ตามที่เรากำหนด โดยเชื่อมต่อกับ **Jasistant** ผ่าน **Webhook** ใน **Messaging API** สามารถทำงานได้ดังนี้
+### Janalyze
 
-1. **Expense record** - แน่นอนว่าทุกวันนี้มีแอปบันทึกรายรับ-รายจ่ายเต็มไปหมด แต่การบันทึกแต่ล่ะรายการนั้น
-  ต้องทำอย่างน้อย 2-3 step และมีหลายอย่างที่ต้องกรอก แต่ Line Bot ของผมแค่พิมพ์สั้นๆ เช่น พิมพ์ว่า "60f" เป็นการบอกว่า จ่ายค่าอาหารไป 60 บาทนะ
-  และ Bot จะตอบกลับมาโดยสามารถคลิกเข้าไปแก้ไขข้อมูลได้ผ่าน [Airtable](https://www.airtable.com/)
+1. เข้าไปที่ [LINE Developers](https://developers.line.biz/en/) แล้ว Login จะเจอกับหน้านี้
 
-| คำสั่ง "60f"                                         | คำสั่ง "145d startbuck"                               |
-| ---------------------------------------------------- | ----------------------------------------------------- |
+![Cover](/static/images/blog/personal-tool-line/console.png)
+
+<br />
+
+2. สร้าง Providers (จากรูปข้อที่ 1 คลิก "Create") ใส่ชื่ออะไรก็ได้
+
+![Cover](/static/images/blog/personal-tool-line/create-pro.png)
+
+<br />
+
+3. เลือก "Create a Messaging API channel"
+
+![Cover](/static/images/blog/personal-tool-line/choose.png)
+
+<br />
+
+4. กรอกข้อมูลต่างๆให้ครบ แล้ว "Create"
+
+![Cover](/static/images/blog/personal-tool-line/channel-create.png)
+
+<br />
+
+5. มาที่ "Messaging API" แล้วเลื่อนลงไปที่ "Webhook settings" ทำการ Edit Webhook URL
+   ต้องเป็น HTTPS เท่านั้น เมื่อส่งข้อความหา Bot จะมาเรียก URL นี้เสมอ
+
+![Cover](/static/images/blog/personal-tool-line/webhook-url.png)
+
+<br />
+
+6. สามารถ Scan QR Code เพิ่มเพื่อนได้เลย
+
+![Cover](/static/images/blog/personal-tool-line/qr.png)
+
+<br />
+
+<center>. . .</center>
+
+<br />
+
+### Jasistant
+
+ตอนเริ่มแรกผมยังไม่มี URL ที่เป็น HTTPS และผมอยากรีบทดสอบแบบเร็วๆ ผมเลยไปใช้ [Glitch](https://glitch.com/)
+เป็น IDE บน Browser สามารถเอา URL ขวาบนมาใช้ได้เลย แต่สำหรับเริ่มต้นเท่านั้นนะ ควรเอามาขึ้น Github แล้วหา Host ให้มันอยู่ดีๆ
+
+![Cover](/static/images/blog/personal-tool-line/glitch.png)
+
+พอผมเริ่มเข้าใจและวางโครงได้แล้ว เลยมาทำเป็น Custom Service และหา Host ให้มันอยู่ โดยมี Tech Stack ประมาณนี้
+
+Language - [Node.js](https://nodejs.org/en)
+
+Framework - [Express.js](https://expressjs.com/)
+
+Host - [Vercel](https://vercel.com/)
+
+Storage - [Google Cloud Storage](https://cloud.google.com/storage) (เก็บรูปภาพ)
+
+AI - [Google Cloud Vision AI](https://cloud.google.com/vision) (ดึงข้อความจากรูปภาพ)
+
+Database - [Airtable](https://www.airtable.com/) (บันทักรายจ่าย)
+
+NPM Package
+
+- [promptpay-qr](https://github.com/dtinth/promptpay-qr) (สร้าง QR Code แบบพร้อมเพย์)
+- [tweetnacl-sealedbox-js](https://www.npmjs.com/package/tweetnacl-sealedbox-js) (ส่งหรือรับข้อมูลแบบเข้ารหัส)
+
+---
+
+## การใช้งาน
+
+1. **Expense Record** - แน่นอนว่าทุกวันนี้มีแอปบันทึกรายรับ-รายจ่ายเต็มไปหมด แต่การบันทึกแต่ล่ะรายการนั้น
+   ต้องทำอย่างน้อย 2-3 step และมีหลายอย่างที่ต้องกรอก แต่ Line Bot ของผมแค่พิมพ์สั้นๆ เช่น พิมพ์ว่า "60f" เป็นการบอกว่า จ่ายค่าอาหารไป 60 บาทนะ
+   และ Bot จะตอบกลับมาโดยสามารถคลิกเข้าไปแก้ไขข้อมูลได้ผ่าน [Airtable](https://www.airtable.com/)
+
+| คำสั่ง "60f"                                           | คำสั่ง "145d startbuck"                                  |
+| ------------------------------------------------------ | -------------------------------------------------------- |
 | ![60f](/static/images/blog/personal-tool-line/60f.jpg) | ![145d](/static/images/blog/personal-tool-line/145d.jpg) |
 
-| Airtable(Rows)                                            | Airtable(Detail)                                            |
-| --------------------------------------------------------- | ----------------------------------------------------------- |
+| Airtable(Rows)                                                        | Airtable(Detail)                                                          |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------------- |
 | ![Airtable Rows](/static/images/blog/personal-tool-line/airtable.jpg) | ![Airtable Detail](/static/images/blog/personal-tool-line/air-detail.jpg) |
 
+<br />
+
+<center>. . .</center>
+
+<br />
+
 2. **QR Code Promptpay** - ทำได้ง่ายๆ ถ้าอยากได้ QR ที่เป็น 100 บาท ก็พิมพ์ว่า "qr100" ก็จะได้ QR Code ที่ล็อคจำนวนเงินไว้ให้เลย (ลอง Scan ดูได้)
-  การทำงานคร่าวๆ คือสร้าง QR Code เป็น Buffer แล้ว Upload ขึ้น Google Cloud Storage ส่งค่ากลับมาเป็น Url และ Reply กลับมาผ่าน Line แสดงเป็นรูปภาพ
+   การทำงานคร่าวๆ คือสร้าง QR Code เป็น Buffer แล้ว Upload ขึ้น Google Cloud Storage ส่งค่ากลับมาเป็น Url และ Reply กลับมาผ่าน Line แสดงเป็นรูปภาพ
 
 ![QR Code](/static/images/blog/personal-tool-line/qrcode.png)
 
 <br />
 
-3. **Image to text** - ส่งรูปภาพอะไรไปก็ได้ แล้ว Bot จะตอบกลับมาเป็นข้อความทั้งหมดที่อยู่ในรูปภาพ ความแม่นยำและถูกต้องขึ้นอยู่กับความคมชัดของข้อความในรูปภาพ แต่ถ้าเป็นภาษาไทยประโยคที่ได้จะเว้นเป็นคำๆ 
-ไม่ติดกัน ซึ่งผมก็ไม่ทราบว่าเพราะอะไร เพราะการดึงข้อความตรงนี้เราใช้ [Google Cloud Vision AI](https://cloud.google.com/vision)
+<center>. . .</center>
+
+<br />
+
+3. **Image to Text** - ส่งรูปภาพอะไรไปก็ได้ แล้ว Bot จะตอบกลับมาเป็นข้อความทั้งหมดที่อยู่ในรูปภาพ ความแม่นยำและถูกต้องขึ้นอยู่กับความคมชัดของข้อความในรูปภาพ แต่ถ้าเป็นภาษาไทยประโยคที่ได้จะเว้นเป็นคำๆ
+   ไม่ติดกัน ซึ่งผมก็ไม่ทราบว่าเพราะอะไร เพราะการดึงข้อความตรงนี้เราใช้ [Google Cloud Vision AI](https://cloud.google.com/vision)
 
 ![QR Code](/static/images/blog/personal-tool-line/imgtotxt1.png)
 
@@ -65,61 +143,4 @@ featureImage: "/static/images/blog/personal-tool-line/cover.png"
 
 ![QR Code](/static/images/blog/personal-tool-line/imgtotxt2.png)
 
-แต่ถ้าเป็นตัวอักษรที่พิมพ์เอาและถ่ายให้ชัดเจน ค่อนข้างจะถูกต้อง 100% นอกจากตัวอักษรนั้นจะเล็กมากๆ 
-
-<br />
-
-<center>. . .</center>
-
-<br />
-
-### Japter (Android Application)
-
-พอผมใช้การบันทึกรายจ่ายผ่่าน LINE ไปสักพัก เริ่มขี้เกียจต้องมาคอยพิมพ์อยู่ทุกครั้ง และผมเองแทบไม่ได้ใช้เงินสดเลย
-ส่วนมากจะโอนจ่ายสะมากกว่า ผมเลยสนใจการสร้างแอพตามที่คุณ dtinth ได้บอกไว้ เลยลองเข้าไปดู​ Source code
-และเอา Project มารันทดสอบดู ก็ยังงงๆ จับต้นชนปลายไม่ถูกอยู่ดี ทำให้ผมตัดสินใจเขียนขึ้นมาใหม่ตาม Concept 
-ที่คุณ dtinth ได้ทำไว้ และตัดส่วนที่เราไม่ต้องการออกไป จนได้ออกเป็นแอพชื่อ **Japter** ซึ่งมาจาก 
-ชื่อผมเองตัว **J** และคำว่า **Adapter** เอามารวมกันนั่นเอง
-
-![Japter](/static/images/blog/personal-tool-line/japter.jpg)
-
-การทำงานคือ **Japter** จะคอยดึงข้อมูลการใช้จ่ายจากการแจ้งเตือน และส่งข้อมูลทั้งหมดไปยัง **Jasistant** มีรายละเอียดอังนี้
-- สามารถกำหนดได้ว่าแจ้งเตือนเรื่องอะไรบ้างที่เราไม่สนใจ อย่างในรูปผมจะใส่ชื่อ Package ไปเลย
-
-  ![Japter](/static/images/blog/personal-tool-line/japter-block.jpg)
-
-- สามารถดูรายละเอียดการแจ้งเตือนล่าสุดได้
-
-  ![Japter](/static/images/blog/personal-tool-line/japter-history.jpg)
-
-- ระบบจะส่งรายการที่ล้มเหลวแบบอัตโนมัติไปใหม่เรื่อยๆ จนกว่าจะสำเร็จหรือเรายกเลิก
-- สามารถดูสถานะต่างๆได้ เช่น สำเร็จแล้วกี่รายการหรืออยู่ในคิวอีกกี่รายการ เป็นต้น
-
-  ![Japter](/static/images/blog/personal-tool-line/japter-status.jpg)
-
-- สามารถยกเลิกทุกรายการที่อยู่ในคิวได้
-
-  ![Japter](/static/images/blog/personal-tool-line/japter-cancel.jpg)
-
----
-
-## ใช้เทคโนโลยีอะไรบ้าง ?
-
-#### Janalyze
-  - [LINE Developers](https://developers.line.biz/en/docs/messaging-api/building-bot/#line-manager-settings) - สร้าง Channel มาเพิ่มชื่อว่า Janalyze และใช้การเชื่อมต่อ Service ผ่าน Webhook ใน Messaging API
-  เมื่อเราส่งข้อความอะไรก็ตามใน LINE มันจะวิ่งเข้า URL ที่เรากำหนดไว้ใน Webhook
-
-#### Jasistant
-  - [Node.js](https://nodejs.org/en) - ใช้เป็นภาษาหลักสำหรับ Backend Service
-  - [Express.js](https://expressjs.com/) - ใช้เป็นเฟรมเวิร์คใน Backend Service
-  - [Vercel](https://vercel.com/) - ใช้สำหรับเป็น Server และ Host ให้กับ Backend Service (ฟรี)
-  - [Google Cloud Storage](https://cloud.google.com/storage) - สำหรับเก็บไฟล์รูปภาพใช้ใน Backend Service
-  - [Google Cloud Vision AI](https://cloud.google.com/vision) - เป็น AI สำหรับอ่านและดึงข้อความจากรูปภาพใช้ใน Backend Service
-  - [Airtable](https://www.airtable.com/) - ใช้เป็นฐานข้อมูลให้กับการบันทึกรายจ่าย
-  - [promptpay-qr](https://github.com/dtinth/promptpay-qr) - เป็นแพ็คเกจของ NPM ใช้สำหรับสร้าง QR Code แบบพร้อมเพย์
-  - [tweetnacl-sealedbox-js](https://www.npmjs.com/package/tweetnacl-sealedbox-js) - เป็นแพ็คเกจของ NPM ใช้สำหรับรับส่งข้อมูลแบบเข้ารหัส เอาไว้ถอดรหัสที่ส่งมาจาก Android
-
-#### Japter
-  - [Kotlin](https://kotlinlang.org/) - เป็นภาษาหลักในการเขียน Android
-  - [lazysodium-android](https://github.com/terl/lazysodium-android) - ใช้ในการเข้ารหัสสำหรับส่งข้อมูลไปยัง Backend Service
-  - [Material](https://developer.android.com/develop/ui/views/theming/look-and-feel) - ใช้เป็น CSS สำหรับ UI
+แต่ถ้าเป็นตัวอักษรที่พิมพ์เอาและถ่ายให้ชัดเจน ค่อนข้างจะถูกต้อง 100% นอกจากตัวอักษรนั้นจะเล็กมากๆ

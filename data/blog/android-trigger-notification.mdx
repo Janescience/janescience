@@ -1,0 +1,52 @@
+---
+title: สร้างแอป Android รับข้อมูลจากการแจ้งเตือน
+date: "2023-06-08"
+tags: ["android", "line"]
+draft: true
+summary: ""
+layout: PostSimple
+featureImage: "/static/images/blog/android-trigger-notification/cover.png"
+---
+
+<center>![Cover](/static/images/blog/android-trigger-notification/cover.png)</center>
+<center className="text-xs">
+  ขอบคุณรูปภาพจาก
+  [https://www.pushengage.com](https://www.pushengage.com/wp-content/uploads/2022/07/PushWoosh-alternatives.png)
+</center>
+
+### Japter (Android Application)
+
+พอผมใช้การบันทึกรายจ่ายผ่่าน LINE ไปสักพัก เริ่มขี้เกียจต้องมาคอยพิมพ์อยู่ทุกครั้ง และผมเองแทบไม่ได้ใช้เงินสดเลย
+ส่วนมากจะโอนจ่ายสะมากกว่า ผมเลยสนใจการสร้างแอพตามที่คุณ dtinth ได้บอกไว้ เลยลองเข้าไปดู​ Source code
+และเอา Project มารันทดสอบดู ก็ยังงงๆ จับต้นชนปลายไม่ถูกอยู่ดี ทำให้ผมตัดสินใจเขียนขึ้นมาใหม่ตาม Concept
+ที่คุณ dtinth ได้ทำไว้ และตัดส่วนที่เราไม่ต้องการออกไป จนได้ออกเป็นแอพชื่อ **Japter** ซึ่งมาจาก
+ชื่อผมเองตัว **J** และคำว่า **Adapter** เอามารวมกันนั่นเอง
+
+![Japter](/static/images/blog/android-trigger-notification/japter.jpg)
+
+การทำงานคือ **Japter** จะคอยดึงข้อมูลการใช้จ่ายจากการแจ้งเตือน และส่งข้อมูลทั้งหมดไปยัง **Jasistant** มีรายละเอียดอังนี้
+
+- สามารถกำหนดได้ว่าแจ้งเตือนเรื่องอะไรบ้างที่เราไม่สนใจ อย่างในรูปผมจะใส่ชื่อ Package ไปเลย
+
+  ![Japter](/static/images/blog/android-trigger-notification/japter-block.jpg)
+
+- สามารถดูรายละเอียดการแจ้งเตือนล่าสุดได้
+
+  ![Japter](/static/images/blog/android-trigger-notification/japter-history.jpg)
+
+- ระบบจะส่งรายการที่ล้มเหลวแบบอัตโนมัติไปใหม่เรื่อยๆ จนกว่าจะสำเร็จหรือเรายกเลิก
+- สามารถดูสถานะต่างๆได้ เช่น สำเร็จแล้วกี่รายการหรืออยู่ในคิวอีกกี่รายการ เป็นต้น
+
+  ![Japter](/static/images/blog/android-trigger-notification/japter-status.jpg)
+
+- สามารถยกเลิกทุกรายการที่อยู่ในคิวได้
+
+  ![Japter](/static/images/blog/android-trigger-notification/japter-cancel.jpg)
+
+---
+
+#### Japter
+
+- [Kotlin](https://kotlinlang.org/) - เป็นภาษาหลักในการเขียน Android
+- [lazysodium-android](https://github.com/terl/lazysodium-android) - ใช้ในการเข้ารหัสสำหรับส่งข้อมูลไปยัง Backend Service
+- [Material](https://developer.android.com/develop/ui/views/theming/look-and-feel) - ใช้เป็น CSS สำหรับ UI
