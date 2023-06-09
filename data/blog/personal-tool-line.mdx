@@ -40,32 +40,32 @@ featureImage: "/static/images/blog/personal-tool-line/cover.png"
 
 <br />
 
-2. สร้าง Providers (จากรูปข้อที่ 1 คลิก "Create") ใส่ชื่ออะไรก็ได้
+2. สร้าง Providers (จากรูปข้อที่ 1 คลิก **"Create"**) ใส่ชื่ออะไรก็ได้
 
 ![Cover](/static/images/blog/personal-tool-line/create-pro.png)
 
 <br />
 
-3. เลือก "Create a Messaging API channel"
+3. เลือก **"Create a Messaging API channel"**
 
 ![Cover](/static/images/blog/personal-tool-line/choose.png)
 
 <br />
 
-4. กรอกข้อมูลต่างๆให้ครบ แล้ว "Create"
+4. กรอกข้อมูลต่างๆให้ครบ แล้ว **"Create"**
 
 ![Cover](/static/images/blog/personal-tool-line/channel-create.png)
 
 <br />
 
-5. มาที่ "Messaging API" แล้วเลื่อนลงไปที่ "Webhook settings" ทำการ Edit Webhook URL
-   ต้องเป็น HTTPS เท่านั้น เมื่อส่งข้อความหา Bot จะมาเรียก URL นี้เสมอ
+5. มาที่ **"Messaging API"** แล้วเลื่อนลงไปที่ **"Webhook settings"** ทำการแก้ไข **"Webhook URL"**
+   ต้องเป็น HTTPS เท่านั้น เมื่อส่งข้อความหา Bot จะมาเรียก URL ที่เรากรอกไปเสมอ
 
 ![Cover](/static/images/blog/personal-tool-line/webhook-url.png)
 
 <br />
 
-6. สามารถ Scan QR Code เพิ่มเพื่อนได้เลย
+6. สามารถ Scan QR Code เพิ่มเพื่อน Bot ได้เลย
 
 ![Cover](/static/images/blog/personal-tool-line/qr.png)
 
@@ -82,25 +82,196 @@ featureImage: "/static/images/blog/personal-tool-line/cover.png"
 
 ![Cover](/static/images/blog/personal-tool-line/glitch.png)
 
+*จากรูปเราแค่ใส่ Log อะไปก็ได้ใน `/webhook` แล้วลองส่งข้อความหา Bot*
+
 พอผมเริ่มเข้าใจและวางโครงได้แล้ว เลยมาทำเป็น Custom Service และหา Host ให้มันอยู่ โดยมี Tech Stack ประมาณนี้
 
-Language - [Node.js](https://nodejs.org/en)
+**Language** - [Node.js](https://nodejs.org/en)
 
-Framework - [Express.js](https://expressjs.com/)
+**Framework** - [Express.js](https://expressjs.com/)
 
-Host - [Vercel](https://vercel.com/)
+**Host** - [Vercel](https://vercel.com/)
 
-Storage - [Google Cloud Storage](https://cloud.google.com/storage) (เก็บรูปภาพ)
+**Storage** - [Google Cloud Storage](https://cloud.google.com/storage) (เก็บรูปภาพ)
 
-AI - [Google Cloud Vision AI](https://cloud.google.com/vision) (ดึงข้อความจากรูปภาพ)
+**AI** - [Google Cloud Vision AI](https://cloud.google.com/vision) (ดึงข้อความจากรูปภาพ)
 
-Database - [Airtable](https://www.airtable.com/) (บันทักรายจ่าย)
+**Database** - [Airtable](https://www.airtable.com/) (บันทักรายจ่าย)
 
-NPM Package
+**NPM Package**
 
 - [promptpay-qr](https://github.com/dtinth/promptpay-qr) (สร้าง QR Code แบบพร้อมเพย์)
 - [tweetnacl-sealedbox-js](https://www.npmjs.com/package/tweetnacl-sealedbox-js) (ส่งหรือรับข้อมูลแบบเข้ารหัส)
 
+<br />
+
+<center>. . .</center>
+
+<br />
+
+### Structure
+
+```
+└──src
+│   └── config
+│   │   └── line.config.js
+│   └── controllers
+│   │   └── notification.controller.js
+│   └── middlewares
+│   │   ├── error-handler.js
+│   │   └── log-event.js
+│   └── modules
+│   │   └── expense-tracking.module.js
+│   │   └── qrcode-promptpay.module.js
+│   └── routes
+│   │   ├── webhook.routes.js
+│   └── services
+│   │   └── image.service.js
+│   │   └── message.service.js
+│   └── utilities
+│       └── line.utility.js
+│       └── storage.utility.js
+└──views
+│   └── 404.html
+│   └── index.html
+└──.env
+└──server.js
+└──vercel.json
+```
+
+<br />
+
+<center>. . .</center>
+
+<br />
+
+### Server properties
+
+```js:server.js
+// Import NPM
+const express = require('express');
+const bodyParser = require('body-parser')
+const path = require("path");
+const errorHandler  = require('./src/middlewares/error-handler');
+const dotenv = require('dotenv');
+dotenv.config();
+
+// Initialize Express App 
+const app = express();
+app.use(express.json({limit:'50mb'}))
+app.use(express.urlencoded({limit: '50mb', extended:true }))
+app.use(express.static(path.join(__dirname, '/public')))
+app.use(bodyParser.text())
+
+// Routes Setup  
+require('./src/routes/webhook.routes')(app);
+
+// Basic Route
+app.get(["/","/index.html"],(req,res) => {
+  res.sendFile(path.join(__dirname, 'views','index.html'));
+})
+
+// Not Found Route
+app.all("*", (req,res) => {
+  res.status(404);
+  if(req.accepts('html')){
+    res.sendFile(path.join(__dirname, 'views','404.html'));
+  } else if (req.accepts('json')) {
+    res.json({error : "404 Not Found"});
+  }else {
+    res.type('txt').send('404 Not Found')
+  }
+})
+
+//Error Handler
+app.use(errorHandler)
+
+//App Started
+app.listen(process.env.PORT, () => {
+  console.log("Server is running on port : ",process.env.PORT);
+})
+```
+
+#### Comments
+
+- ***Import NPM*** - เป็นส่วนที่บอกว่า Code หน้านี้เราจะใช้ NPM อะไรบ้าง ก็ให้ Import เข้ามาและเราต้อง Install ผ่าน `npm` ก่อนด้วย
+  ```bash
+  npm i express body-parser dotenv
+  ```
+- ***Initialize Express App*** - เรียกใช้เฟรมเวิร์ค Express และตั้งค่าต่างๆ ไม่ว่าจะเป็น Limit การรับส่งข้อมูล หรือ Path ของ Static file
+- ***Routes Setup*** - บอกว่า App มี Routes อะไรบ้าง โดยในไฟล์จะเป็นการกำหนด HTTP Method แยก Path ตามไฟล์ เมื่อเรียก URL มาที่ `/webhook` จะวิ่งเข้า `webhook.controller`
+  ```js:webhook.routes.js
+  const controller = require("../controllers/webhook.controller");
+  const { logger } = require("../middlewares/log-events");
+  module.exports = function(app) {
+    app.use(function(req, res, next) {
+      res.header(
+        "Access-Control-Allow-Headers",
+        "x-access-token, Origin, Content-Type, Accept"
+      );
+      next();
+    });
+
+    app.post('/webhook',[logger],controller.webhook);
+  };
+  ```
+  
+- ***Basic Route*** - กำหนด Default Path ถ้าเข้าด้วย URL `/` หรือ `/index.html` จะให้ทำอะไรบ้างหรือ Redirect ไปไฟล์ไหน 
+  ```html:index.html
+  <div id="main">
+    <div class="fof">
+        <h1>Welcome Jasistant Engine</h1>
+    </div>
+  </div>
+  ```
+- ***Not Found Route*** - กำหนดว่าถ้ามีการเข้า URL อะไรก็ตามที่ไม่มีอยู่ใน App จะให้แสดงเป็นอะไร ของผมให้แสดงหน้า `404.html`
+  ```html:404.html
+  <div id="main">
+    <div class="fof">
+        <h1>Error 404</h1>
+    </div>
+  </div>
+  ```
+- ***Error Handler*** - เมื่อมี Error จะให้ทำตาม Process ในไฟล์ `/src/middlewares/error-handler`
+  ```js:error-handler.js
+  const { logEvents } = require('./log-events');
+
+  const errorHandler = (err,req,res,next) => {
+      logEvents(`${err.name} : ${err.message}`);
+      res.status(500).send(err);
+  }
+
+  module.exports = errorHandler;
+  ```
+  - **errorHandler** - ทุกครั้งที่เกิด Error จะให้แสดง Log ออกมาผ่าน `logEvent` และ Return กลับไปด้วย Error code = 500 เสมอ
+  ```js:log-event.js
+  const { format } = require('date-fns');
+  const { v4:uuid } = require('uuid');
+
+  const logEvents = async (message) => {
+      const dateTime = `${format(new Date(),'yyyyMMdd\tHH:mm:ss')}`;
+      const logItem = `${dateTime}\t${uuid()}\t${message}\n`;
+      console.log(logItem)
+  }
+
+  const logger = (req,res,next) => {
+      if(req.body){
+          console.log(`${req.method} ${req.path} ${JSON.stringify(req.body)}`);
+      }else{
+          console.log(`${req.method} ${req.path}`);
+      }
+      next();
+  }
+
+  module.exports = { logger , logEvents};
+  ```
+  - **logEvents** - ที่เราทำแบบนี้เพื่อกำหนด Format ของ Log และเลือกได้จะเรียกใช้ตรงไหน
+  - **logger** - สำหรับเอาไว้ Log ทุกครั้งที่มีการ Request เข้ามา และเราเลือกจะใส่หรือไม่ใส่ก็ได้แต่ล่ะ Path ในไฟล์ `.routes.js`
+- ***App Started*** - กำหนดได้ว่าให้ Running ที่ PORT อะไร ผมกำหนดไว้ใน `process.env.PORT` 
+และในฟังก์ชัน `listen` กำหนดได้ว่าให้ทำอะไรบ้างตอน Start project ผมให้แสดง Log ออกมาว่า Run ที่ PORT อะไร
+  ```js:.env
+  PORT=3000
+  ```
 ---
 
 ## การใช้งาน
