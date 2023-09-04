@@ -1,8 +1,8 @@
 ---
 title: เมื่ออยากมี Tools ส่วนตัวใช้ในชีวิตประจำวันผ่าน LINE
-date: "2023-05-30"
-tags: ["node", "line", "android", "googlecloud"]
-draft: true
+date: "2023-09-04"
+tags: ["node", "line","linebot"]
+draft: false
 summary: ""
 layout: PostSimple
 featureImage: "/static/images/blog/personal-tool-line/cover.png"
@@ -23,8 +23,8 @@ featureImage: "/static/images/blog/personal-tool-line/cover.png"
 
 หลักๆแล้วแบ่งออกเป็น 2 Process
 
-1. **LINE** - เป็นส่วนที่ให้ User ใช้งาน พูดคุยกับ Bot ชื่อว่า [Janalyze](#janalyze)
-2. **Service** - เป็นส่วนของการทำงานฝั่งหลังบ้านที่จะรับข้อมูลจาก LINE แล้วเอามาประมวลผลตาม Logic ผมตั้งชื่อว่า [Jasistant](#jasistant)
+1. **LINE** - เป็นส่วนที่ผมเองใช้พูดคุยกับ Bot ชื่อว่า [Janalyze](#janalyze)
+2. **Custom Service** - เป็นส่วนของการทำงานฝั่งหลังบ้านที่จะรับข้อมูลจาก LINE แล้วเอามาประมวลผลตาม Logic มีการแยกการทำงานระหว่าง Text และ Image ผมตั้งชื่อว่า [Jasistant](#jasistant)
 
 <br />
 
@@ -65,7 +65,7 @@ featureImage: "/static/images/blog/personal-tool-line/cover.png"
 
 <br />
 
-6. สามารถ Scan QR Code เพิ่มเพื่อน Bot ได้เลย
+6. สามารถ Scan QR Code เพิ่มเพื่อน Bot ได้เลย เสร็จสิ้นการสร้าง Line Bot 
 
 ![Cover](/static/images/blog/personal-tool-line/qr.png)
 
@@ -78,7 +78,8 @@ featureImage: "/static/images/blog/personal-tool-line/cover.png"
 ### Jasistant
 
 ตอนเริ่มแรกผมยังไม่มี URL ที่เป็น HTTPS และผมอยากรีบทดสอบแบบเร็วๆ ผมเลยไปใช้ [Glitch](https://glitch.com/)
-เป็น IDE บน Browser สามารถเอา URL ขวาบนมาใช้ได้เลย แต่สำหรับเริ่มต้นเท่านั้นนะ ควรเอามาขึ้น Github แล้วหา Host ให้มันอยู่ดีๆ
+เป็น IDE บน Browser สามารถเอา URL ขวาบนมาใช้ได้เลย เพื่อทดสอบว่า Line Bot สามารถเชื่อมต่อกับ Service หลังบ้านได้จริงๆ
+แต่สำหรับเริ่มต้นเท่านั้นนะ ควรเอามาขึ้น Github แล้วหา Host ให้มันอยู่ดีๆ
 
 ![Cover](/static/images/blog/personal-tool-line/glitch.png)
 
@@ -86,24 +87,19 @@ featureImage: "/static/images/blog/personal-tool-line/cover.png"
 
 พอผมเริ่มเข้าใจและวางโครงได้แล้ว เลยมาทำเป็น Custom Service และหา Host ให้มันอยู่ โดยมี Tech Stack ประมาณนี้
 
-**Language** - [Node.js](https://nodejs.org/en)
+- [Node.js](https://nodejs.org/en) - ใช้เป็นภาษาหลักในการทำ Backend Service
+  - [promptpay-qr](https://github.com/dtinth/promptpay-qr) (NPM Package) -  ใช้สร้าง QR Code แบบพร้อมเพย์
+  - [tweetnacl-sealedbox-js](https://www.npmjs.com/package/tweetnacl-sealedbox-js) (NPM Package) - ส่งหรือรับข้อมูลแบบเข้ารหัส
+- [Express.js](https://expressjs.com/) - ใช้เป็น Framework ให้กับ Node.js
+- [Vercel](https://vercel.com/) - ใช้เป็น Hosting เพราะมันฟรีและ Custom ง่ายมาก
+- [Google Cloud Storage](https://cloud.google.com/storage) (เก็บรูปภาพ) - เมื่อเราต้องการส่งรูปภาพและให้ Bot ประมวลผลอะไรสักอย่างจะต้องมีที่เก็บรูปภาพ
+- [Google Cloud Vision AI](https://cloud.google.com/vision) (ดึงข้อความจากรูปภาพ) - เป็น AI สำหรับดึงข้อความจากรูปภาพ
+- [Airtable](https://www.airtable.com/) (บันทักรายจ่าย) - เป็น Database แบบง่ายๆ ที่เอาไว้เก็บข้อมมูลรายรับ รายจ่าย 
+สามารถแก้ไขข้อมูลต่างๆผ่าน App ในมือถือได้เลยและ Export เป็น Excel ได้ด้วย ใช้งานง่ายพอสมควรแค่เข้าไปสมัครแล้วล็อคอิน สร้าง Workspace ได้เลย
 
-**Framework** - [Express.js](https://expressjs.com/)
+> [Source Code](https://github.com/Janescience/jasistant)
 
-**Host** - [Vercel](https://vercel.com/)
-
-**Storage** - [Google Cloud Storage](https://cloud.google.com/storage) (เก็บรูปภาพ)
-
-**AI** - [Google Cloud Vision AI](https://cloud.google.com/vision) (ดึงข้อความจากรูปภาพ)
-
-**Database** - [Airtable](https://www.airtable.com/) (บันทักรายจ่าย)
-
-**NPM Package**
-
-- [promptpay-qr](https://github.com/dtinth/promptpay-qr) (สร้าง QR Code แบบพร้อมเพย์)
-- [tweetnacl-sealedbox-js](https://www.npmjs.com/package/tweetnacl-sealedbox-js) (ส่งหรือรับข้อมูลแบบเข้ารหัส)
-
-<br />
+{/* <br />
 
 <center>. . .</center>
 
@@ -111,33 +107,8 @@ featureImage: "/static/images/blog/personal-tool-line/cover.png"
 
 ### Structure
 
-```
-└──src
-│   └── config
-│   │   └── line.config.js
-│   └── controllers
-│   │   └── notification.controller.js
-│   └── middlewares
-│   │   ├── error-handler.js
-│   │   └── log-event.js
-│   └── modules
-│   │   └── expense-tracking.module.js
-│   │   └── qrcode-promptpay.module.js
-│   └── routes
-│   │   ├── webhook.routes.js
-│   └── services
-│   │   └── image.service.js
-│   │   └── message.service.js
-│   └── utilities
-│       └── line.utility.js
-│       └── storage.utility.js
-└──views
-│   └── 404.html
-│   └── index.html
-└──.env
-└──server.js
-└──vercel.json
-```
+![Cover](/static/images/blog/personal-tool-line/structure.png)
+
 
 <br />
 
@@ -156,22 +127,22 @@ const errorHandler  = require('./src/middlewares/error-handler');
 const dotenv = require('dotenv');
 dotenv.config();
 
-// Initialize Express App 
+// Initialize express app 
 const app = express();
 app.use(express.json({limit:'50mb'}))
 app.use(express.urlencoded({limit: '50mb', extended:true }))
 app.use(express.static(path.join(__dirname, '/public')))
 app.use(bodyParser.text())
 
-// Routes Setup  
+// Routes setup  
 require('./src/routes/webhook.routes')(app);
 
-// Basic Route
+// Basic route
 app.get(["/","/index.html"],(req,res) => {
   res.sendFile(path.join(__dirname, 'views','index.html'));
 })
 
-// Not Found Route
+// Not found route
 app.all("*", (req,res) => {
   res.status(404);
   if(req.accepts('html')){
@@ -183,10 +154,10 @@ app.all("*", (req,res) => {
   }
 })
 
-//Error Handler
+//Error handler
 app.use(errorHandler)
 
-//App Started
+//App started
 app.listen(process.env.PORT, () => {
   console.log("Server is running on port : ",process.env.PORT);
 })
@@ -272,7 +243,449 @@ app.listen(process.env.PORT, () => {
   ```js:.env
   PORT=3000
   ```
----
+
+<br />
+
+<center>. . .</center>
+
+<br />
+
+### Config
+
+```js:/config/line.config.js
+const dotenv = require('dotenv');
+dotenv.config();
+
+const config = () => {
+    return { 
+        channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN,
+        channelSecret: process.env.LINE_CHANNEL_SECRET
+    }
+}
+
+module.exports = config
+```
+
+- ใช้ `dotenv` เพื่อให้เข้าถึงตัวแปรในไฟล์ `.env` ได้
+- *LINE_CHANNEL_ACCESS_TOKEN* เอาค่ามาจาก **Messaging API** แล้วเลื่อนไปข้างล่างสุดดูที่หัวข้อ **Channel access token**
+- *LINE_CHANNEL_SECRET* เอาค่ามาจาก **Basic settings** แล้วไปที่หัวข้อ **Channel secret**
+
+<br />
+
+<center>. . .</center>
+
+<br />
+
+### Service
+
+```js:/services/message.service.js
+
+const expenseTracking = require("../modules/expense-tracking.module")
+const qrcodePromptpay = require("../modules/qrcode-promptpay.module")
+
+const category = {
+  t: "transportation",
+  f: "food",
+  e: "electronic",
+  d: "drinks",
+  c: "clothes",
+  a: "alcohal",
+  g: "game",
+  h: "health",
+  m: "miscellaneous",
+  o: "occasion",
+  l: "lodging"
+}
+
+const messageService = async (message) =>{
+    message = message.trim()
+    let match
+    
+    if (match = message.match(/^([\d.]+|[ivxlcdm]+)([tfedcaghmol])([ \w]+|)$/i)) {
+      const m = match
+      
+      const enteredAmount = +m[1]
+      const amount = enteredAmount.toFixed(2)
+      const ctg = category[m[2].toLowerCase()]
+      const name = m[3] ? m[3] : ""
+
+      return await expenseTracking(null,name,amount, ctg)
+    }else if(match = message.match(/^(expctg)$/i)){
+      return {message :  JSON.stringify(category,null,4) }
+    }else if(match = message.match(/^(qr)([\d.]+)$/i)){
+      const m = match
+      const amount = Number(match[2])
+      return await qrcodePromptpay(amount)
+    }
+}
+
+module.exports = messageService;
+```
+
+<br />
+
+<center>. . .</center>
+
+<br />
+
+### Utilities
+
+#### Line
+```js:/utilities/line.utility.js
+const toMessages = (data) => {
+  if (!data) data = "Data reply is undefined..."
+  if (typeof data === "string") data = [{ type: "text", text: data }]
+  return data
+}
+  
+const createBubble = (
+  title,
+  text,
+  {
+    headerBackground = "#353433",
+    headerColor = "#d7fc70",
+    textSize = "xl",
+    altText = String(text),
+    footer
+  } = {}
+) => {
+  const data = {
+    type: "bubble",
+    styles: {
+      header: { backgroundColor: headerBackground }
+    },
+    header: {
+      type: "box",
+      layout: "vertical",
+      contents: [
+        { type: "text", text: title, color: headerColor, weight: "bold" }
+      ]
+    },
+    body:
+      typeof text === "string"
+        ? {
+            type: "box",
+            layout: "vertical",
+            contents: [{ type: "text", text: text, wrap: true, size: textSize }]
+          }
+        : text
+  }
+  if (footer) {
+    data.styles.footer = { backgroundColor: "#e9e8e7" }
+    data.footer =
+      typeof footer === "string"
+        ? {
+            type: "box",
+            layout: "vertical",
+            contents: [
+              {
+                type: "text",
+                text: footer,
+                wrap: true,
+                size: "sm",
+                color: "#8b8685"
+              }
+            ]
+          }
+        : footer
+  }
+  return {
+    type: "flex",
+    altText: truncate(`[${title}] ${altText}`, 400),
+    contents: data
+  }
+}
+
+const  truncate = (text, maxLength) => {
+  return text.length + 5 > maxLength
+    ? text.substr(0, maxLength - 5) + "…"
+    : text
+}
+
+const readAsBuffer = (stream) => {
+  return new Promise((resolve, reject) => {
+    stream.on("error", e => {
+      reject(e)
+    })
+    const bufs = []
+    stream.on("end", () => {
+      resolve(Buffer.concat(bufs))
+    })
+    stream.on("data", buf => {
+      bufs.push(buf)
+    })
+  })
+}
+  
+const utility = {
+  toMessages,
+  createBubble,
+  readAsBuffer
+};
+
+module.exports = utility;
+  
+```
+
+
+- **toMessage** - ใช้สำหรับส่งค่ากลับไปใน Line(Bot ตอบเรา) แบบเป็นข้อความธรรมดา โดยมีการตรวจสอบด้วยว่าจะต้องเป็น String เท่านั้น 
+- **createBubble** - เป็นการตอบกลับแบบ Flex Message ที่จะไม่ใช่ข้อความธรรมดา อาจจะมีรูปหรือปุ่มให้กดได้ จัดแบบฟอร์มและตำแหน่งข้อความตามต้องการ
+โดยของผมจะสร้าง Layout ไว้หมดแล้วและรับเอาแค่บางตัวแปร อ่านเพิ่มเติมได้ที่ [Flex Message](https://developers.line.biz/en/docs/messaging-api/using-flex-messages/) 
+- **truncate** - ในกรณีที่ข้อความยาวเกินที่กำหนดจะให้แสดงเป็น *...*
+- **readAsBuffer** - ใช้สำหรับรูปภาพเปลี่ยน Content เป็น Buffer เพื่อนำไปส่งเข้า Cloud อีกที
+
+
+<br/>
+
+#### Storage
+
+```js:/utilities/storage.utility.js
+const { Storage } = require("@google-cloud/storage")
+const { nanoid } = require("nanoid")
+
+const storage = new Storage(
+  {
+    projectId: process.env.GCS_PROJECT_ID,
+    scopes: 'https://www.googleapis.com/auth/cloud-platform',
+    credentials: {
+      client_email: process.env.GCS_EMAIL,
+      private_key: process.env.GCS_PRIVATE_KEY
+    }
+  }
+);
+
+const putBlob = async (buffer, extension) => {
+  const blobName = nanoid() + extension
+  await storage
+    .bucket("tmpblobimg")
+    .file(blobName)
+    .save(buffer)
+  return blobName
+}
+
+const getBlob = async (blobName) => {
+  const response = await storage
+    .bucket("tmpblobimg")
+    .file(blobName)
+    .download()
+  return response[0]
+}
+
+const deleteBlob = async (blobName) => {
+  await storage
+    .bucket("tmpblobimg")
+    .file(blobName)
+    .delete();
+}
+
+const getBlobUrl = async (blobName) => {
+  const result = await storage
+    .bucket("tmpblobimg")
+    .file(blobName)
+    .getSignedUrl({
+      action: "read",
+      expires: new Date(Date.now() + 86400e3),
+      version: "v4",
+      virtualHostedStyle: true
+    })
+  return result[0]
+}
+
+const cloudStorage = {
+  putBlob,
+  getBlob,
+  deleteBlob,
+  getBlobUrl
+};
+
+module.exports = cloudStorage;
+
+```
+
+- **storage** - เป็นการ Authorization storage ใน Cloud ด้วยการใช้ Project ID , Email และ Private Key
+
+
+<br />
+
+<center>. . .</center>
+
+<br />
+
+### Modules
+
+#### Expense Tracking
+```js:/modules/expense-tracking.module.js
+const Airtable = require("airtable");
+const { AirtableRecord } = require("airtable");
+const { createBubble } = require("../utilities/line.utility");
+
+const expenseTable = () => {
+  return new Airtable({ apiKey: process.env.AIRTABLE_API_KEY })
+    .base(process.env.AIRTABLE_EXPENSE_BASE)
+    .table("Expense Records");
+};
+
+const expenseTracking = async (time,name,amount, category) => {
+  const date = time ? time : new Date();
+  // Airtable
+  const recorded = await expenseTable().create(
+    {
+      Name: name.trim(),
+      Date: date,
+      Category: category,
+      Amount: amount,
+    },
+    { typecast: true }
+  );
+  const body = {
+    type: "box",
+    layout: "vertical",
+    contents: [
+      {
+        type: "text",
+        text: "฿" + amount,
+        size: "xxl",
+        weight: "bold",
+      },
+      {
+        type: "text",
+        text: `${category}${name ? "\n" + name.trim() : ""}`,
+        wrap: true,
+      },
+    ],
+    action: {
+      type: "uri",
+      label: "Open Airtable",
+      uri: process.env.AIRTABLE_EXPENSE_URI + "/" + recorded.getId(),
+    },
+  };
+  const footer = await summary();
+  const bubble = createBubble("Expense Tracking", body, {
+    headerColor: "#f7f7f2",
+    footer: {
+      type: "box",
+      layout: "horizontal",
+      spacing: "sm",
+      contents: footer.map(([label, text]) => ({
+        type: "box",
+        layout: "vertical",
+        contents: [
+          {
+            type: "text",
+            text: label,
+            color: "#8b8685",
+            size: "xs",
+            align: "end",
+          },
+          {
+            type: "text",
+            text: text,
+            color: "#8b8685",
+            size: "sm",
+            align: "end",
+          },
+        ],
+      })),
+      action: {
+        type: "uri",
+        label: "Open Airtable",
+        uri: process.env.AIRTABLE_EXPENSE_URI,
+      },
+    },
+  });
+  return {message:bubble};
+};
+
+const summary = async () => {
+  const date = new Date().toJSON().split("T")[0];
+  const tableData = await expenseTable().select().all();
+  const normalRecords = tableData.filter((r) => !r.get("Occasional"));
+  const records = AirtableRecord;
+  const total = (records) => records.map((r) => +r.get("Amount") || 0).reduce((a, b) => a + b, 0);
+  const firstDate = normalRecords
+    .map((r) => (r.get("Date") ? r.get("Date").split("T")[0] : r.get("Date")))
+    .reduce((a, b) => (a < b ? a : b), date);
+
+  const todayUsage = total(
+    normalRecords.filter(
+      (r) => (r.get("Date") ? r.get("Date").split("T")[0] : r.get("Date")) === date
+    )
+  );
+  const dayNumber = Math.round((Date.parse(date) - Date.parse(firstDate)) / 86400e3) + 1;
+  const $ = (v) => `฿${v.toFixed(2)}`;
+
+  return [
+    ["Today", $(todayUsage)], //รายจ่ายรวมทั้งหมดของวันนี้
+    ["Day", `${dayNumber}`], //รวมแล้วมีการบันทึกรายจ่ายทั้งหมดกี่วัน
+  ];
+};
+
+module.exports = expenseTracking;
+
+```
+- **expenseTable** - เป็นการบอกว่าเราใช้ Airtable อันไหนและ Table ชื่อว่าอะไร เชื่อมต่อด้วย APIKEY และ BASE ID ส่วนตรงชื่อ Table ถ้าเรายังไม่ได้สร้าง
+มันก็จะสร้างให้อัตโนมัติ
+  - **AIRTABLE_API_KEY** (APIKEY) - เข้าไปดูข้อมูลที่ [APIKEY](https://airtable.com/create/apikey)
+  - **AIRTABLE_EXPENSE_BASE** (BASE ID) - เป็น Base ID เพื่อบอกว่าเราต่อกับ Base อันไหน ให้ดูจาก URL โดยเอาค่ามาจาก หลัง `.com/` เช่น 
+  https://airtable.com/app1brOBAd2BLsotU/tbltpKT3ZVDRoo8zG/viwvm85L6NKZcvifX?blocks=hide ก็ให้เอาค่า **app1brOBAd2BLsotU** มาใช้
+- **expenseTracking** - เตรียม Flex Message ไม่ว่าจะเป็น body, footer, action 
+- **summary** - เป็นการคำนวณรายจ่ายรวมของแต่ล่ะวัน และคำนวณว่าเราบันทึกรายจ่ายมาแล้วกี่วัน
+
+<br/>
+
+#### QRCode Promptpay
+
+```js:/modules/qrcode-promptpay.module.js
+const qrcode = require('qrcode')
+const generatePayload = require('promptpay-qr')
+const { putBlob,getBlobUrl } = require('../utilities/storage.utility')
+
+const generateQrcode = async (amount) => {
+
+  const mobileNumber = '080-608-XXXX'
+  const payload = generatePayload(mobileNumber, { amount })
+  
+  const bufferImage = await qrcode.toBuffer(payload, {
+      type: 'jpg',
+      errorCorrectionLevel: 'H',
+  });
+
+  const blobName = await putBlob(bufferImage, ".jpg")
+  const blobUrl = await getBlobUrl(blobName)
+
+  const message = 
+  [
+    {
+      type: 'image',
+      originalContentUrl: blobUrl,
+      previewImageUrl: blobUrl
+    },
+    {
+      type: "text",
+      text: `${amount} บาท`,
+    }
+  ]
+  
+  return {
+      message: message,
+      blobName : blobName
+    }
+}
+
+module.exports = generateQrcode;
+
+```
+
+- **qrcode** (NPM Packages) - สำหรับแปลง Payload เป็นรูป QRCode
+- **promptpay-qr** (NPM Packages) - สำหรับสร้าง Payload ที่เอาไว้สร้าง QRCode จากเบอร์โทรศัพท์และจำนวนเงิน
+- **generateQrcode** - 
+--- */}
+
+<br />
+
+<center>. . .</center>
+
+<br />
 
 ## การใช้งาน
 
