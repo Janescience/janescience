@@ -22,6 +22,7 @@ featureImage: "/static/images/blog/personal-tool-line/cover.png"
 - [ทำอะไรไปบ้าง ?](#ทำอะไรไปบ้าง-?)
 - [Janalyze](#janalyze)
 - [Jasistant](#jasistant)
+  - [Setup Google Cloud](#setup-google-cloud)
   - [Structure](#structure)
   - [NPM Packages](#npm-packages)
   - [Server Properties](#server-properties)
@@ -121,7 +122,42 @@ featureImage: "/static/images/blog/personal-tool-line/cover.png"
 
 > [Jasistant Source Code](https://github.com/Janescience/jasistant)
 
- <br />
+<br />
+
+<center>. . .</center>
+
+<br />
+
+### Setup Google Cloud
+
+> ถ้าอยากทำแค่บันทึกรายจ่าย ไม่ต้องการสร้าง QRCode หรือ Image to Text ข้าม Step นี้ไปได้
+
+ซึ่งเราจะต้องผูกบัตรเครดิตก่อนนะครับ เลือก **START FREE** ได้เลยจะขึ้นปุ่มมาข้างบน เหมือนจะมีให้ทดลองใช้ฟรี 90 วัน ใช้ได้สูงสุด 300 เครดิต(300 ดอลลาร์) 
+หลังจากนั้นคิดราคาตามที่เราใช้ แต่ผมเองยังไม่ได้เสียเงินเลยสักบาท เพราะ Google Cloud Storage คิดราคาเป็น 1 GB/Month =  $0.020 
+อ้างอิงจาก [Google Cloud Storage Pricing](https://cloud.google.com/storage/pricing#asia) และผมก็ลบรูปเสมอด้วย ก็ไม่น่าจะถึง 1 GB แน่นอน
+ส่วน Google Cloud Vision API สามารถใช้ได้ฟรี 1000 ภาพ/เดือน อ้างอิงจาก [Google Cloud Vision API Pricing](https://cloud.google.com/vision/pricing)
+
+1. เข้าไปที่ [Google Cloud Console](https://console.cloud.google.com/) ถ้ายังไม่เคยสร้าง Project ให้เลือก **Create or select a project**
+2. เมื่อมีหน้าต่าง Modal แสดงขึ้นมาให้เลือก **NEW PROJECT** ที่มุมขวาบนจะพามาที่หน้านี้ 
+
+![Cover](/static/images/blog/personal-tool-line/gcs-create.png)
+
+กรอกข้อมูลให้ครบแล้วกด **CREATE** รอจนสร้างเสร็จ
+
+3. เลือกโปรเจคที่เราเพิ่งสร้าง (ตรงซ้ายบนใกล้เมนูหรือตรงแจ้งเตือนก็ได้) และเลือกเมนู **Cloud Storage > Buckets** เพื่อสร้าง **Storage** ไว้เก็บรูปภาพ
+4. เลือก **CREATE** กรอกข้อมูลต่างๆให้ครบ แล้วเอาชื่อ **Bucket** นั้นมาใช้ในไฟล​์ `/utilities/storage.utility.js` จบการสร้าง **Storage**
+5. ต้องสร้าง **Private Key** เพื่อเอาไปใช้ **Auth** โดยไปที่เมนู **IAM & Admin > Service Accounts** แล้วเลือก **+ CREATE SERVICE ACCOUNT**
+6. กรอก **Service account name** แล้วคลิกปุ่ม **CREATE AND CONTINUE** 
+7. เลือก Role เป็น **Owner** แล้วคลิกปุ่ม **CONTINUE** และ **DONE** ต่อได้เลย 
+8. เสร็จแล้วเข้าไปที่ **Service account details** โดยคลิกตรงช่อง **Email** 
+9. ไปที่ **Tab KEYS** เลือก **ADD KEY > Create new key** 
+10. เลือก **JSON** แล้ว **CREATE** ได้เลย จะเป็นการดาวน์โหลดไฟล์ .json
+11. เปิดไฟล์ .json ขึ้นมาที่เราต้องใช้จะมีแค่ `project_id, private_key, client_email` ให้เอาค่าพวกนี้ไปใส่ในตัวแปร `.env`
+(ถ้าใช้ Vercel เป็น Host ให้เข้าไปที่ Project นั้นๆ เลือก **Settings > Environment Variables**)
+
+> Value ใน Environment Variables ไม่ต้องมี ""  
+
+<br />
 
 <center>. . .</center>
 
