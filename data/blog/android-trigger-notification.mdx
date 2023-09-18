@@ -53,13 +53,81 @@ featureImage: "/static/images/blog/android-trigger-notification/cover.png"
 <center>. . .</center>
 <br/>
 
-
 ### Tech Stacks
 
 - [Kotlin](https://kotlinlang.org/) - เป็นภาษาหลักในการเขียน Android
 - [lazysodium-android](https://github.com/terl/lazysodium-android) - ใช้ในการเข้ารหัสสำหรับส่งข้อมูลไปยัง [Jasistant](https://janescience.com/blog/personal-tool-line#jasistant)
 - [Material](https://developer.android.com/develop/ui/views/theming/look-and-feel) - ใช้เป็น CSS สำหรับ UI
 
+<br/>
+<center>. . .</center>
+<br/>
+
+### Debug
+
+1. เปิดเมนู **Developer options** ใน **Settings** เพื่อทำการ Debug , Install Application ผ่าน USB หรือ Wifi ซึ่งโทรศัพท์แต่ล่ะรุ่นจะใช้วิธีแตกต่างกัน อย่างเช่น [Turn on Develoepr Options](https://www.samsung.com/uk/support/mobile-devices/how-do-i-turn-on-the-developer-options-menu-on-my-samsung-galaxy-device/)
+ส่วนตัวผมเองใช้ **Xiaomi** จะต้องไปที่ **Settings > About phone > MIUI Version (Click 7 times)** แล้วเมนูจะเพิ่มเข้ามาที่ **Settings > Additional settings**
+2. ผมจะ Debug ผ่าน Wirless เปิดโทรศัพท์ไปที่ **Settings > Additional Setting > Developer options > Wireless debugging > Pair device with QR code**
+3. กลับมาที่ Android Studio ตรง Runnings devices เลือก Pair Devices Using Wi-Fi (ต้องใช้ Wi-Fi อันเดียวกัน) เลือก Pair using QR code แล้ว Scan จากโทรศัพท์ได้เลย
+ถ้าเชื่อมต่อกันสำเร็จ จะแสดงข้อความว่าสำเร็จ และมีชื่อรุ่นโทรศัพท์ของเราใน Android Studio กด Debug ได้เลย
+4. ถ้าโทรศัพท์เรายังไม่มี Application ก็จะมี Popup สอบถามว่าเราจะ Install หรือไม่ ให้เลือก Install 
+5. ต้องไปตั้งค่าเพื่อให้ **Japter** เข้าถึงการแจ้งเตือนได้ และกำหนดให้ทำงานตลอดเวลา ไปที่ **Settings > Apps > Manage apps > Japter** 
+
+|App info|Other permissions|
+| ------------------------------------------------------ | -------------------------------------------------------- |
+| ![info](/static/images/blog/android-trigger-notification/setting-2.jpeg) | ![permissions](/static/images/blog/android-trigger-notification/setting-1.jpeg) |
+
+6. เมื่อเราลง Japter เรียบร้อยแล้ว ต้อง Setup publicKey ก่อน เพื่อใช้ในการเข้ารหัสเมื่อส่งข้อมูลไปยัง [Jasistant](https://github.com/Janescience/jasistant)
+ผมทำตาม [Document](https://docs.dt.in.th/dtinth.tools-android/exfiltrate.html) ที่คุณ dtinth เขียนไว้ ต้อง Setup ด้วยกัน 2 ที่
+  
+  #### Jasistant
+  ```js:/controllers/notification.controller.js
+    const sealedbox = require('tweetnacl-sealedbox-js');
+    const expenseTracking = require("../modules/expense-tracking.module")
+
+    exports.notification = async (req, res) => {
+
+      const result = sealedbox.open(
+        Buffer.from(req.body, 'hex'),
+        Buffer.from(process.env.NOTI_PUBLIC_KEY, 'base64'),
+        Buffer.from(process.env.NOTI_SECRET_KEY, 'base64')
+      );
+
+      const notification = JSON.parse(Buffer.from(result).toString('utf8'));
+
+      const packageName = notification?.packageName
+      const title = notification?.title
+      const text = notification?.text
+      const time = notification?.time
+
+      const amount = await text.match(/\d+(\.\d+)/g).map(function(v) { return parseFloat(v); });
+
+      if(packageName == "com.kasikorn.retail.mbanking.wap"){
+        if(title == 'รายการโอน/ถอน' || title == 'รายการใช้บัตร'){
+          await expenseTracking(new Date(time),title,amount[0], "transfer")
+          return res.status(200).send({message : 'Expense recording success.'})
+        }
+      }
+    };
+  ```
+
+  พอได้ key มาแล้ว ผมเอามาไว้ในตัวแปร `.env` และมีการ Filter บันทึกรายจ่ายเฉพาะการแจ้งเตือน
+  ที่มาจากแอปธนาคารที่เป็นการโอนเงินหรือการใช้บัตรเครดิตเท่านั้น
+
+
+  #### Japter
+      - Public Key - ใช้ค่าเดียวกันกับ `process.env.NOTI_PUBLIC_KEY`
+      - HTTPS Enpoint - ก็ตรงตัวเลยผมจะใส่เป็น https://jasistant.vercel.app/notification
+
+<br/>
+<center>. . .</center>
+<br/>
+
+### Install 
+
+**Android Studio > Build > Build Bundle(s)/APK(s) > Build APK(s)** โปรแกรมใช้เวลา Build สักครู่ เราก็จะได้ไฟล์ `.apk` ออกมา
+ถ้าไม่มี error หรืออะไรผิดพลาด นำไฟล์นั้นมา Insatll ในโทรศัพท์ของเราได้เลย
+
 ---
 
-> 📲 [Japter Source Code](https://github.com/Janescience/japter)
+> [Japter Source Code](https://github.com/Janescience/japter)
