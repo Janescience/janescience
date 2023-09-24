@@ -6,7 +6,7 @@ const siteMetadata = {
   language: 'en-us',
   theme: 'system', // system, dark or light
   siteUrl: 'https://janescience.com',
-  siteRepo: 'https://github.com/Janescience/blog-nextjs-tailwind',
+  siteRepo: 'https://github.com/Janescience/janescience',
   siteLogo: '/static/images/logo.png',
   image: '/static/images/avatar.jpeg',
   socialBanner: '/static/images/twitter-card.png',
