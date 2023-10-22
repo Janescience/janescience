@@ -1,0 +1,287 @@
+---
+title: Deploy Spring-Boot Application ใน Kubernetes(Minikube) ด้วย Jenkins CI/CD Pipeline
+date: "2023-10-23"
+tags: ["jenkins","docker","kubernetes"]
+draft: false
+summary: "ทำ CI/CD ด้วย Jenkins และเขียน Pipeline Deploy to Kubernetes โดยใช้ 'docker' & `kubectl` และ Application เป็น Spring Boot "
+layout: PostSimple
+featureImage: "/static/images/blog/jenkins-docker-kubernetes/cover.jpeg"
+---
+
+<center>![Git Workflow](/static/images/blog/jenkins-docker-kubernetes/cover.jpeg)</center>
+
+<center className="text-xs">ขอบคุณรูปภาพจาก [https://www.weave.works](https://www.weave.works/assets/images/blt0e0b20ea61123a17/Create_A_CI_CD_Pipeline_With_Kubernetes_and_Jenkins.jpeg) </center>
+
+บทความนี้ ผมขอข้ามการอธิบาย Docker และ Kubernetes ว่าคืออะไร ทำงานอย่างไร แต่จะ Focus ไปที่การ Setup Jenkins เพื่อ Deploy เท่านั้น
+
+## Prerequire
+
+- Java 11 or 17 
+- [Jenkins](https://www.jenkins.io/) (Require Java)
+    - Mac OS - `brew install jenkins-lts` (Install ผ่าน Homebrew)
+    - Windows - [Download Jenkins](https://www.jenkins.io/download/) (เลือก Windows)
+    - Linux - [Install Jenkins](https://www.jenkins.io/doc/book/installing/linux/)
+- [Docker](https://www.docker.com/products/docker-desktop/)
+- [minikube](https://minikube.sigs.k8s.io/docs/start/) (Require Docker)
+- [kubectl](https://kubernetes.io/docs/tasks/tools/) 
+- Spring-Boot Application ([Source Code](https://github.com/Janescience/discovery-service))
+
+<br/>
+<center>. . .</center>
+<br/>
+
+## Start Jenkins
+
+- [Mac OS](https://phoenixnap.com/kb/install-jenkins-on-mac) (Method 1: Install Jenkins Using the Homebrew Package Manager)
+- [Linux](https://www.jenkins.io/doc/book/installing/linux/) (Start Jenkins)
+- [Windows](https://www.oreilly.com/library/view/hands-on-continuous-integration/9781789130485/5f1d3f8c-6ee0-499f-97ec-81b5feff6ff5.xhtml)
+
+<br/>
+<center>. . .</center>
+<br/>
+
+## Setup Jenkins (First Time)
+
+1. เข้า Jenkins UI ด้วย http://localhost:8080 (Default)
+2. `cat /Users/[user]/.jenkins/secrets/initialAdminPassword` แล้วจะได้ secret ออกมาเอามาใส่ **Administrator password**
+3. เลือก **Install suggested plugins** รอจนเสร็จ
+4. กรอก Username กำหนด Password และตั้งชื่อ 
+5. เลือก **Save and Continue > Save and Finish > Start using Jenkins**
+
+<br/>
+<center>. . .</center>
+<br/>
+
+## Install Plugins
+
+1. เข้าไปที่ **Dashboard > Manage Jenkins > Plugins > Advanced settings**
+2. [Downlod File](https://drive.google.com/u/2/uc?id=1SSL00SsCENFV5b0nl5N3DUSBjnqW7091&export=download) (Kubernetes Continuous Deploy PluginVersion1.0.0)
+3. เลือนไปที่ **Deploy Plugin** แล้วเลือก **Choose File** เพื่อ Upload Plugin ที่ Download มา
+4. เลือก **Deploy** รอจนเสร็จ
+
+<br/>
+<center>. . .</center>
+<br/>
+
+## Setup Credentials
+
+เข้าไปที่ **Dashboard > Manage Jenkins > Credentials > System > Global credentials (unrestricted)**  เลือก  **+ Add Credentilas**
+
+1. Kubeconfig
+
+กำหนด ID และ Description เป็น **k8sconfigpwd**
+
+![Kubeconfig](/static/images/blog/jenkins-docker-kubernetes/kubeconfig.png)
+
+ใช้คำสั่ง `open .kube/config` (ต้อง Start Minikube ก่อน `minikube start`) จะเป็นการเปิด Config ขึ้นมาใน Text ให้ Copy เนื้อหาทั้งหมดในไฟล์มา ให้เอามาใส่ใน **Content** แล้วเลือก **Create**
+
+2. Docker Hub
+
+![Kubeconfig](/static/images/blog/jenkins-docker-kubernetes/dockerconfig.png)
+
+<br/>
+<center>. . .</center>
+<br/>
+
+## Setup Maven
+
+Spring-Boot Application ของผมต้องใช้ Maven ในการ Build ไม่จำเป็นต้องมีในเครื่อง เราจะใช้ Maven ของ Jenkins เอา
+
+ไปที่ **"Dashboard > Manage Jenkins > Tools"** เลื่อนลงไปที่ **Maven installations**
+
+![Maven](/static/images/blog/jenkins-docker-kubernetes/maven.png)
+
+<br/>
+<center>. . .</center>
+<br/>
+
+## File Require in Spring-Boot Application
+
+```yml:/k8s/deployment.yml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: discovery-service-app
+  labels:
+    app: discovery-service-app
+spec:
+  revisionHistoryLimit: 0
+  replicas: 2
+  selector:
+    matchLabels:
+      app: discovery-service-app
+  template:
+    metadata:
+      labels:
+        app: discovery-service-app
+    spec:
+      containers:
+        - name: discovery-service-app
+          image: janescience/discovery-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 9001
+          resources:
+            limits:
+              cpu: 500m
+            requests:
+              cpu: 200m
+
+```
+
+```yml:/k8s/service.yml
+apiVersion: v1
+kind: Service
+metadata:
+  name: discovery-svc
+spec:
+  type : LoadBalancer
+  ports:
+    - port: 80
+      targetPort: 9001
+  selector:
+    app: discovery-service-app
+```
+
+```yml:Dockerfile
+FROM openjdk:17-jdk
+ARG JAR_FILE=target/*.jar
+COPY ${JAR_FILE} discovery.jar
+ENTRYPOINT ["java","-jar","discovery.jar"]
+EXPOSE 9001
+```
+
+<br/>
+<center>. . .</center>
+<br/>
+
+
+## Jenkins Pipeline
+
+1. เลือก **"Dashboard > + New Item"**
+2. ตั้งชื่อ และเลือก **Pipeline**
+3. เลื่อนลงมาที่ **Pipeline** เลือก **Pipeline script** แล้วเขียน Pipeline ลงไปใน Script ตามนี้
+
+```bash
+pipeline {
+    agent any
+    tools{
+        maven 'maven_3_5_0'
+    }
+    environment {
+        DOCKER_HOME = '/usr/local/bin/docker'  // Path to the Docker executable
+    }
+    stages{
+        stage('Build Maven'){
+            steps{
+                checkout([$class: 'GitSCM', branches: [[name: '*/master']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/Janescience/discovery-service']]])
+                sh 'mvn clean install'
+            }
+        }
+        stage('Build image'){
+            steps{
+                script{
+                    sh '${DOCKER_HOME} build -t discovery-service:latest .'
+                }
+            }
+        }
+        
+        stage('Push image to Hub'){
+            steps{
+                script{
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-pwd', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                        sh '${DOCKER_HOME} login -u ${DOCKER_USERNAME} -p ${DOCKER_PASSWORD}'
+                        sh '${DOCKER_HOME} tag discovery-service:latest janescience/discovery-service:latest'
+                        sh '${DOCKER_HOME} push janescience/discovery-service:latest'
+                        sh '${DOCKER_HOME} rmi -f $(${DOCKER_HOME} images -f "dangling=true" -q)'
+                    }
+                }
+            }
+        }
+        stage('Deploy to k8s'){
+            steps{
+                script{
+                    kubernetesDeploy (configs: 'k8s/deployment.yml',kubeconfigId: 'k8sconfigpwd')
+                    kubernetesDeploy (configs: 'k8s/service.yml',kubeconfigId: 'k8sconfigpwd')
+                }
+            }
+        
+        }
+    }
+}
+```
+
+หรืออีกวิธีคือเลือก **Pipeline script from SCM**
+
+เป็นการเก็บ Script Pipeline ไว้ใน Project แทน โดยตั้งชื่อไฟล์ว่า **Jenkinsfile**
+
+![Pipeline Git](/static/images/blog/jenkins-docker-kubernetes/pipelinegit.png)
+
+และไปเพิ่ม Github Credentials เหมือน [Setup Credentials](#setup-credentials) เพื่อให้ Jenkins เข้าถึง Github ได้
+
+<br/>
+<center>. . .</center>
+<br/>
+
+## Deploy to Kubernetes
+
+เลือก Project และกด **Build Now** ถ้า Deploy สำเร็จต้องขึ้นสีเขียวหมดแบบนี้
+
+![Jenkins Build](/static/images/blog/jenkins-docker-kubernetes/build.png)
+
+ถ้าอยากดู Logs ดูได้ที่ **"Permalinks > Last build > Console Output"**
+
+![Jenkins Logs](/static/images/blog/jenkins-docker-kubernetes/logs.png)
+
+<br/>
+<center>. . .</center>
+<br/>
+
+## Verify Kubernetes Deployed
+
+```bash
+
+~ kubectl get all
+
+NAME                                         READY   STATUS    RESTARTS      AGE
+pod/discovery-service-app-6747dd94f9-5bsxs   1/1     Running   0             18m
+pod/discovery-service-app-6747dd94f9-w6dhb   1/1     Running   0             18m
+pod/search-service-app-69b7c477b7-4w72l      1/1     Running   1 (16h ago)   17h
+pod/search-service-app-69b7c477b7-6q4x5      1/1     Running   1 (16h ago)   17h
+pod/search-service-app-69b7c477b7-hjkxb      1/1     Running   2 (16h ago)   17h
+pod/search-service-app-69b7c477b7-jrgqh      1/1     Running   1 (16h ago)   17h
+pod/search-service-app-69b7c477b7-pxm59      1/1     Running   1 (16h ago)   17h
+
+NAME                    TYPE           CLUSTER-IP       EXTERNAL-IP   PORT(S)        AGE
+service/discovery-svc   LoadBalancer   10.111.56.231    <pending>     80:31604/TCP   18m
+service/kubernetes      ClusterIP      10.96.0.1        <none>        443/TCP        19h
+service/search-svc      LoadBalancer   10.106.152.162   <pending>     80:31202/TCP   19h
+
+NAME                                    READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/discovery-service-app   2/2     2            2           18m
+deployment.apps/search-service-app      5/5     5            5           19h
+
+NAME                                               DESIRED   CURRENT   READY   AGE
+replicaset.apps/discovery-service-app-6747dd94f9   2         2         2       18m
+replicaset.apps/search-service-app-69b7c477b7      5         5         5       19h
+
+NAME                                                     REFERENCE                       TARGETS   MINPODS   MAXPODS   REPLICAS   AGE
+horizontalpodautoscaler.autoscaling/search-service-app   Deployment/search-service-app   1%/200%   5         10        5          18h
+```
+
+ใน minikube จะไม่ Support External-IP เราต้อง forward port อีกที
+
+```bash
+~ kubectl port-forward service/discovery-svc 9001:80&
+
+Forwarding from 127.0.0.1:9001 -> 9001
+Forwarding from [::1]:9001 -> 9001
+```
+
+ลองเข้า http://localhost:9001
+
+![Service](/static/images/blog/jenkins-docker-kubernetes/service.png)
+
+
+
+
