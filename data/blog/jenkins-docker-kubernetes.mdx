@@ -30,6 +30,20 @@ featureImage: "/static/images/blog/jenkins-docker-kubernetes/cover.jpeg"
 <center>. . .</center>
 <br/>
 
+## Solution Overview
+
+<center>![Overview](/static/images/blog/jenkins-docker-kubernetes/overview.png)</center>
+
+1. Pull code ล่าสุดจาก ​Github เมื่อเราสั่ง Build  
+2. Build .jar ด้วย Maven 
+3. Build docker image ด้วย Dockerfile ที่อยู่ในโปรเจค
+4. Push docker image ไปยัง Docker Hub (คล้าย Github แต่ใช้เก็บ Docker image)
+5. Deploy Kubernetes ด้วย Kubeconfig ที่เรากำหนดไว้ โดย Kubernetes จะไปเอา Docker image จาก Docker Hub ตาม Tag ที่เรากำหนดไว้มา ​Deploy
+
+<br/>
+<center>. . .</center>
+<br/>
+
 ## Start Jenkins
 
 - [Mac OS](https://phoenixnap.com/kb/install-jenkins-on-mac) (Method 1: Install Jenkins Using the Homebrew Package Manager)
@@ -55,7 +69,7 @@ featureImage: "/static/images/blog/jenkins-docker-kubernetes/cover.jpeg"
 ## Install Plugins
 
 1. เข้าไปที่ **Dashboard > Manage Jenkins > Plugins > Advanced settings**
-2. [Downlod File](https://drive.google.com/u/2/uc?id=1SSL00SsCENFV5b0nl5N3DUSBjnqW7091&export=download) (Kubernetes Continuous Deploy PluginVersion1.0.0)
+2. [Download File](https://drive.google.com/u/2/uc?id=1SSL00SsCENFV5b0nl5N3DUSBjnqW7091&export=download) (Kubernetes Continuous Deploy PluginVersion1.0.0)
 3. เลือนไปที่ **Deploy Plugin** แล้วเลือก **Choose File** เพื่อ Upload Plugin ที่ Download มา
 4. เลือก **Deploy** รอจนเสร็จ
 
@@ -225,7 +239,7 @@ pipeline {
 
 ## Deploy to Kubernetes
 
-เลือก Project และกด **Build Now** ถ้า Deploy สำเร็จต้องขึ้นสีเขียวหมดแบบนี้
+เลือก Project และกด **Build Now** ถ้า Deploy สำเร็จต้องขึ้นสีเขียวหมดแบบนี้ (ต้อง Start minikube ก่อน)
 
 ![Jenkins Build](/static/images/blog/jenkins-docker-kubernetes/build.png)
 
@@ -269,7 +283,7 @@ NAME                                                     REFERENCE              
 horizontalpodautoscaler.autoscaling/search-service-app   Deployment/search-service-app   1%/200%   5         10        5          18h
 ```
 
-ใน minikube จะไม่ Support External-IP เราต้อง forward port อีกที
+ใน minikube จะไม่ Support External-IP เราต้อง Forward port อีกที และการ Forward port ไม่รองรับ Load balance
 
 ```bash
 ~ kubectl port-forward service/discovery-svc 9001:80&
@@ -281,6 +295,44 @@ Forwarding from [::1]:9001 -> 9001
 ลองเข้า http://localhost:9001
 
 ![Service](/static/images/blog/jenkins-docker-kubernetes/service.png)
+
+ถ้าอยากทดสอบ Load balance ต้องเปิด Tunnel
+
+```bash
+
+~ minikube tunnel
+
+✅  Tunnel successfully started
+
+📌  NOTE: Please do not close this terminal as this process must stay alive for the tunnel to be accessible ...
+
+❗  The service/ingress discovery-svc requires privileged ports to be exposed: [80]
+🔑  sudo permission will be asked for it.
+🏃  Starting tunnel for service discovery-svc.
+❗  The service/ingress search-svc requires privileged ports to be exposed: [80]
+🔑  sudo permission will be asked for it.
+🏃  Starting tunnel for service search-svc.
+❗  The service/ingress example-ingress requires privileged ports to be exposed: [80 443]
+🔑  sudo permission will be asked for it.
+🏃  Starting tunnel for service example-ingress.
+Password:
+```
+
+ลอง Get Service อีกรอบ จะเห็นว่าได้ 127.0.0.1 ขึ้นมาใน EXTERNAL-IP
+
+```bash
+
+~ kubectl get service discovery-svc
+
+NAME            TYPE           CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
+discovery-svc   LoadBalancer   10.111.56.231   127.0.0.1     80:31604/TCP   19h
+```
+
+ลองเข้า http://localhost
+
+![Service](/static/images/blog/jenkins-docker-kubernetes/tunnel.png)
+
+ถ้าเราทดสอบ Load Test ด้วยการเปิด Tunnel ถึงจะมีการทำ Load Balance ให้
 
 
 
