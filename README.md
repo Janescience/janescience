@@ -1,8 +1,8 @@
 <div align="center">
-<h1>Janescience 🦦 </h1> 
+<h1>Janescience</h1> 
 
-<img  src="https://media1.giphy.com/avatars/nattrocha/RbXnrTephetH.gif" width="40%"  align="center" alt="GitHub Readme Stats" />
- 
+<img  src="https://i.postimg.cc/kgzYNg8p/86b26d45-8e73-4ff9-b1a1-dac1bb5bb384.jpg" width="40%"  align="center" alt="GitHub Readme Stats" />
+
 <h2>...</h2>
  
 <img  src="https://d33wubrfki0l68.cloudfront.net/f3a1d32fae795595a34856eabc04c71d6209d41f/b8c57/images/hello-world/hello-world.gif" width="40%"  align="center" alt="GitHub Readme Stats" />
@@ -12,7 +12,7 @@
  
 <h2>Blog </h2>
  
-<h3>   🐻‍❄️ <a href="https://janescience.com" target="_blank">Janescience.com</a></h3>
+<h3>   🐻‍❄️ <a href="https://janescience.com" target="_blank">janescience.com</a></h3>
 
 <h2>...</h2>
  
