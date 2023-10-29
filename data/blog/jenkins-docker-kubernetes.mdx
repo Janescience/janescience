@@ -50,6 +50,9 @@ featureImage: "/static/images/blog/jenkins-docker-kubernetes/cover.jpeg"
 4. Push docker image ไปยัง Docker Hub (คล้าย Github แต่ใช้เก็บ Docker image)
 5. Deploy Kubernetes ด้วย Kubeconfig ที่เรากำหนดไว้ โดย Kubernetes จะไปเอา Docker image จาก Docker Hub ตาม Tag ที่เรากำหนดไว้มา ​Deploy
 
+>  ถ้าเราไม่มี Jenkins เราจะต้องทำ 5 ขั้นตอนนี้แบบ Manual เองทุกๆครั้งที่ Deploy
+
+
 <br/>
 <center>. . .</center>
 <br/>
@@ -129,11 +132,16 @@ metadata:
   labels:
     app: discovery-service-app
 spec:
-  revisionHistoryLimit: 0
-  replicas: 2
   selector:
     matchLabels:
       app: discovery-service-app
+  replicas: 2
+  minReadySeconds: 15
+  strategy:
+    type: RollingUpdate                                   
+    rollingUpdate: 
+      maxUnavailable: 1                                   
+      maxSurge: 1
   template:
     metadata:
       labels:
@@ -145,12 +153,6 @@ spec:
           imagePullPolicy: Always
           ports:
             - containerPort: 9001
-          resources:
-            limits:
-              cpu: 500m
-            requests:
-              cpu: 200m
-
 ```
 
 ```yml:/k8s/service.yml
@@ -163,6 +165,7 @@ spec:
   ports:
     - port: 80
       targetPort: 9001
+      protocol: TCP
   selector:
     app: discovery-service-app
 ```
@@ -270,80 +273,188 @@ pipeline {
 NAME                                         READY   STATUS    RESTARTS      AGE
 pod/discovery-service-app-6747dd94f9-5bsxs   1/1     Running   0             18m
 pod/discovery-service-app-6747dd94f9-w6dhb   1/1     Running   0             18m
-pod/search-service-app-69b7c477b7-4w72l      1/1     Running   1 (16h ago)   17h
-pod/search-service-app-69b7c477b7-6q4x5      1/1     Running   1 (16h ago)   17h
-pod/search-service-app-69b7c477b7-hjkxb      1/1     Running   2 (16h ago)   17h
-pod/search-service-app-69b7c477b7-jrgqh      1/1     Running   1 (16h ago)   17h
-pod/search-service-app-69b7c477b7-pxm59      1/1     Running   1 (16h ago)   17h
+
 
 NAME                    TYPE           CLUSTER-IP       EXTERNAL-IP   PORT(S)        AGE
 service/discovery-svc   LoadBalancer   10.111.56.231    <pending>     80:31604/TCP   18m
 service/kubernetes      ClusterIP      10.96.0.1        <none>        443/TCP        19h
-service/search-svc      LoadBalancer   10.106.152.162   <pending>     80:31202/TCP   19h
 
 NAME                                    READY   UP-TO-DATE   AVAILABLE   AGE
 deployment.apps/discovery-service-app   2/2     2            2           18m
-deployment.apps/search-service-app      5/5     5            5           19h
 
 NAME                                               DESIRED   CURRENT   READY   AGE
 replicaset.apps/discovery-service-app-6747dd94f9   2         2         2       18m
-replicaset.apps/search-service-app-69b7c477b7      5         5         5       19h
-
-NAME                                                     REFERENCE                       TARGETS   MINPODS   MAXPODS   REPLICAS   AGE
-horizontalpodautoscaler.autoscaling/search-service-app   Deployment/search-service-app   1%/200%   5         10        5          18h
 ```
 
-ใน minikube จะไม่ Support External-IP เราต้อง Forward port อีกที และการ Forward port ไม่รองรับ Load balance
+ใน `minikube` จะไม่ Support EXTERNAL-IP แต่ถ้าเป็น Kubernetes ของ Cloud Provider เช่น Azure , GCP หรือ AWS 
+ถึงจะมี Public IP เราต้องใช้คำสั่ง `minikube service discovery-svc`
 
 ```bash
-~ kubectl port-forward service/discovery-svc 9001:80&
 
-Forwarding from 127.0.0.1:9001 -> 9001
-Forwarding from [::1]:9001 -> 9001
+~ minikube service discovery-svc
+
+|-----------|---------------|-------------|---------------------------|
+| NAMESPACE |     NAME      | TARGET PORT |            URL            |
+|-----------|---------------|-------------|---------------------------|
+| default   | discovery-svc |          80 | http://192.168.49.2:31605 |
+|-----------|---------------|-------------|---------------------------|
+🏃  Starting tunnel for service discovery-svc.
+|-----------|---------------|-------------|------------------------|
+| NAMESPACE |     NAME      | TARGET PORT |          URL           |
+|-----------|---------------|-------------|------------------------|
+| default   | discovery-svc |             | http://127.0.0.1:51232 |
+|-----------|---------------|-------------|------------------------|
+🎉  Opening service default/discovery-svc in default browser...
+❗  Because you are using a Docker driver on darwin, the terminal needs to be open to run it.
 ```
 
-ลองเข้า http://localhost:9001
+เมื่อใช้คำสั่งนี้จะทำการเปิด Browser ให้อัตโนมัติ และเข้าไปที่ http://127.0.0.1:51232
 
 ![Service](/static/images/blog/jenkins-docker-kubernetes/service.png)
 
-ถ้าอยากทดสอบ Load balance ต้องเปิด Tunnel
 
+
+<br/>
+<center>. . .</center>
+<br/>
+
+## Load Balance Test
+
+ผมลอง Deploy อีกโปรเจคโดยทำเหมือนกันทุกอย่าง แล้วลอง Request ไปเยอะๆ และมีการ Log เอาไว้
+โดยกำหนดเอาไว้ 2 Pods 
+
+อันนี้ Pod 1
 ```bash
 
-~ minikube tunnel
+~ kubectl logs -f pod/search-service-app-5745756985-xgsgk
 
-✅  Tunnel successfully started
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.1.0)
 
-📌  NOTE: Please do not close this terminal as this process must stay alive for the tunnel to be accessible ...
-
-❗  The service/ingress discovery-svc requires privileged ports to be exposed: [80]
-🔑  sudo permission will be asked for it.
-🏃  Starting tunnel for service discovery-svc.
-❗  The service/ingress search-svc requires privileged ports to be exposed: [80]
-🔑  sudo permission will be asked for it.
-🏃  Starting tunnel for service search-svc.
-❗  The service/ingress example-ingress requires privileged ports to be exposed: [80 443]
-🔑  sudo permission will be asked for it.
-🏃  Starting tunnel for service example-ingress.
-Password:
+2023-10-29T08:42:27.260Z  INFO 1 --- [           main] c.spring.microservice.SearchApplication  : Starting SearchApplication v0.0.1 using Java 17.0.2 with PID 1 (/search.jar started by root in /)
+2023-10-29T08:42:27.261Z  INFO 1 --- [           main] c.spring.microservice.SearchApplication  : No active profile set, falling back to 1 default profile: "default"
+2023-10-29T08:42:28.007Z  INFO 1 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2023-10-29T08:42:28.067Z  INFO 1 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 35 ms. Found 5 JPA repository interfaces.
+2023-10-29T08:42:28.449Z  INFO 1 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 8086 (http)
+2023-10-29T08:42:28.453Z  INFO 1 --- [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2023-10-29T08:42:28.454Z  INFO 1 --- [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.8]
+2023-10-29T08:42:28.504Z  INFO 1 --- [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2023-10-29T08:42:28.505Z  INFO 1 --- [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1206 ms
+2023-10-29T08:42:28.754Z  INFO 1 --- [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2023-10-29T08:42:28.790Z  INFO 1 --- [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.2.2.Final
+2023-10-29T08:42:28.791Z  INFO 1 --- [           main] org.hibernate.cfg.Environment            : HHH000406: Using bytecode reflection optimizer
+2023-10-29T08:42:28.883Z  INFO 1 --- [           main] o.h.b.i.BytecodeProviderInitiator        : HHH000021: Bytecode provider name : bytebuddy
+2023-10-29T08:42:28.980Z  INFO 1 --- [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2023-10-29T08:42:28.989Z  INFO 1 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2023-10-29T08:42:29.462Z  INFO 1 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@69c93ca4
+2023-10-29T08:42:29.463Z  INFO 1 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2023-10-29T08:42:29.525Z  INFO 1 --- [           main] org.hibernate.orm.dialect                : HHH035001: Using dialect: org.hibernate.dialect.PostgreSQLDialect, version: org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator$DialectResolutionInfoImpl@26f96b85
+2023-10-29T08:42:30.152Z  INFO 1 --- [           main] o.h.b.i.BytecodeProviderInitiator        : HHH000021: Bytecode provider name : bytebuddy
+2023-10-29T08:42:31.363Z  INFO 1 --- [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000490: Using JtaPlatform implementation: [org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform]
+2023-10-29T08:42:31.823Z  INFO 1 --- [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2023-10-29T08:42:32.350Z  INFO 1 --- [           main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2023-10-29T08:42:32.663Z  WARN 1 --- [           main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2023-10-29T08:42:33.865Z  INFO 1 --- [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 4 endpoint(s) beneath base path '/actuator'
+2023-10-29T08:42:34.167Z  INFO 1 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 8086 (http) with context path ''
+2023-10-29T08:42:34.237Z  INFO 1 --- [           main] c.spring.microservice.SearchApplication  : Started SearchApplication in 7.265 seconds (process running for 7.685)
+2023-10-29T08:59:16.311Z  INFO 1 --- [nio-8086-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2023-10-29T08:59:16.313Z  INFO 1 --- [nio-8086-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2023-10-29T08:59:16.320Z  INFO 1 --- [nio-8086-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 6 ms
+2023-10-29T08:59:22.606Z  INFO 1 --- [nio-8086-exec-2] c.s.m.c.IndividualSearchController       : INDIVIDUAL SEARCH PROFILE CALLED
+2023-10-29T09:00:25.681Z  INFO 1 --- [nio-8086-exec-4] c.s.m.c.IndividualSearchController       : INDIVIDUAL SEARCH PROFILE CALLED
+2023-10-29T09:00:34.175Z  INFO 1 --- [nio-8086-exec-5] c.s.m.c.IndividualSearchController       : INDIVIDUAL SEARCH PROFILE CALLED
+2023-10-29T09:00:35.148Z  INFO 1 --- [nio-8086-exec-6] c.s.m.c.IndividualSearchController       : INDIVIDUAL SEARCH PROFILE CALLED
+2023-10-29T09:04:09.307Z  INFO 1 --- [nio-8086-exec-8] c.s.m.c.IndividualSearchController       : INDIVIDUAL SEARCH PROFILE CALLED
+2023-10-29T09:04:11.206Z  INFO 1 --- [nio-8086-exec-9] c.s.m.c.IndividualSearchController       : INDIVIDUAL SEARCH PROFILE CALLED
+2023-10-29T09:04:12.177Z  INFO 1 --- [io-8086-exec-10] c.s.m.c.IndividualSearchController       : INDIVIDUAL SEARCH PROFILE CALLED
+2023-10-29T09:04:12.981Z  INFO 1 --- [nio-8086-exec-1] c.s.m.c.IndividualSearchController       : INDIVIDUAL SEARCH PROFILE CALLED
+2023-10-29T09:04:13.681Z  INFO 1 --- [nio-8086-exec-2] c.s.m.c.IndividualSearchController       : INDIVIDUAL SEARCH PROFILE CALLED
+2023-10-29T09:04:14.383Z  INFO 1 --- [nio-8086-exec-3] c.s.m.c.IndividualSearchController       : INDIVIDUAL SEARCH PROFILE CALLED
+2023-10-29T09:04:15.154Z  INFO 1 --- [nio-8086-exec-4] c.s.m.c.IndividualSearchController       : INDIVIDUAL SEARCH PROFILE CALLED
+2023-10-29T09:04:20.707Z  INFO 1 --- [nio-8086-exec-5] c.s.m.c.IndividualSearchController       : INDIVIDUAL SEARCH PROFILE CALLED
+2023-10-29T09:04:22.288Z  INFO 1 --- [nio-8086-exec-6] c.s.m.c.IndividualSearchController       : INDIVIDUAL SEARCH PROFILE CALLED
+2023-10-29T09:04:23.427Z  INFO 1 --- [nio-8086-exec-7] c.s.m.c.IndividualSearchController       : INDIVIDUAL SEARCH PROFILE CALLED
 ```
 
-ลอง Get Service อีกรอบ จะเห็นว่าได้ 127.0.0.1 ขึ้นมาใน EXTERNAL-IP
-
+อันนี้ Pod 2
 ```bash
 
-~ kubectl get service discovery-svc
+~ kubectl logs -f pod/search-service-app-5745756985-xqxtw
 
-NAME            TYPE           CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
-discovery-svc   LoadBalancer   10.111.56.231   127.0.0.1     80:31604/TCP   19h
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.1.0)
+
+2023-10-29T08:42:30.958Z  INFO 1 --- [           main] c.spring.microservice.SearchApplication  : Starting SearchApplication v0.0.1 using Java 17.0.2 with PID 1 (/search.jar started by root in /)
+2023-10-29T08:42:30.959Z  INFO 1 --- [           main] c.spring.microservice.SearchApplication  : No active profile set, falling back to 1 default profile: "default"
+2023-10-29T08:42:32.132Z  INFO 1 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2023-10-29T08:42:32.251Z  INFO 1 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 112 ms. Found 5 JPA repository interfaces.
+2023-10-29T08:42:33.741Z  INFO 1 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 8086 (http)
+2023-10-29T08:42:33.747Z  INFO 1 --- [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2023-10-29T08:42:33.747Z  INFO 1 --- [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.8]
+2023-10-29T08:42:33.863Z  INFO 1 --- [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2023-10-29T08:42:33.925Z  INFO 1 --- [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 2827 ms
+2023-10-29T08:42:34.560Z  INFO 1 --- [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2023-10-29T08:42:34.596Z  INFO 1 --- [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.2.2.Final
+2023-10-29T08:42:34.597Z  INFO 1 --- [           main] org.hibernate.cfg.Environment            : HHH000406: Using bytecode reflection optimizer
+2023-10-29T08:42:34.682Z  INFO 1 --- [           main] o.h.b.i.BytecodeProviderInitiator        : HHH000021: Bytecode provider name : bytebuddy
+2023-10-29T08:42:34.768Z  INFO 1 --- [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2023-10-29T08:42:34.784Z  INFO 1 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2023-10-29T08:42:35.241Z  INFO 1 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@69c93ca4
+2023-10-29T08:42:35.243Z  INFO 1 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2023-10-29T08:42:35.302Z  INFO 1 --- [           main] org.hibernate.orm.dialect                : HHH035001: Using dialect: org.hibernate.dialect.PostgreSQLDialect, version: org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator$DialectResolutionInfoImpl@46d8f407
+2023-10-29T08:42:35.503Z  INFO 1 --- [           main] o.h.b.i.BytecodeProviderInitiator        : HHH000021: Bytecode provider name : bytebuddy
+2023-10-29T08:42:36.042Z  INFO 1 --- [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000490: Using JtaPlatform implementation: [org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform]
+2023-10-29T08:42:36.295Z  INFO 1 --- [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2023-10-29T08:42:36.491Z  INFO 1 --- [           main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2023-10-29T08:42:36.668Z  WARN 1 --- [           main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2023-10-29T08:42:37.041Z  INFO 1 --- [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 4 endpoint(s) beneath base path '/actuator'
+2023-10-29T08:42:37.166Z  INFO 1 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 8086 (http) with context path ''
+2023-10-29T08:42:37.184Z  INFO 1 --- [           main] c.spring.microservice.SearchApplication  : Started SearchApplication in 6.817 seconds (process running for 7.657)
+2023-10-29T08:45:38.147Z  INFO 1 --- [nio-8086-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2023-10-29T08:45:38.149Z  INFO 1 --- [nio-8086-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2023-10-29T08:45:38.156Z  INFO 1 --- [nio-8086-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 7 ms
+2023-10-29T08:46:35.605Z  INFO 1 --- [nio-8086-exec-3] c.s.m.c.IndividualSearchController       : INDIVIDUAL SEARCH PROFILE CALLED
+2023-10-29T09:01:34.343Z  INFO 1 --- [nio-8086-exec-7] c.s.m.c.IndividualSearchController       : INDIVIDUAL SEARCH PROFILE CALLED
+2023-10-29T09:01:42.932Z  INFO 1 --- [nio-8086-exec-8] c.s.m.c.IndividualSearchController       : INDIVIDUAL SEARCH PROFILE CALLED
+2023-10-29T09:01:48.836Z  INFO 1 --- [nio-8086-exec-9] c.s.m.c.IndividualSearchController       : INDIVIDUAL SEARCH PROFILE CALLED
+2023-10-29T09:02:13.476Z  INFO 1 --- [io-8086-exec-10] c.s.m.c.IndividualSearchController       : INDIVIDUAL SEARCH PROFILE CALLED
+2023-10-29T09:02:20.416Z  INFO 1 --- [nio-8086-exec-1] c.s.m.c.IndividualSearchController       : INDIVIDUAL SEARCH PROFILE CALLED
+2023-10-29T09:02:22.441Z  INFO 1 --- [nio-8086-exec-2] c.s.m.c.IndividualSearchController       : INDIVIDUAL SEARCH PROFILE CALLED
+2023-10-29T09:02:23.191Z  INFO 1 --- [nio-8086-exec-4] c.s.m.c.IndividualSearchController       : INDIVIDUAL SEARCH PROFILE CALLED
+2023-10-29T09:02:24.005Z  INFO 1 --- [nio-8086-exec-3] c.s.m.c.IndividualSearchController       : INDIVIDUAL SEARCH PROFILE CALLED
+2023-10-29T09:02:25.011Z  INFO 1 --- [nio-8086-exec-5] c.s.m.c.IndividualSearchController       : INDIVIDUAL SEARCH PROFILE CALLED
+2023-10-29T09:02:26.204Z  INFO 1 --- [nio-8086-exec-6] c.s.m.c.IndividualSearchController       : INDIVIDUAL SEARCH PROFILE CALLED
+2023-10-29T09:02:27.088Z  INFO 1 --- [nio-8086-exec-7] c.s.m.c.IndividualSearchController       : INDIVIDUAL SEARCH PROFILE CALLED
+2023-10-29T09:02:27.824Z  INFO 1 --- [nio-8086-exec-8] c.s.m.c.IndividualSearchController       : INDIVIDUAL SEARCH PROFILE CALLED
+2023-10-29T09:02:28.707Z  INFO 1 --- [nio-8086-exec-9] c.s.m.c.IndividualSearchController       : INDIVIDUAL SEARCH PROFILE CALLED
+2023-10-29T09:02:29.544Z  INFO 1 --- [io-8086-exec-10] c.s.m.c.IndividualSearchController       : INDIVIDUAL SEARCH PROFILE CALLED
+2023-10-29T09:02:34.676Z  INFO 1 --- [nio-8086-exec-1] c.s.m.c.IndividualSearchController       : INDIVIDUAL SEARCH PROFILE CALLED
+2023-10-29T09:02:36.273Z  INFO 1 --- [nio-8086-exec-2] c.s.m.c.IndividualSearchController       : INDIVIDUAL SEARCH PROFILE CALLED
+2023-10-29T09:02:37.317Z  INFO 1 --- [nio-8086-exec-4] c.s.m.c.IndividualSearchController       : INDIVIDUAL SEARCH PROFILE CALLED
+2023-10-29T09:02:58.291Z  INFO 1 --- [nio-8086-exec-3] c.s.m.c.IndividualSearchController       : INDIVIDUAL SEARCH PROFILE CALLED
+2023-10-29T09:02:59.882Z  INFO 1 --- [nio-8086-exec-5] c.s.m.c.IndividualSearchController       : INDIVIDUAL SEARCH PROFILE CALLED
+2023-10-29T09:03:00.810Z  INFO 1 --- [nio-8086-exec-6] c.s.m.c.IndividualSearchController       : INDIVIDUAL SEARCH PROFILE CALLED
+2023-10-29T09:03:01.956Z  INFO 1 --- [nio-8086-exec-7] c.s.m.c.IndividualSearchController       : INDIVIDUAL SEARCH PROFILE CALLED
+2023-10-29T09:03:02.808Z  INFO 1 --- [nio-8086-exec-8] c.s.m.c.IndividualSearchController       : INDIVIDUAL SEARCH PROFILE CALLED
+2023-10-29T09:03:03.150Z  INFO 1 --- [nio-8086-exec-9] c.s.m.c.IndividualSearchController       : INDIVIDUAL SEARCH PROFILE CALLED
+2023-10-29T09:03:03.604Z  INFO 1 --- [io-8086-exec-10] c.s.m.c.IndividualSearchController       : INDIVIDUAL SEARCH PROFILE CALLED
+2023-10-29T09:03:03.816Z  INFO 1 --- [nio-8086-exec-1] c.s.m.c.IndividualSearchController       : INDIVIDUAL SEARCH PROFILE CALLED
+2023-10-29T09:03:04.036Z  INFO 1 --- [nio-8086-exec-2] c.s.m.c.IndividualSearchController       : INDIVIDUAL SEARCH PROFILE CALLED
+2023-10-29T09:03:04.265Z  INFO 1 --- [nio-8086-exec-4] c.s.m.c.IndividualSearchController       : INDIVIDUAL SEARCH PROFILE CALLED
+2023-10-29T09:03:04.493Z  INFO 1 --- [nio-8086-exec-3] c.s.m.c.IndividualSearchController       : INDIVIDUAL SEARCH PROFILE CALLED
+2023-10-29T09:03:04.693Z  INFO 1 --- [nio-8086-exec-5] c.s.m.c.IndividualSearchController       : INDIVIDUAL SEARCH PROFILE CALLED
 ```
 
-ลองเข้า http://localhost
-
-![Service](/static/images/blog/jenkins-docker-kubernetes/tunnel.png)
-
-ถ้าเราทดสอบ Load Test ด้วยการเปิด Tunnel ถึงจะมีการทำ Load Balance ให้
-
-
-
+จะเห็นว่ามีการจัดการแบ่ง Request ให้อัตโนมัติ และถ้าอยากเข้าใจและศึกษาเพิ่มเติมเกี่ยวกับ Kubernetes มากกว่านี้ผมแนะนำบทความนี้ครับ 
+[Learn Kubernetes in Under 3 Hours: A Detailed Guide to Orchestrating Containers](https://www.freecodecamp.org/news/learn-kubernetes-in-under-3-hours-a-detailed-guide-to-orchestrating-containers-114ff420e882/)
 
