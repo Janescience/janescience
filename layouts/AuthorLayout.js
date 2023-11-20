@@ -29,11 +29,11 @@ export default function AuthorLayout({ children, frontMatter }) {
             <div className="flex space-x-3 pt-6">
               <a
                 target="_blank"
-                href="https://drive.google.com/file/d/1p5Laavj2KbDfkDVXr7UfFkCdWpHXdYSw/view?usp=sharing"
+                href="https://drive.google.com/file/d/1SWUxidRocRoK_-v08bIYAVjwEDB7rOz8/view?usp=sharing"
                 className="rounded bg-teal-400 py-2 px-4 font-bold text-black hover:bg-teal-300"
                 rel="noreferrer"
               >
-                Resume
+                CV
               </a>
               {/* <SocialIcon kind="mail" href={`mailto:${email}`} />
               <SocialIcon kind="github" href={github} />
