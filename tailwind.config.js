@@ -25,7 +25,7 @@ module.exports = {
         14: '3.5rem',
       },
       fontFamily: {
-        sans: ['Kanit', ...defaultTheme.fontFamily.sans],
+        sans: 'Mitr, sans-serif',
       },
       colors: {
         primary: colors.teal,
