@@ -1,7 +1,5 @@
 <div align="center">
-<h1>Janescience</h1> 
-
-<img  src="https://i.postimg.cc/kgzYNg8p/86b26d45-8e73-4ff9-b1a1-dac1bb5bb384.jpg" width="40%"  align="center" alt="GitHub Readme Stats" />
+<h1><a href="https://janescience.com" target="_blank">Janescience</a></h1> 
 
 <h2>...</h2>
  
@@ -9,12 +7,6 @@
 
  
 〰️
- 
-<h2>Blog </h2>
- 
-<h3>   🐻‍❄️ <a href="https://janescience.com" target="_blank">janescience.com</a></h3>
-
-<h2>...</h2>
  
 [![Top Langs](https://github-readme-stats.vercel.app/api/top-langs/?hide=php,css,dockerfile&langs_count=10&username=janescience&layout=compact&show_icons=true&title_color=fff&icon_color=79ff97&text_color=9f9f9f&bg_color=151515)](https://github.com/anuraghazra/github-readme-stats)
 
