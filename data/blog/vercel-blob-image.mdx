@@ -1,0 +1,219 @@
+---
+title: อัปโหลดและใช้งานรูปภาพบน Cloud ง่ายๆและฟรีด้วย Vercel Blob
+date: "2024-01-18"
+tags: ["vercel",'image','cloud']
+draft: false
+summary: "Vercel Blob เป็น Storage สำหรับจัดเก็บไฟล์ต่างๆ ผ่าน Cloudflare R2"
+layout: PostSimple
+featureImage: "/static/images/blog/vercel-blob-image/cover.avif"
+---
+
+<center>![Cover](/static/images/blog/vercel-blob-image/cover.avif)</center>
+
+<center className="text-xs">ขอบคุณรูปภาพจาก [https://vercel.com/templates/svelte/blob-sveltekit](https://vercel.com/templates/svelte/blob-sveltekit) </center>
+
+## [Vercel Blob](https://vercel.com/docs/storage/vercel-blob)
+
+**Vercel Blob** เป็นการให้บริการเช่าพื้นที่จัดเก็บไฟล์ต่างๆ ผ่าน Cloudflare R2 ซึ่งตอนนี้ยังเป็นแค่ตัว Beta แต่ล่ะไฟล์จะมี URL หลังจากอัปโหลดไปแล้ว
+เพื่อให้ง่ายต่อการเข้าถึงและนำไปใช้งาน สามารถจัดการกับไฟล์ตั้งแต่ put(อัปโหลด), del(ลบไฟล์), head(ดูข้อมูลไฟล์), list(ดูรายการทั้งหมดใน Blob store) และอื่นๆ 
+ศึกษาเพิ่มเติมได้ที่ [Vercel Blob SDK](https://vercel.com/docs/storage/vercel-blob/using-blob-sdk)
+
+<br/>
+<center>. . .</center>
+<br/>
+
+## Prerequisites
+
+1. Install npm package:
+```bash
+npm i @vercel/blob
+```
+
+2. สร้าง Blob store ในโปรเจค
+ต้องมีโปรเจคใน [Vercel](https://vercel.com/) ก่อน เมื่อเลือกโปรเจคที่ต้องการแล้ว เข้าไปที่ **Storage** tab 
+แล้วเลือก **Create** ในหัวข้อ **Blob** ตั้งชื่อให้เรียบร้อย
+
+![New Blob](/static/images/blog/vercel-blob-image/new-blob.png)
+
+3. เพิ่มตัวแปร `BLOB_READ_WRITE_TOKEN` ใน Local project เอาไปใส่ใน `.env`
+
+![ENV Blob](/static/images/blog/vercel-blob-image/env-blob.png)
+
+<br/>
+<center>. . .</center>
+<br/>
+
+## Upload Image
+
+ผมจะยกตัวอย่างให้ดูว่า Frontend ต้องส่งข้อมูลอย่างไรและ Backend รับข้อมูลมาแล้วต้อง Upload อย่างไร
+โดย Feature ที่ผมจะทำคือ Upload profile image ให้กับน้องวัวแต่ล่ะตัว ซึ่งผมจะแยก API upload นี้ออกมา
+
+- **Frontend** - Vue.js
+
+```html:Profile.vue
+<template>
+    <input
+        id="imageUpload"
+        @change="handleFile"
+        type="file"
+        accept="image/*"
+        hidden
+    />
+    <img
+      :src="value"
+      @click="chooseImg"
+    >
+</template>
+<script>
+    export default {
+        methods : {
+            chooseImg () {
+                let fileUpload = document.getElementById("imageUpload");
+
+                if (fileUpload != null) {
+                    fileUpload.click();
+                }
+            },
+            handleFile (e) {
+                const files = e.target.files || e.dataTransfer.files;
+                if (!files.length)
+                    return;
+                if(files[0].size <= 1000000){
+                    //ส่งค่า File object ออกไปทาง file props
+                    this.$emit('file',files[0])
+                    //แสดงรูปภาพที่เลือก
+                    this.createBase64(files[0]);
+                }else{
+                    window.alert('ขนาดไฟล์รูปภาพต้องน้อยกว่าหรือเท่ากับ 1 MB.');
+                }
+            },
+            createBase64(fileObj) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    this.value = e.target.result
+                };
+                reader.readAsDataURL(fileObj);
+            },
+        },
+        props: {
+            file : {
+                type : Object,
+                default : null
+            },
+        }
+    }
+</script>
+
+```
+
+```html:Upload.vue
+<template>
+    <Profile @file="getFile"/>
+    <button type="button" @click="upload">Upload</button>
+</template>
+<script>
+import http from '@/constants/api';
+import Profile from '@/components/Profile.vue'
+  export default {
+    data () {
+      return {
+        file : null,
+        id : 2
+      }
+    },
+    methods:{
+        getFile(fileObj){
+          this.file = fileObj
+        },
+        upload(){
+            if(this.file){
+                const formData = new FormData();
+                formData.append("file",this.file);
+                return http.post(`/upload/${this.id}`,formData);
+            }
+        }
+    },
+    components : {
+        Profile
+    }
+  }
+</script>
+
+```
+
+<br/>
+
+
+- **Backend** - Node.js(Express.js) & MongoDB 
+
+```js:server.js
+const expressFileupload = require('express-fileupload');
+
+...
+
+const app = express();
+app.use(expressFileupload())
+
+...
+```
+
+```js:upload.js
+const { put,del } = require('@vercel/blob');
+
+const db = require("../models");
+const Cow = db.cow;
+
+exports.upload = async (req,res) => {
+  const id = req.params.id;
+
+  if (!req.files) {
+    return res.status(500).send({ msg: "file is not found" })
+  }
+
+  const myFile = req.files.file;
+  //อัปโหลดรูปไปยัง Blob
+  const blob = await put(myFile.name, myFile.data, {
+    contentType : myFile.mimetype,
+    access: 'public',
+    token : process.env.BLOB_READ_WRITE_TOKEN
+  });
+
+  const cow = await Cow.findById(id).exec();
+
+  //ถ้ามีรูปที่เคยอัปโหลดไว้ใน Blob แล้ว เราจะลบรูปที่ไม่ใช้แล้วด้วย
+  if(cow.image && cow.image.indexOf('https') >= 0){
+    await del(cow.image);
+  }
+  
+  //นำ URL รูปใหม่ที่ได้จาก Blob มาอัพเดต
+  await Cow.updateOne({_id:id},{image:blob.url}).exec();
+
+  res.status(200).send({blob});
+}
+```
+
+<br/>
+<center>. . .</center>
+<br/>
+
+## Blob Store
+
+![Browser](/static/images/blog/vercel-blob-image/browser.png)
+
+ถ้าอัปโหลดสำเร็จก็จะเห็นรายการรูปภาพแบบนี้ 
+
+![View](/static/images/blog/vercel-blob-image/view.png)
+
+เมื่อกดเข้าไปดูแต่ล่ะรายการต้องแสดงรูปภาพได้แบบนี้
+
+<br/>
+<center>. . .</center>
+<br/>
+
+## Free version limit
+
+![Limit](/static/images/blog/vercel-blob-image/limit.png)
+
+ถ้าเราใช้งานไม่เกินที่กำหนดไว้ต่อเดือน ก็จะยังคงสามารถใช้งานได้ฟรีไปตลอด ซึ่งก็คงจะเหมาะกับโปรเจคเริ่มต้น ใช้กันภายใน Dev environment
+
+
