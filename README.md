@@ -1,25 +1,8 @@
 <div align="center">
-<h1>Janescience</h1> 
+<h1><a href="https://janescience.com" target="_blank">Janescience</a></h1> 
 
-<img  src="https://i.postimg.cc/kgzYNg8p/86b26d45-8e73-4ff9-b1a1-dac1bb5bb384.jpg" width="40%"  align="center" alt="GitHub Readme Stats" />
-
-<h2>...</h2>
- 
-<img  src="https://d33wubrfki0l68.cloudfront.net/f3a1d32fae795595a34856eabc04c71d6209d41f/b8c57/images/hello-world/hello-world.gif" width="40%"  align="center" alt="GitHub Readme Stats" />
-
- 
-〰️
- 
-<h2>Blog </h2>
- 
-<h3>   🐻‍❄️ <a href="https://janescience.com" target="_blank">janescience.com</a></h3>
-
-<h2>...</h2>
- 
-[![Top Langs](https://github-readme-stats.vercel.app/api/top-langs/?hide=php,css,dockerfile&langs_count=10&username=janescience&layout=compact&show_icons=true&title_color=fff&icon_color=79ff97&text_color=9f9f9f&bg_color=151515)](https://github.com/anuraghazra/github-readme-stats)
-
-[![GitHub Streak](http://github-readme-streak-stats.herokuapp.com?user=janescience&theme=dark&date_format=j%20M%5B%20Y%5D)](https://git.io/streak-stats)
-
+<img src="https://i.postimg.cc/br6dgH6R/c-HJpdm-F0-ZS9sci9pb-WFn-ZXMvd2-Vic2l0-ZS8y-MDIz-LTEx-L3-Jhd3-Bpe-GVs-X29m-Zmlj-ZV8y-NV9h-X2-Nsb3-Nl-X3-Vw-X29m-X2-Fic3-Ry-YWN0.png" width="100%" height="400"/>
+  
 </div>
 
 
