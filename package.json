@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@fontsource/inter": "4.5.2",
+    "@fontsource/mitr": "^5.0.8",
     "@mailchimp/mailchimp_marketing": "^3.0.58",
     "@tailwindcss/forms": "^0.4.0",
     "@tailwindcss/typography": "^0.5.0",
@@ -41,6 +42,7 @@
     "sharp": "^0.28.3",
     "smoothscroll-polyfill": "^0.4.4",
     "tailwindcss": "^3.0.23",
+    "typewriter-effect": "^2.21.0",
     "unist-util-visit": "^4.0.0"
   },
   "devDependencies": {

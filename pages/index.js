@@ -55,12 +55,15 @@ export default function Home({ posts }) {
                         {title}
                       </Link>
                     </h2>
-                    <div className="flex items-center ">
-                      {tags.map((tag) => (
-                        <Tag key={tag} text={tag} />
-                      ))}
+                    <div className="flex items-center justify-between">
+                      <div>
+                        {tags.map((tag) => (
+                          <Tag key={tag} text={tag} />
+                        ))}
+                      </div>
                       
-                      <dd className="text-xs ml-1 text-gray-500 p-1 dark:text-gray-300 ">
+                      
+                      <dd className="text-xs ml-1 font-thin text-gray-400 p-1 dark:text-gray-500 ">
                         <time dateTime={date}>{formatDate(date)}</time>
                       </dd>
                     </div>
@@ -75,7 +78,7 @@ export default function Home({ posts }) {
         <div className="flex justify-end text-base font-medium leading-6">
           <Link
             href="/blog"
-            className="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
+            className="text-lime-500 hover:text-lime-600 dark:hover:text-lime-400"
             aria-label="all posts"
           >
             All Posts &rarr;
