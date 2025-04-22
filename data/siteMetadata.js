@@ -7,9 +7,9 @@ const siteMetadata = {
   theme: 'system', // system, dark or light
   siteUrl: 'https://janescience.com',
   siteRepo: 'https://github.com/Janescience/janescience',
-  siteLogo: '/static/images/logo.png',
-  image: '/static/images/avatar.jpeg',
-  socialBanner: '/static/images/twitter-card.png',
+  siteLogo: '/static/images/jane.png',
+  image: '/static/images/jane.jpeg',
+  socialBanner: '/static/images/jane.png',
   email: 'janescience.top@gmail.com',
   github: 'https://github.com/Janescience',
   twitter: 'https://twitter.com/Twitter',
