@@ -58,7 +58,7 @@ export default function Home({ posts }) {
                     <div className="flex items-center justify-between">
                       <div>
                         {tags.map((tag) => (
-                          <Tag key={tag} text={tag} />
+                          <Tag key={tag} text={"#"+tag} />
                         ))}
                       </div>
                       

@@ -1,8 +1,8 @@
 ---
 name: Janewit Sirijan
-avatar: /static/images/avatar.jpeg
-occupation: Web developer
-company: Outsource at Bay Bank
+avatar: /static/images/jane.jpg
+occupation: Fullstack Web Developer
+company: Outsource at Generali Thailand
 pencil: https://drive.google.com/file/d/1p5Laavj2KbDfkDVXr7UfFkCdWpHXdYSw/view?usp=sharing
 ---
 
@@ -20,8 +20,10 @@ pencil: https://drive.google.com/file/d/1p5Laavj2KbDfkDVXr7UfFkCdWpHXdYSw/view?u
 เริ่มจากได้ไปสหกิจศึกษากับ Soft Square ในตำแหน่ง Web Java Developer และได้กลับมาทำโปรเจคจบที่เป็นทั้ง Android Native และ Website หลังจากนั้นเลยตัดสินใจเดินสาย Web Developer และได้มาเป็น Full Stack Web Developer จนถึงปัจจุบัน
 
 Programming ที่ค่อนข้างถนัด คือ Java , Javascript แต่ 1 ปีให้หลังมานี้ หันมาสนใจศึกษา
-Node.js , Cloud Server , No Sql , Vue.js , React.js , Flutter 
+Node.js , Cloud , NoSql , Vue.js , React.js , Flutter 
 โดยทั้งหมดนี้เพื่อทำงานและตัวผมเองสนใจ
+
+**Freelance** ผมก็รับนะ ติดต่อมาได้เลยครับ 😎
 
 ## ทำไมต้อง Janescience ?
 
@@ -43,12 +45,17 @@ Node.js , Cloud Server , No Sql , Vue.js , React.js , Flutter
 - **2017** เข้ามาสหกิจศึกษาในกรุงเทพที่ [Soft Square](http://www.softsquaregroup.com/)
 - **2018** หลังจากเรียนจบได้ทำงานต่อกับ [Soft Square](http://www.softsquaregroup.com/)
 - **2021** ย้ายมาทำงานสาย Outsource ให้กับ [Ocean Life Insurance](https://www.ocean.co.th/)
-- **2022** ย้ายมาทำงานให้กับ [Bay Bank](https://www.krungsri.com/en/personal) ยังคงเป็น Outsource ถึงปัจจุบัน
-
+- **2022** ย้ายมาทำงานให้กับ [Bay Bank](https://www.krungsri.com/en/personal) 
+- **2024** ย้ายมาทำงานให้กับ [Generali Thailand](https://campaign.generali.co.th/) ยังคงเป็น Outsource ถึงปัจจุบัน
 
 ## 🤍
 
 Coding , Hangout , Movies , Anime , Music , Craft Beer 🍻
 
+## ติดต่อ
+
+[Facebook](https://www.facebook.com/topp.janewitt/)
+[LINE](https://linevoom.line.me/user/_dfu0XNXBF1p4iyIHfOWCAGRJ8jBozCLZE5tsmdk)
+
 ---
-อัพเดตล่าสุด : 7 April 2022
+อัพเดตล่าสุด : 22 Apr 2025
