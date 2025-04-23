@@ -3,9 +3,11 @@ import { PageSEO } from '@/components/SEO'
 import Tag from '@/components/Tag'
 import Card from '@/components/Card'
 import Image from '@/components/Image'
+import Head from 'next/head'
 import siteMetadata from '@/data/siteMetadata'
 import { getAllFilesFrontMatter } from '@/lib/mdx'
 import formatDate from '@/lib/utils/formatDate'
+import getLatestPost from '@/lib/getLatestPost'
 
 import NewsletterForm from '@/components/NewsletterForm'
 
@@ -13,13 +15,26 @@ const MAX_DISPLAY = 9
 
 export async function getStaticProps() {
   const posts = await getAllFilesFrontMatter('blog')
+  const latestPost = getLatestPost()
 
-  return { props: { posts } }
+  return { props: { posts,latestPost } }
 }
 
-export default function Home({ posts }) {
+export default function Home({ posts,latestPost }) {
+  const image =
+  latestPost.featureImage || siteMetadata.image
+
   return (
     <>
+      <Head>
+        <title>{siteMetadata.title}</title>
+        <meta property="og:type" content="article" />
+        <meta property="og:title" content={latestPost.title} />
+        <meta property="og:description" content={latestPost.summary || siteMetadata.description} />
+        <meta property="og:image" content={`${siteMetadata.siteUrl}${image}`} />
+        <meta property="og:url" content={`${siteMetadata.siteUrl}/blog/${latestPost.slug}`} />
+        <meta property="og:site_name" content={siteMetadata.title} />
+      </Head>
       <PageSEO title={siteMetadata.title} description={siteMetadata.description} />
       <div className="divide-y divide-gray-200 dark:divide-gray-700">
         <div className="space-y-2 pt-6 pb-8 md:space-y-5">
