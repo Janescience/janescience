@@ -1,0 +1,24 @@
+
+  <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+    <channel>
+      <title>Janescience</title>
+      <link>https://janescience.com/blog</link>
+      <description>ความรู้เกี่ยวกับ Programming ที่ผมได้ศึกษา สนใจ บันทึกไว้เป็นบทความ</description>
+      <language>en-us</language>
+      <managingEditor>janescience.top@gmail.com (Janewit Sirijan)</managingEditor>
+      <webMaster>janescience.top@gmail.com (Janewit Sirijan)</webMaster>
+      <lastBuildDate>Tue, 07 Feb 2023 00:00:00 GMT</lastBuildDate>
+      <atom:link href="https://janescience.com/tags/test/feed.xml" rel="self" type="application/rss+xml"/>
+      
+  <item>
+    <guid>https://janescience.com/blog/jest-api</guid>
+    <title>เขียน Test API Node.js ด้วย Jest และใช้ DB เป็น Mongo</title>
+    <link>https://janescience.com/blog/jest-api</link>
+    <description>สวัสดีครับ ผมจะลองยกตัวอย่างการเขียน Test สั้นๆด้วย Jest โปรเจค Node ของผมใช้ Express.js และ DB เป็น MongoDB ส่วนของการ Test เป็นการเขียน Test API ครับ</description>
+    <pubDate>Tue, 07 Feb 2023 00:00:00 GMT</pubDate>
+    <author>janescience.top@gmail.com (Janewit Sirijan)</author>
+    <category>jest</category><category>test</category><category>node</category><category>mongo</category>
+  </item>
+
+    </channel>
+  </rss>

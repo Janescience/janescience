@@ -1,0 +1,44 @@
+
+  <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+    <channel>
+      <title>Janescience</title>
+      <link>https://blog-nextjs-tailwind-sigma.vercel.app/blog</link>
+      <description>A blog created with Next.js and Tailwind.css</description>
+      <language>en-us</language>
+      <managingEditor>janescience.top@gmail.com (Janewit Sirijan)</managingEditor>
+      <webMaster>janescience.top@gmail.com (Janewit Sirijan)</webMaster>
+      <lastBuildDate>Sat, 30 Apr 2022 00:00:00 GMT</lastBuildDate>
+      <atom:link href="https://blog-nextjs-tailwind-sigma.vercel.app/tags/java/feed.xml" rel="self" type="application/rss+xml"/>
+      
+  <item>
+    <guid>https://blog-nextjs-tailwind-sigma.vercel.app/blog/auth-springboot-jwt</guid>
+    <title>Auth API ด้วย Spring Boot + JWT</title>
+    <link>https://blog-nextjs-tailwind-sigma.vercel.app/blog/auth-springboot-jwt</link>
+    
+    <pubDate>Sat, 30 Apr 2022 00:00:00 GMT</pubDate>
+    <author>janescience.top@gmail.com (Janewit Sirijan)</author>
+    <category>java</category>
+  </item>
+
+  <item>
+    <guid>https://blog-nextjs-tailwind-sigma.vercel.app/blog/springboot-heroku</guid>
+    <title>Deploy Spring Boot บน Heroku</title>
+    <link>https://blog-nextjs-tailwind-sigma.vercel.app/blog/springboot-heroku</link>
+    
+    <pubDate>Sat, 23 Apr 2022 00:00:00 GMT</pubDate>
+    <author>janescience.top@gmail.com (Janewit Sirijan)</author>
+    <category>java</category><category>hosting</category>
+  </item>
+
+  <item>
+    <guid>https://blog-nextjs-tailwind-sigma.vercel.app/blog/springboot-liquibase</guid>
+    <title>ลองทำ Liquibase + Spring Boot</title>
+    <link>https://blog-nextjs-tailwind-sigma.vercel.app/blog/springboot-liquibase</link>
+    <description>เป็นเครื่องมือที่ช่วยจัดการในส่วนของ Database ไม่ว่าจะเป็น Insert , Update , Delete ข้อมูล หรือ Create , Drop , Alter  ตาราง หรือ Add , Drop , Alter คอลัมน์ และอื่นๆ </description>
+    <pubDate>Wed, 09 Mar 2022 00:00:00 GMT</pubDate>
+    <author>janescience.top@gmail.com (Janewit Sirijan)</author>
+    <category>java</category>
+  </item>
+
+    </channel>
+  </rss>

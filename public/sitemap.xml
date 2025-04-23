@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://janescience.com/about</loc>
+  </url>
+
+  <url>
+    <loc>https://janescience.com/blog</loc>
+  </url>
+
+  <url>
+    <loc>https://janescience.com</loc>
+  </url>
+
+  <url>
+    <loc>https://janescience.com/tags</loc>
+  </url>
+
+  <url>
+    <loc>https://janescience.com/blog/auth-springboot-jwt</loc>
+  </url>
+
+  <url>
+    <loc>https://janescience.com/blog/giscus</loc>
+  </url>
+
+  <url>
+    <loc>https://janescience.com/blog/git-workflow</loc>
+  </url>
+
+  <url>
+    <loc>https://janescience.com/blog/springboot-heroku</loc>
+  </url>
+
+  <url>
+    <loc>https://janescience.com/blog/springboot-liquibase</loc>
+  </url>
+
+  <url>
+    <loc>https://janescience.com/blog/jest-api</loc>
+  </url>
+
+  <url>
+    <loc>https://janescience.com/blog/node-notify-line</loc>
+  </url>
+
+  <url>
+    <loc>https://janescience.com/blog/vue-i18n</loc>
+  </url>
+
+  <url>
+    <loc>https://janescience.com/tags/giscus</loc>
+  </url>
+
+  <url>
+    <loc>https://janescience.com/tags/java</loc>
+  </url>
+
+  <url>
+    <loc>https://janescience.com/tags/hosting</loc>
+  </url>
+
+  <url>
+    <loc>https://janescience.com/tags/vue</loc>
+  </url>
+
+  <url>
+    <loc>https://janescience.com/tags/git</loc>
+  </url>
+</urlset>

@@ -1,0 +1,24 @@
+
+  <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+    <channel>
+      <title>Janescience</title>
+      <link>https://blog-nextjs-tailwind-sigma.vercel.app/blog</link>
+      <description>A blog created with Next.js and Tailwind.css</description>
+      <language>en-us</language>
+      <managingEditor>janescience.top@gmail.com (Janewit Sirijan)</managingEditor>
+      <webMaster>janescience.top@gmail.com (Janewit Sirijan)</webMaster>
+      <lastBuildDate>Sat, 23 Apr 2022 00:00:00 GMT</lastBuildDate>
+      <atom:link href="https://blog-nextjs-tailwind-sigma.vercel.app/tags/hosting/feed.xml" rel="self" type="application/rss+xml"/>
+      
+  <item>
+    <guid>https://blog-nextjs-tailwind-sigma.vercel.app/blog/springboot-heroku</guid>
+    <title>Deploy Spring Boot บน Heroku</title>
+    <link>https://blog-nextjs-tailwind-sigma.vercel.app/blog/springboot-heroku</link>
+    
+    <pubDate>Sat, 23 Apr 2022 00:00:00 GMT</pubDate>
+    <author>janescience.top@gmail.com (Janewit Sirijan)</author>
+    <category>java</category><category>hosting</category>
+  </item>
+
+    </channel>
+  </rss>
