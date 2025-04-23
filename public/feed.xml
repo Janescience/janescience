@@ -1,211 +1,194 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
-  <channel>
-    <title>Janescience</title>
-    <link>https://janescience.com/blog</link>
-    <description>ความรู้เกี่ยวกับ Programming ที่ผมได้ศึกษา สนใจ บันทึกไว้เป็นบทความ</description>
-    <language>en-us</language>
-    <managingEditor>janescience.top@gmail.com (Janewit Sirijan)</managingEditor>
-    <webMaster>janescience.top@gmail.com (Janewit Sirijan)</webMaster>
-    <lastBuildDate>Wed, 23 Apr 2025 11:31:53 GMT</lastBuildDate>
-    <atom:link href="https://janescience.com/feed.xml" rel="self" type="application/rss+xml" />
-    
-    <item>
-        <title>สร้างระบบสั่งสินค้าผ่าน LINE OA ฟรี! ใช้แค่ HTML + Google Sheet + Google Apps Script</title>
-        <link>https://janescience.com/blog/lineoa-orders-html-gas</link>
-        <guid>https://janescience.com/blog/lineoa-orders-html-gas</guid>
-        <description>ลูกค้ากดสั่งผ่าน LINE OA ได้เลย ระบบเก็บข้อมูลลงชีต แจ้งเตือนกลุ่ม และตอบกลับอัตโนมัติ ทำเองได้ทั้งหมด ใช้แค่ HTML + LINE OA + Google Apps Script</description>
-        <pubDate>Tue, 22 Apr 2025 00:00:00 GMT</pubDate>
-        <author>janescience.top@gmail.com (Janewit Sirijan)</author>
-        <category>lineoa</category><category>gas</category><category>githubpages</category><category>html</category><category>javascript</category><category>googlesheet</category>
-    </item>
-  
 
-    <item>
-        <title>อัปโหลดและใช้งานรูปภาพบน Cloud ง่ายๆและฟรีด้วย Vercel Blob</title>
-        <link>https://janescience.com/blog/vercel-blob-image</link>
-        <guid>https://janescience.com/blog/vercel-blob-image</guid>
-        <description>Vercel Blob เป็น Storage สำหรับจัดเก็บไฟล์ต่างๆ ผ่าน Cloudflare R2</description>
-        <pubDate>Thu, 18 Jan 2024 00:00:00 GMT</pubDate>
-        <author>janescience.top@gmail.com (Janewit Sirijan)</author>
-        <category>vercel</category><category>image</category><category>cloud</category>
-    </item>
-  
+  <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+    <channel>
+      <title>Janescience</title>
+      <link>https://janescience.com/blog</link>
+      <description>ความรู้เกี่ยวกับ Programming ที่ผมได้ศึกษา สนใจ บันทึกไว้เป็นบทความ</description>
+      <language>en-us</language>
+      <managingEditor>janescience.top@gmail.com (Janewit Sirijan)</managingEditor>
+      <webMaster>janescience.top@gmail.com (Janewit Sirijan)</webMaster>
+      <lastBuildDate>Tue, 22 Apr 2025 00:00:00 GMT</lastBuildDate>
+      <atom:link href="https://janescience.com/feed.xml" rel="self" type="application/rss+xml"/>
+      
+  <item>
+    <guid>https://janescience.com/blog/lineoa-orders-html-gas</guid>
+    <title>สร้างระบบสั่งสินค้าผ่าน LINE OA ฟรี! ใช้แค่ HTML + Google Sheet + Google Apps Script</title>
+    <link>https://janescience.com/blog/lineoa-orders-html-gas</link>
+    <description>ลูกค้ากดสั่งผ่าน LINE OA ได้เลย ระบบเก็บข้อมูลลงชีต แจ้งเตือนกลุ่ม และตอบกลับอัตโนมัติ ทำเองได้ทั้งหมด ใช้แค่ HTML + LINE OA + Google Apps Script</description>
+    <pubDate>Tue, 22 Apr 2025 00:00:00 GMT</pubDate>
+    <author>janescience.top@gmail.com (Janewit Sirijan)</author>
+    <category>lineoa</category><category>gas</category><category>githubpages</category><category>html</category><category>javascript</category><category>googlesheet</category>
+  </item>
 
-    <item>
-        <title>เขียน Pipeline ใน Jenkins สำหรับ Kubernetes</title>
-        <link>https://janescience.com/blog/jenkins-docker-kubernetes</link>
-        <guid>https://janescience.com/blog/jenkins-docker-kubernetes</guid>
-        <description>ทำ CI/CD ด้วย Jenkins และเขียน Pipeline Deploy to Kubernetes โดยใช้ &apos;docker&apos; &amp; `kubectl` และ Application เป็น Spring Boot </description>
-        <pubDate>Mon, 23 Oct 2023 00:00:00 GMT</pubDate>
-        <author>janescience.top@gmail.com (Janewit Sirijan)</author>
-        <category>jenkins</category><category>docker</category><category>kubernetes</category>
-    </item>
-  
+  <item>
+    <guid>https://janescience.com/blog/vercel-blob-image</guid>
+    <title>อัปโหลดและใช้งานรูปภาพบน Cloud ง่ายๆและฟรีด้วย Vercel Blob</title>
+    <link>https://janescience.com/blog/vercel-blob-image</link>
+    <description>Vercel Blob เป็น Storage สำหรับจัดเก็บไฟล์ต่างๆ ผ่าน Cloudflare R2</description>
+    <pubDate>Thu, 18 Jan 2024 00:00:00 GMT</pubDate>
+    <author>janescience.top@gmail.com (Janewit Sirijan)</author>
+    <category>vercel</category><category>image</category><category>cloud</category>
+  </item>
 
-    <item>
-        <title>ลองทำ Performance Testing ด้วย JMeter</title>
-        <link>https://janescience.com/blog/jmeter</link>
-        <guid>https://janescience.com/blog/jmeter</guid>
-        <description>JMeter คืออะไร ? เป็นโปรแกรม Open Source ตัวหนึ่งที่ค่อนข้างนิยมนำมาใช้ในการทำ Performance Testing ทั้งที่เป็น Static และ Dynamic ใช้ได้ทั้ง Window , Linux หรือ Mac แน่นอนว่าก็ยังมี Tool อีกหลายตัวที่สามารถทำได้ทั้งฟรีและไม่ฟรี</description>
-        <pubDate>Wed, 20 Sep 2023 00:00:00 GMT</pubDate>
-        <author>janescience.top@gmail.com (Janewit Sirijan)</author>
-        <category>performancetest</category>
-    </item>
-  
+  <item>
+    <guid>https://janescience.com/blog/jenkins-docker-kubernetes</guid>
+    <title>เขียน Pipeline ใน Jenkins สำหรับ Kubernetes</title>
+    <link>https://janescience.com/blog/jenkins-docker-kubernetes</link>
+    <description>ทำ CI/CD ด้วย Jenkins และเขียน Pipeline Deploy to Kubernetes โดยใช้ &#39;docker&#39; &amp; `kubectl` และ Application เป็น Spring Boot </description>
+    <pubDate>Mon, 23 Oct 2023 00:00:00 GMT</pubDate>
+    <author>janescience.top@gmail.com (Janewit Sirijan)</author>
+    <category>jenkins</category><category>docker</category><category>kubernetes</category>
+  </item>
 
-    <item>
-        <title>สร้างแอป Android รับข้อมูลจากการแจ้งเตือน</title>
-        <link>https://janescience.com/blog/android-trigger-notification</link>
-        <guid>https://janescience.com/blog/android-trigger-notification</guid>
-        <description>ลองสร้างแอปรับการแจ้งเตือนเมื่อเราใช้โทรศัพท์มือถือโอนเงินหรือใช้บัตรเครดิตให้บันทึกรายการอัตโนมัติตามที่เรากำหนด</description>
-        <pubDate>Wed, 06 Sep 2023 00:00:00 GMT</pubDate>
-        <author>janescience.top@gmail.com (Janewit Sirijan)</author>
-        <category>android</category><category>line</category><category>notification</category>
-    </item>
-  
+  <item>
+    <guid>https://janescience.com/blog/jmeter</guid>
+    <title>ลองทำ Performance Testing ด้วย JMeter</title>
+    <link>https://janescience.com/blog/jmeter</link>
+    <description>JMeter คืออะไร ? เป็นโปรแกรม Open Source ตัวหนึ่งที่ค่อนข้างนิยมนำมาใช้ในการทำ Performance Testing ทั้งที่เป็น Static และ Dynamic ใช้ได้ทั้ง Window , Linux หรือ Mac แน่นอนว่าก็ยังมี Tool อีกหลายตัวที่สามารถทำได้ทั้งฟรีและไม่ฟรี</description>
+    <pubDate>Wed, 20 Sep 2023 00:00:00 GMT</pubDate>
+    <author>janescience.top@gmail.com (Janewit Sirijan)</author>
+    <category>performancetest</category>
+  </item>
 
-    <item>
-        <title>เมื่ออยากมี Tools ส่วนตัวใช้ในชีวิตประจำวันผ่าน LINE</title>
-        <link>https://janescience.com/blog/personal-tool-line</link>
-        <guid>https://janescience.com/blog/personal-tool-line</guid>
-        <description>ถ้าเราสามารถบันทึกรายจ่ายของเราได้ง่ายๆ เพียงแค่พิมพ์ไม่กี่ตัวอักษร ก็คงจะสะดวกน่าดู เลยเป็นจุดเริ่มต้นของการทำ LINE Bot</description>
-        <pubDate>Mon, 04 Sep 2023 00:00:00 GMT</pubDate>
-        <author>janescience.top@gmail.com (Janewit Sirijan)</author>
-        <category>node</category><category>line</category><category>linebot</category>
-    </item>
-  
+  <item>
+    <guid>https://janescience.com/blog/android-trigger-notification</guid>
+    <title>สร้างแอป Android รับข้อมูลจากการแจ้งเตือน</title>
+    <link>https://janescience.com/blog/android-trigger-notification</link>
+    <description>ลองสร้างแอปรับการแจ้งเตือนเมื่อเราใช้โทรศัพท์มือถือโอนเงินหรือใช้บัตรเครดิตให้บันทึกรายการอัตโนมัติตามที่เรากำหนด</description>
+    <pubDate>Wed, 06 Sep 2023 00:00:00 GMT</pubDate>
+    <author>janescience.top@gmail.com (Janewit Sirijan)</author>
+    <category>android</category><category>line</category><category>notification</category>
+  </item>
 
-    <item>
-        <title>ใช้ Cron Jobs บน Vercel ด้วย Node</title>
-        <link>https://janescience.com/blog/cron-job-vercel</link>
-        <guid>https://janescience.com/blog/cron-job-vercel</guid>
-        <description>ผมต้องการให้มีการแจ้งเตือนในเวลาตี 3 ของทุกวัน ซึ่งตอนแรกผมใช้ Cron Job ของ Node แต่พอ Deploy ขึ้น Vercel มันไม่ทำงาน ก็เลยไปเจอมาว่าต้องการมี Config เฉพาะของ Vercel</description>
-        <pubDate>Mon, 08 May 2023 00:00:00 GMT</pubDate>
-        <author>janescience.top@gmail.com (Janewit Sirijan)</author>
-        <category>cron</category><category>vercel</category><category>node</category>
-    </item>
-  
+  <item>
+    <guid>https://janescience.com/blog/personal-tool-line</guid>
+    <title>เมื่ออยากมี Tools ส่วนตัวใช้ในชีวิตประจำวันผ่าน LINE</title>
+    <link>https://janescience.com/blog/personal-tool-line</link>
+    <description>ถ้าเราสามารถบันทึกรายจ่ายของเราได้ง่ายๆ เพียงแค่พิมพ์ไม่กี่ตัวอักษร ก็คงจะสะดวกน่าดู เลยเป็นจุดเริ่มต้นของการทำ LINE Bot</description>
+    <pubDate>Mon, 04 Sep 2023 00:00:00 GMT</pubDate>
+    <author>janescience.top@gmail.com (Janewit Sirijan)</author>
+    <category>node</category><category>line</category><category>linebot</category>
+  </item>
 
-    <item>
-        <title>ทำ JWT Refresh Token ด้วย Spring Boot</title>
-        <link>https://janescience.com/blog/springboot-jwt-refreshtoken</link>
-        <guid>https://janescience.com/blog/springboot-jwt-refreshtoken</guid>
-        <description>การทำ JWT เป็นการทำ Authorize แบบสั้นๆ Access Token มีเวลาหมดอายุ พอหมดอายุแล้ว User ต้อง Login ใหม่เพื่อสร้าง Access Token ใหม่ ซึ่งการที่ User ต้อง Login ใหม่บ่อยๆ ก็คงจะน่ารำคาญไม่ใช่น้อย ทำให้ประสบการณ์การใช้งานอาจจะไม่ดีเท่าไหร่</description>
-        <pubDate>Sat, 18 Mar 2023 00:00:00 GMT</pubDate>
-        <author>janescience.top@gmail.com (Janewit Sirijan)</author>
-        <category>jwt</category><category>springboot</category>
-    </item>
-  
+  <item>
+    <guid>https://janescience.com/blog/cron-job-vercel</guid>
+    <title>ใช้ Cron Jobs บน Vercel ด้วย Node</title>
+    <link>https://janescience.com/blog/cron-job-vercel</link>
+    <description>ผมต้องการให้มีการแจ้งเตือนในเวลาตี 3 ของทุกวัน ซึ่งตอนแรกผมใช้ Cron Job ของ Node แต่พอ Deploy ขึ้น Vercel มันไม่ทำงาน ก็เลยไปเจอมาว่าต้องการมี Config เฉพาะของ Vercel</description>
+    <pubDate>Mon, 08 May 2023 00:00:00 GMT</pubDate>
+    <author>janescience.top@gmail.com (Janewit Sirijan)</author>
+    <category>cron</category><category>vercel</category><category>node</category>
+  </item>
 
-    <item>
-        <title>เพิ่มการป้องกัน CSRF ให้กับ Spring Security</title>
-        <link>https://janescience.com/blog/csrf-spring-security</link>
-        <guid>https://janescience.com/blog/csrf-spring-security</guid>
-        <description>Cross-Site Request Forgery เป็นการโจมตี Website รูปแบบหนึ่งที่ Hacker นิยมใช้ โดยการหลอกเหยื่อให้กดลิงก์หรือเข้าใช้เว็บไซต์ที่ทาง Hacker  ได้เตรียมไว้แล้ว และเปลี่ยนข้อมูลบางอย่างตามที่ Hacker ต้องการ โดยจะใช้สิทธิการเข้าถึงข้อมูลของเหยื่อ กระทำการใดๆโดยที่เหยื่ออาจจะไม่รู้ตัว</description>
-        <pubDate>Tue, 14 Mar 2023 00:00:00 GMT</pubDate>
-        <author>janescience.top@gmail.com (Janewit Sirijan)</author>
-        <category>springboot</category><category>csrf</category>
-    </item>
-  
+  <item>
+    <guid>https://janescience.com/blog/springboot-jwt-refreshtoken</guid>
+    <title>ทำ JWT Refresh Token ด้วย Spring Boot</title>
+    <link>https://janescience.com/blog/springboot-jwt-refreshtoken</link>
+    <description>การทำ JWT เป็นการทำ Authorize แบบสั้นๆ Access Token มีเวลาหมดอายุ พอหมดอายุแล้ว User ต้อง Login ใหม่เพื่อสร้าง Access Token ใหม่ ซึ่งการที่ User ต้อง Login ใหม่บ่อยๆ ก็คงจะน่ารำคาญไม่ใช่น้อย ทำให้ประสบการณ์การใช้งานอาจจะไม่ดีเท่าไหร่</description>
+    <pubDate>Sat, 18 Mar 2023 00:00:00 GMT</pubDate>
+    <author>janescience.top@gmail.com (Janewit Sirijan)</author>
+    <category>jwt</category><category>springboot</category>
+  </item>
 
-    <item>
-        <title>Run Spring Boot ด้วย Docker Compose</title>
-        <link>https://janescience.com/blog/springboot-docker</link>
-        <guid>https://janescience.com/blog/springboot-docker</guid>
-        <description>เป็น Plugin อีกตัวของ Docker ที่อยู่ในรูปแบบของ Script เพื่อมาช่วยในการสร้าง Container และ Config หลายๆอันขึ้นมาพร้อมกัน โดยใช้คำสั่งเดียว `docker-compose up`</description>
-        <pubDate>Sun, 12 Mar 2023 00:00:00 GMT</pubDate>
-        <author>janescience.top@gmail.com (Janewit Sirijan)</author>
-        <category>docker</category><category>springboot</category>
-    </item>
-  
+  <item>
+    <guid>https://janescience.com/blog/csrf-spring-security</guid>
+    <title>เพิ่มการป้องกัน CSRF ให้กับ Spring Security</title>
+    <link>https://janescience.com/blog/csrf-spring-security</link>
+    <description>Cross-Site Request Forgery เป็นการโจมตี Website รูปแบบหนึ่งที่ Hacker นิยมใช้ โดยการหลอกเหยื่อให้กดลิงก์หรือเข้าใช้เว็บไซต์ที่ทาง Hacker  ได้เตรียมไว้แล้ว และเปลี่ยนข้อมูลบางอย่างตามที่ Hacker ต้องการ โดยจะใช้สิทธิการเข้าถึงข้อมูลของเหยื่อ กระทำการใดๆโดยที่เหยื่ออาจจะไม่รู้ตัว</description>
+    <pubDate>Tue, 14 Mar 2023 00:00:00 GMT</pubDate>
+    <author>janescience.top@gmail.com (Janewit Sirijan)</author>
+    <category>springboot</category><category>csrf</category>
+  </item>
 
-    <item>
-        <title>Authentication ด้วย Spring Security &amp; JWT</title>
-        <link>https://janescience.com/blog/auth-springsecurity-jwt</link>
-        <guid>https://janescience.com/blog/auth-springsecurity-jwt</guid>
-        <description>จริงๆผมอยากจะเขียน Blog เรื่องนี้ตั้งนานแล้ว พอมีเวลาก็เลยอยากเขียน Service ขึ้นมาใหม่พร้อมกับเขียน Blog ไปด้วยเลย โดยจะได้อัพเดต Tech ที่ใช้ด้วย</description>
-        <pubDate>Sat, 11 Mar 2023 00:00:00 GMT</pubDate>
-        <author>janescience.top@gmail.com (Janewit Sirijan)</author>
-        <category>springboot</category><category>jwt</category>
-    </item>
-  
+  <item>
+    <guid>https://janescience.com/blog/springboot-docker</guid>
+    <title>Run Spring Boot ด้วย Docker Compose</title>
+    <link>https://janescience.com/blog/springboot-docker</link>
+    <description>เป็น Plugin อีกตัวของ Docker ที่อยู่ในรูปแบบของ Script เพื่อมาช่วยในการสร้าง Container และ Config หลายๆอันขึ้นมาพร้อมกัน โดยใช้คำสั่งเดียว `docker-compose up`</description>
+    <pubDate>Sun, 12 Mar 2023 00:00:00 GMT</pubDate>
+    <author>janescience.top@gmail.com (Janewit Sirijan)</author>
+    <category>docker</category><category>springboot</category>
+  </item>
 
-    <item>
-        <title>สร้าง Excel Timesheet ด้วย Python กับ ChatGPT</title>
-        <link>https://janescience.com/blog/timesheet-python-chatgpt</link>
-        <guid>https://janescience.com/blog/timesheet-python-chatgpt</guid>
-        <description>เนื่องจากขี้เกียจมานั่งสร้าง Timesheet ใหม่เองทุกเดือน เลยลองเขียนโปรแกรมด้วย Python กับ ChatGPT ให้สามารถสร้าง Timesheet แบบ Auto ด้วยการ Run เพียงคำสั่งเดียว</description>
-        <pubDate>Tue, 21 Feb 2023 00:00:00 GMT</pubDate>
-        <author>janescience.top@gmail.com (Janewit Sirijan)</author>
-        <category>timesheet</category><category>python</category><category>chatgpt</category>
-    </item>
-  
+  <item>
+    <guid>https://janescience.com/blog/auth-springsecurity-jwt</guid>
+    <title>Authentication ด้วย Spring Security &amp; JWT</title>
+    <link>https://janescience.com/blog/auth-springsecurity-jwt</link>
+    <description>จริงๆผมอยากจะเขียน Blog เรื่องนี้ตั้งนานแล้ว พอมีเวลาก็เลยอยากเขียน Service ขึ้นมาใหม่พร้อมกับเขียน Blog ไปด้วยเลย โดยจะได้อัพเดต Tech ที่ใช้ด้วย</description>
+    <pubDate>Sat, 11 Mar 2023 00:00:00 GMT</pubDate>
+    <author>janescience.top@gmail.com (Janewit Sirijan)</author>
+    <category>springboot</category><category>jwt</category>
+  </item>
 
-    <item>
-        <title>สร้าง Comments ให้กับ Website ด้วย Giscus</title>
-        <link>https://janescience.com/blog/giscus</link>
-        <guid>https://janescience.com/blog/giscus</guid>
-        <description>ผมที่เพิ่งเริ่มเขียน Blog ได้ไปอ่านบทความขอ devahoy.com เป็นการแชร์วิธีเพิ่ม Comments ให้กับ Website ด้วย Giscus  และเห็นว่าเป็น open source ที่ไม่มี ads ด้วย เลยอยากจะลองเอามาใส่ที่เว็บของตัวเองบ้าง</description>
-        <pubDate>Sun, 12 Feb 2023 00:00:00 GMT</pubDate>
-        <author>janescience.top@gmail.com (Janewit Sirijan)</author>
-        <category>giscus</category><category>comments</category><category>react</category>
-    </item>
-  
+  <item>
+    <guid>https://janescience.com/blog/timesheet-python-chatgpt</guid>
+    <title>สร้าง Excel Timesheet ด้วย Python กับ ChatGPT</title>
+    <link>https://janescience.com/blog/timesheet-python-chatgpt</link>
+    <description>เนื่องจากขี้เกียจมานั่งสร้าง Timesheet ใหม่เองทุกเดือน เลยลองเขียนโปรแกรมด้วย Python กับ ChatGPT ให้สามารถสร้าง Timesheet แบบ Auto ด้วยการ Run เพียงคำสั่งเดียว</description>
+    <pubDate>Tue, 21 Feb 2023 00:00:00 GMT</pubDate>
+    <author>janescience.top@gmail.com (Janewit Sirijan)</author>
+    <category>timesheet</category><category>python</category><category>chatgpt</category>
+  </item>
 
-    <item>
-        <title>สร้างการแจ้งเตือนด้วย Node เข้า LINE ผ่าน LINE Notify</title>
-        <link>https://janescience.com/blog/node-notify-line</link>
-        <guid>https://janescience.com/blog/node-notify-line</guid>
-        <description>ลองสร้าง Notification ด้วย Node ไปยัง LINE Application</description>
-        <pubDate>Wed, 08 Feb 2023 00:00:00 GMT</pubDate>
-        <author>janescience.top@gmail.com (Janewit Sirijan)</author>
-        <category>notification</category><category>line</category><category>node</category>
-    </item>
-  
+  <item>
+    <guid>https://janescience.com/blog/giscus</guid>
+    <title>สร้าง Comments ให้กับ Website ด้วย Giscus</title>
+    <link>https://janescience.com/blog/giscus</link>
+    <description>ผมที่เพิ่งเริ่มเขียน Blog ได้ไปอ่านบทความขอ devahoy.com เป็นการแชร์วิธีเพิ่ม Comments ให้กับ Website ด้วย Giscus  และเห็นว่าเป็น open source ที่ไม่มี ads ด้วย เลยอยากจะลองเอามาใส่ที่เว็บของตัวเองบ้าง</description>
+    <pubDate>Sun, 12 Feb 2023 00:00:00 GMT</pubDate>
+    <author>janescience.top@gmail.com (Janewit Sirijan)</author>
+    <category>giscus</category><category>comments</category><category>react</category>
+  </item>
 
-    <item>
-        <title>เขียน Test API Node.js ด้วย Jest และใช้ DB เป็น Mongo</title>
-        <link>https://janescience.com/blog/jest-api</link>
-        <guid>https://janescience.com/blog/jest-api</guid>
-        <description>สวัสดีครับ ผมจะลองยกตัวอย่างการเขียน Test สั้นๆด้วย Jest โปรเจค Node ของผมใช้ Express.js และ DB เป็น MongoDB ส่วนของการ Test เป็นการเขียน Test API ครับ</description>
-        <pubDate>Tue, 07 Feb 2023 00:00:00 GMT</pubDate>
-        <author>janescience.top@gmail.com (Janewit Sirijan)</author>
-        <category>jest</category><category>test</category><category>node</category><category>mongo</category>
-    </item>
-  
+  <item>
+    <guid>https://janescience.com/blog/node-notify-line</guid>
+    <title>สร้างการแจ้งเตือนด้วย Node เข้า LINE ผ่าน LINE Notify</title>
+    <link>https://janescience.com/blog/node-notify-line</link>
+    <description>ลองสร้าง Notification ด้วย Node ไปยัง LINE Application</description>
+    <pubDate>Wed, 08 Feb 2023 00:00:00 GMT</pubDate>
+    <author>janescience.top@gmail.com (Janewit Sirijan)</author>
+    <category>notification</category><category>line</category><category>node</category>
+  </item>
 
-    <item>
-        <title>ใช้ Liquibase กับ Spring Boot</title>
-        <link>https://janescience.com/blog/springboot-liquibase</link>
-        <guid>https://janescience.com/blog/springboot-liquibase</guid>
-        <description>เป็นเครื่องมือที่ช่วยจัดการในส่วนของ Database ไม่ว่าจะเป็น Insert , Update , Delete ข้อมูล หรือ Create , Drop , Alter ตาราง หรือ Add , Drop , Alter คอลัมน์ และอื่นๆ </description>
-        <pubDate>Wed, 09 Mar 2022 00:00:00 GMT</pubDate>
-        <author>janescience.top@gmail.com (Janewit Sirijan)</author>
-        <category>liquibase</category><category>springboot</category>
-    </item>
-  
+  <item>
+    <guid>https://janescience.com/blog/jest-api</guid>
+    <title>เขียน Test API Node.js ด้วย Jest และใช้ DB เป็น Mongo</title>
+    <link>https://janescience.com/blog/jest-api</link>
+    <description>สวัสดีครับ ผมจะลองยกตัวอย่างการเขียน Test สั้นๆด้วย Jest โปรเจค Node ของผมใช้ Express.js และ DB เป็น MongoDB ส่วนของการ Test เป็นการเขียน Test API ครับ</description>
+    <pubDate>Tue, 07 Feb 2023 00:00:00 GMT</pubDate>
+    <author>janescience.top@gmail.com (Janewit Sirijan)</author>
+    <category>jest</category><category>test</category><category>node</category><category>mongo</category>
+  </item>
 
-    <item>
-        <title>ทำเว็บ 2 ภาษาง่ายๆ ด้วย Vue i18n</title>
-        <link>https://janescience.com/blog/vue-i18n</link>
-        <guid>https://janescience.com/blog/vue-i18n</guid>
-        <description>เมื่อผมทำ Website portfolio ด้วย vue.js ไปสักพัก มีความคิดอยากให้เว็บมีภาษาไทยด้วย (ตอนแรกตั้งใจว่าจะทำเว็บเป็นภาษาอังกฤษ) เลยเริ่มหา Tools ที่ง่ายที่สุด</description>
-        <pubDate>Fri, 25 Feb 2022 00:00:00 GMT</pubDate>
-        <author>janescience.top@gmail.com (Janewit Sirijan)</author>
-        <category>vue</category><category>i18n</category>
-    </item>
-  
+  <item>
+    <guid>https://janescience.com/blog/springboot-liquibase</guid>
+    <title>ใช้ Liquibase กับ Spring Boot</title>
+    <link>https://janescience.com/blog/springboot-liquibase</link>
+    <description>เป็นเครื่องมือที่ช่วยจัดการในส่วนของ Database ไม่ว่าจะเป็น Insert , Update , Delete ข้อมูล หรือ Create , Drop , Alter ตาราง หรือ Add , Drop , Alter คอลัมน์ และอื่นๆ </description>
+    <pubDate>Wed, 09 Mar 2022 00:00:00 GMT</pubDate>
+    <author>janescience.top@gmail.com (Janewit Sirijan)</author>
+    <category>liquibase</category><category>springboot</category>
+  </item>
 
-    <item>
-        <title>เมื่อต้องใช้ Git Workflow</title>
-        <link>https://janescience.com/blog/git-workflow</link>
-        <guid>https://janescience.com/blog/git-workflow</guid>
-        <description>สวัสดีครับ วันนี้ผมจะมาพูดถึงการใช้ Git ที่ดีขึ้นและใช้ได้อย่างเต็มประสิทธิภาพ ก่อนอื่นเลยต้องรู้จัก Git มาบ้าง และถ้าเคยใช้มาแล้ว ก็จะยิ่งเข้าใจง่ายขึ้นครับ แต่ถ้ายังไม่เคยใช้เลย ก็สามารถอ่านและศึกษาได้ </description>
-        <pubDate>Thu, 24 Feb 2022 00:00:00 GMT</pubDate>
-        <author>janescience.top@gmail.com (Janewit Sirijan)</author>
-        <category>git</category>
-    </item>
-  
-  </channel>
-</rss>
+  <item>
+    <guid>https://janescience.com/blog/vue-i18n</guid>
+    <title>ทำเว็บ 2 ภาษาง่ายๆ ด้วย Vue i18n</title>
+    <link>https://janescience.com/blog/vue-i18n</link>
+    <description>เมื่อผมทำ Website portfolio ด้วย vue.js ไปสักพัก มีความคิดอยากให้เว็บมีภาษาไทยด้วย (ตอนแรกตั้งใจว่าจะทำเว็บเป็นภาษาอังกฤษ) เลยเริ่มหา Tools ที่ง่ายที่สุด</description>
+    <pubDate>Fri, 25 Feb 2022 00:00:00 GMT</pubDate>
+    <author>janescience.top@gmail.com (Janewit Sirijan)</author>
+    <category>vue</category><category>i18n</category>
+  </item>
+
+  <item>
+    <guid>https://janescience.com/blog/git-workflow</guid>
+    <title>เมื่อต้องใช้ Git Workflow</title>
+    <link>https://janescience.com/blog/git-workflow</link>
+    <description>สวัสดีครับ วันนี้ผมจะมาพูดถึงการใช้ Git ที่ดีขึ้นและใช้ได้อย่างเต็มประสิทธิภาพ ก่อนอื่นเลยต้องรู้จัก Git มาบ้าง และถ้าเคยใช้มาแล้ว ก็จะยิ่งเข้าใจง่ายขึ้นครับ แต่ถ้ายังไม่เคยใช้เลย ก็สามารถอ่านและศึกษาได้ </description>
+    <pubDate>Thu, 24 Feb 2022 00:00:00 GMT</pubDate>
+    <author>janescience.top@gmail.com (Janewit Sirijan)</author>
+    <category>git</category>
+  </item>
+
+    </channel>
+  </rss>
