@@ -24,19 +24,29 @@ function getAllPosts() {
     .slice(0, MAX_POSTS)
 }
 
+function escapeXml(unsafe) {
+    return unsafe
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&apos;')
+  }
+  
+
 function buildRssItem(post) {
   const link = `${siteMetadata.siteUrl}/blog/${post.slug}`
-  const categories = (post.tags || []).map(tag => `<category>${tag}</category>`).join('')
+  const categories = (post.tags || []).map(tag => `<category>${escapeXml(tag)}</category>`).join('')
 
   return `
     <item>
-      <title>${post.title}</title>
-      <link>${link}</link>
-      <guid>${link}</guid>
-      <description>${post.summary || ''}</description>
-      <pubDate>${new Date(post.date).toUTCString()}</pubDate>
-      <author>${siteMetadata.email} (${siteMetadata.author})</author>
-      ${categories}
+        <title>${escapeXml(post.title)}</title>
+        <link>${link}</link>
+        <guid>${link}</guid>
+        <description>${escapeXml(post.summary || '')}</description>
+        <pubDate>${new Date(post.date).toUTCString()}</pubDate>
+        <author>${escapeXml(siteMetadata.email)} (${escapeXml(siteMetadata.author)})</author>
+        ${categories}
     </item>
   `
 }
